@@ -276,7 +276,7 @@ public sealed class RequestValidationTests
 
         foreach (TranscribeRequest request in bad)
         {
-            Assert.DoesNotContain('—', await RejectionAsync(h, request));
+            Assert.DoesNotContain('\u2014', await RejectionAsync(h, request));
         }
     }
 }
