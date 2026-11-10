@@ -125,6 +125,7 @@ class Whisper:
         import sherpa_onnx
         self.timer = timer; self.d = d; self.threads = threads; self.sh = sherpa_onnx; self.rec = {}
     def transcribe(self, a, lang):
+        lang = lang or "en"   # noise files have no language: forced English
         if lang not in self.rec:
             d = self.d
             self.rec[lang] = self.sh.OfflineRecognizer.from_whisper(
