@@ -45,7 +45,7 @@ A new category is added to this table and to `tests/CLAUDE.md` in the same chang
 - Page hashes: every file under `frontend/` except `frontend/frontend-hashes.txt` is listed there as `<sha256> *<path>` and matches. A page edit moves its line in the same commit: `node build/update-frontend-hashes.mjs` rewrites the file.
 - Page tests present: the page suite has a test file per logic module, none silenced, and the charters name its command.
 - Workflow pins: every `uses:` under `.github` is a full 40-character commit SHA, and `NOTICE` names every default model and every ffmpeg build the locks ship.
-- Copy: no em dash in `frontend/js/copy.js` or in any `.cs` file under `src/`. Frontend scripts and stylesheets open with a purpose header like every other source file.
+- Copy: no em dash in `frontend/js/copy.js`, in any `.cs` file under `src/`, or in a document (`docs/**/*.md`, `docs/**/*.json`, `README.md`, `CHANGELOG.md`, `NOTICE` and every charter); `docs/build/reference-digest.md` and `docs/build/research-models.md` are exempt by name in the guard, because they quote titles that carry one. Frontend scripts and stylesheets open with a purpose header like every other source file.
 
 A failing guard names a real inconsistency: fix the inconsistency and leave the guard as it is. An exemption names its file and its reason.
 
