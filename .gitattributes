@@ -1,0 +1,12 @@
+# LF everywhere: a checkout on Windows must not change a hash or a diff.
+* text=auto eol=lf
+
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.ico  binary
+*.gz   binary
+*.onnx binary
+*.wav  binary
+*.m4a  binary
+*.mp4  binary

@@ -1,0 +1,54 @@
+<!-- The desktop front end. One project hosts both desktop hosts behind one interface: the Windows
+     host (WebView2) and the Linux host live in their own folders, and the build compiles only the
+     one for the target, so each platform ships no code for the other and no reference to it. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MeetingAudioTranscriptor.Shell</RootNamespace>
+    <AssemblyName>meeting-audio-transcriptor</AssemblyName>
+    <!-- Each build compiles exactly one host, so the analyzer sees one implementer; the interface is
+         the seam both hosts share and the entry point must stay written against it. -->
+    <NoWarn>$(NoWarn);CA1859</NoWarn>
+  </PropertyGroup>
+
+  <!-- ShellHost names the host being built. A runtime identifier decides it when one is given (so a
+       cross build from Linux for win-x64 gets the Windows host); without one, the build machine's
+       own platform decides. -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <ShellHost Condition="$(RuntimeIdentifier.StartsWith('win'))">windows</ShellHost>
+    <ShellHost Condition="'$(ShellHost)' == ''">linux</ShellHost>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ShellHost)' == ''">
+    <ShellHost Condition="$([MSBuild]::IsOSPlatform('Windows'))">windows</ShellHost>
+    <ShellHost Condition="'$(ShellHost)' == ''">linux</ShellHost>
+  </PropertyGroup>
+
+  <!-- A windowed executable on Windows (no console flashes); a plain executable elsewhere. -->
+  <PropertyGroup>
+    <OutputType Condition="'$(ShellHost)' == 'windows'">WinExe</OutputType>
+    <OutputType Condition="'$(ShellHost)' != 'windows'">Exe</OutputType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ShellHost)' == 'windows'">
+    <DefineConstants>$(DefineConstants);SHELL_WINDOWS</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ShellHost)' == 'linux'">
+    <DefineConstants>$(DefineConstants);SHELL_LINUX</DefineConstants>
+  </PropertyGroup>
+
+  <!-- The other host's folder is not compiled, so its platform code never reaches this build. -->
+  <ItemGroup Condition="'$(ShellHost)' == 'windows'">
+    <Compile Remove="Linux/**" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ShellHost)' == 'linux'">
+    <Compile Remove="Windows/**" />
+  </ItemGroup>
+
+  <!-- The web view package is referenced by the Windows host alone. -->
+  <ItemGroup Condition="'$(ShellHost)' == 'windows'">
+    <PackageReference Include="Microsoft.Web.WebView2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MeetingAudioTranscriptor.App\MeetingAudioTranscriptor.App.csproj" />
+  </ItemGroup>
+</Project>

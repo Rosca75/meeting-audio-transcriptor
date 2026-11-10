@@ -1,0 +1,13 @@
+<!-- Audio file decoding: a child ffmpeg process and, on Windows, Media Foundation interop. It is
+     the only project that may allow unsafe code, because the interop needs it, and the engine
+     receives only decoded samples. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MeetingAudioTranscriptor.Media</RootNamespace>
+    <IsTrimmable>true</IsTrimmable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MeetingAudioTranscriptor.Engine\MeetingAudioTranscriptor.Engine.csproj" />
+  </ItemGroup>
+</Project>

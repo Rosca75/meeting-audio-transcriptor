@@ -1,0 +1,17 @@
+<!-- The domain logic: chunking, transcript assembly and the writers. It names no window, no model
+     runtime and no path the user chose (audio arrives as samples), which keeps it testable in a
+     console with fakes. It takes no package and no unsafe code, and a guard holds both. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MeetingAudioTranscriptor.Engine</RootNamespace>
+    <IsTrimmable>true</IsTrimmable>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MeetingAudioTranscriptor.Contracts\MeetingAudioTranscriptor.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Internal types are tested directly rather than made public for the test project. -->
+    <InternalsVisibleTo Include="MeetingAudioTranscriptor.Engine.Tests" />
+  </ItemGroup>
+</Project>

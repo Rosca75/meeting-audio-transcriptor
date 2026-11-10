@@ -1,0 +1,37 @@
+<!-- The build properties every project of the repository shares. -->
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- The newest language, so a reader is never held to an older idiom than the compiler offers. -->
+    <LangVersion>latest</LangVersion>
+    <!-- Nullability is the contract: an optional wire field is declared T?. -->
+    <Nullable>enable</Nullable>
+    <!-- A reader of one file sees every dependency of that file. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <!-- Analyzer findings and .editorconfig :error rules fail the build, so none is ignored. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- No ICU data and culture-invariant formatting: the tool is local, and a transcript must not
+         change with the machine's locale. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <Deterministic>true</Deterministic>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- Stops a package's symbol and documentation files being copied into the output, where a
+         published folder would carry them to every user. -->
+    <AllowedReferenceRelatedFileExtensions>none</AllowedReferenceRelatedFileExtensions>
+    <!-- Unsafe code is allowed in the Media project alone, which switches it on itself. -->
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!-- The trim analyzer runs in CI and in a Release build; a local Debug build skips it, because
+       its data-flow analysis is the slowest build step. IsTrimmable in a project's own file
+       switches the analyzer on, and the SDK reads this property only when it is still unset.
+       GitHub sets CI=true. An empty Configuration is Debug as well. -->
+  <PropertyGroup Condition="'$(EnableTrimAnalyzer)' == '' And ('$(Configuration)' == '' Or '$(Configuration)' == 'Debug') And '$(CI)' != 'true'">
+    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+  </PropertyGroup>
+
+  <!-- No platform attribute is stamped here: the application runs on Windows and on Linux, so a
+       platform-bound API is guarded at its call site with OperatingSystem.IsWindows or IsLinux. -->
+</Project>

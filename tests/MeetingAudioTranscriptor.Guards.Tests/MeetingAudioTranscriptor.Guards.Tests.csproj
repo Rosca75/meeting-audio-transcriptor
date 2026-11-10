@@ -1,0 +1,17 @@
+<!-- The guards: checks over the repository's source text, project files and assemblies, run in the
+     unit tier. A guard that reads nothing fails rather than passing. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MeetingAudioTranscriptor.Guards.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The engine is referenced so its assembly is copied beside the test and can be loaded. -->
+    <ProjectReference Include="..\..\src\MeetingAudioTranscriptor.Engine\MeetingAudioTranscriptor.Engine.csproj" />
+  </ItemGroup>
+</Project>

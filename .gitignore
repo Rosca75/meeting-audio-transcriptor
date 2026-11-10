@@ -1,0 +1,32 @@
+bin/
+obj/
+publish/
+artifacts/
+*.user
+.vs/
+.vscode/
+.idea/
+node_modules/
+__pycache__/
+.claude/settings.local.json
+.claude/worktrees/
+
+# Models and tools are fetched, never committed.
+models/
+tools/ffmpeg/
+*.onnx
+*.onnx.data
+spike-venv/
+
+# Benchmark data and caches.
+bench/data/
+bench/.cache/
+
+# Recorded media, except the tiny fixtures a test commits beside itself.
+*.wav
+*.m4a
+*.mp4
+!tests/**/Fixtures/**/*.wav
+!tests/**/Fixtures/**/*.m4a
+!tests/**/Fixtures/**/*.mp4
+!tests/**/Fixtures/**/*.onnx

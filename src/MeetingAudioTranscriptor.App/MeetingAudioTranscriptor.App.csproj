@@ -1,0 +1,19 @@
+<!-- The composition and the bound surface both front ends call. It names no window, so the whole
+     surface can be driven by a test or by the command line. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MeetingAudioTranscriptor.App</RootNamespace>
+    <IsTrimmable>true</IsTrimmable>
+    <!-- Bound methods are instance methods by design. -->
+    <NoWarn>$(NoWarn);CA1822</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MeetingAudioTranscriptor.Contracts\MeetingAudioTranscriptor.Contracts.csproj" />
+    <ProjectReference Include="..\MeetingAudioTranscriptor.Engine\MeetingAudioTranscriptor.Engine.csproj" />
+    <ProjectReference Include="..\MeetingAudioTranscriptor.Inference\MeetingAudioTranscriptor.Inference.csproj" />
+    <ProjectReference Include="..\MeetingAudioTranscriptor.Media\MeetingAudioTranscriptor.Media.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="MeetingAudioTranscriptor.App.Tests" />
+  </ItemGroup>
+</Project>

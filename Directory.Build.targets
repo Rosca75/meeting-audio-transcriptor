@@ -1,0 +1,12 @@
+<!-- The build targets every project of the repository shares. -->
+<Project>
+  <!-- Drops the two desktop-framework WebView2 controls the package adds: nothing hosts them, and
+       the WPF one binds a base-assembly version the base runtime lacks. Repo-wide because a test
+       project that reads the shell inherits the same references. -->
+  <Target Name="DropTheDesktopWebViewControls" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference->WithMetadataValue('Filename', 'Microsoft.Web.WebView2.Wpf'))" />
+      <Reference Remove="@(Reference->WithMetadataValue('Filename', 'Microsoft.Web.WebView2.WinForms'))" />
+    </ItemGroup>
+  </Target>
+</Project>

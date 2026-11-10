@@ -1,0 +1,15 @@
+<!-- The one place a package version appears; project files name a package and never a version. -->
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- A transitive package takes the version pinned here, so a vulnerable one is raised in one place. -->
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.ML.OnnxRuntime" Version="1.31.1" />
+    <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.4191.47" />
+  </ItemGroup>
+  <ItemGroup Label="Test only">
+    <PackageVersion Include="xunit.v3" Version="4.0.1" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,16 @@
+<!-- The App suite: unit tests over the App project, run on Microsoft.Testing.Platform. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MeetingAudioTranscriptor.App.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MeetingAudioTranscriptor.App\MeetingAudioTranscriptor.App.csproj" />
+    <ProjectReference Include="..\..\src\MeetingAudioTranscriptor.Contracts\MeetingAudioTranscriptor.Contracts.csproj" />
+  </ItemGroup>
+</Project>

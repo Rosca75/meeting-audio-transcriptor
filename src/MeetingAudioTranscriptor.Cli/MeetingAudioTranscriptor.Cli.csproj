@@ -1,0 +1,11 @@
+<!-- The command-line front end: a console executable over the App project. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MeetingAudioTranscriptor.Cli</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>meeting-audio-transcriptor-cli</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MeetingAudioTranscriptor.App\MeetingAudioTranscriptor.App.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,8 @@
+<!-- The wire shapes: records and name constants every other project shares. It depends on nothing,
+     because every project references it and a dependency here would reach all of them. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MeetingAudioTranscriptor.Contracts</RootNamespace>
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+</Project>

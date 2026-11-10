@@ -1,0 +1,15 @@
+<!-- The package-backed half of the model boundary the engine declares: it runs ONNX models on the
+     CPU. It is the only project that references the ONNX Runtime and holds no transcription
+     algorithm, so the engine stays free of the package. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MeetingAudioTranscriptor.Inference</RootNamespace>
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MeetingAudioTranscriptor.Engine\MeetingAudioTranscriptor.Engine.csproj" />
+  </ItemGroup>
+</Project>

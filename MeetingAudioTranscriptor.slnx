@@ -1,0 +1,18 @@
+<!-- The solution: every source project, build tool and test suite of the repository. -->
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MeetingAudioTranscriptor.Contracts/MeetingAudioTranscriptor.Contracts.csproj" />
+    <Project Path="src/MeetingAudioTranscriptor.Engine/MeetingAudioTranscriptor.Engine.csproj" />
+    <Project Path="src/MeetingAudioTranscriptor.Inference/MeetingAudioTranscriptor.Inference.csproj" />
+    <Project Path="src/MeetingAudioTranscriptor.Media/MeetingAudioTranscriptor.Media.csproj" />
+    <Project Path="src/MeetingAudioTranscriptor.App/MeetingAudioTranscriptor.App.csproj" />
+    <Project Path="src/MeetingAudioTranscriptor.Cli/MeetingAudioTranscriptor.Cli.csproj" />
+    <Project Path="src/MeetingAudioTranscriptor.Shell/MeetingAudioTranscriptor.Shell.csproj" />
+  </Folder>
+  <Folder Name="/build/" />
+  <Folder Name="/tests/">
+    <Project Path="tests/MeetingAudioTranscriptor.Engine.Tests/MeetingAudioTranscriptor.Engine.Tests.csproj" />
+    <Project Path="tests/MeetingAudioTranscriptor.App.Tests/MeetingAudioTranscriptor.App.Tests.csproj" />
+    <Project Path="tests/MeetingAudioTranscriptor.Guards.Tests/MeetingAudioTranscriptor.Guards.Tests.csproj" />
+  </Folder>
+</Solution>
