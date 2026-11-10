@@ -18,10 +18,12 @@
 //
 // Extraction uses the system tar (a .tar.xz with `tar -xJf`, a .zip with
 // `tar -xf`, which is bsdtar on Windows). A GNU tar cannot read a zip, so on a
-// machine whose tar fails on one the tool falls back to unzip. Node 22 or later,
-// no dependency.
+// machine whose tar fails on one the tool falls back to unzip. The archive is
+// named relative to its own folder, because a GNU tar (Git for Windows ships one)
+// reads "D:\path" as a remote host "D" and refuses it. Node 22 or later, no
+// dependency.
 import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { download, reexecWithNetworkOptions, sha256Of, verify } from "./fetch-models.mjs";
@@ -68,9 +70,9 @@ function outputsOf(build) {
   return [build.binary, ...(build.licenceFiles ?? [])];
 }
 
-/** Runs a command and returns its exit status; a missing program gets an actionable message. */
-function runTool(program, args) {
-  const result = spawnSync(program, args, { stdio: ["ignore", "ignore", "pipe"], encoding: "utf8" });
+/** Runs a command, in a working folder when one is given, and returns its exit status; a missing program gets an actionable message. */
+function runTool(program, args, cwd = undefined) {
+  const result = spawnSync(program, args, { cwd, stdio: ["ignore", "ignore", "pipe"], encoding: "utf8" });
   if (result.error?.code === "ENOENT") {
     throw new Error(`the program "${program}" was not found on PATH; install it (tar is part of every supported operating system, and unzip is needed only where tar cannot read a zip)`);
   }
@@ -80,7 +82,7 @@ function runTool(program, args) {
 /** Extracts the named members of an archive into a folder with the system tar, falling back to unzip for a zip. */
 function extractMembers(archive, folder, members) {
   const isZip = archive.toLowerCase().endsWith(".zip");
-  const first = runTool("tar", [isZip ? "-xf" : "-xJf", archive, "-C", folder, ...members]);
+  const first = runTool("tar", [isZip ? "-xf" : "-xJf", basename(archive), "-C", resolve(folder), ...members], dirname(resolve(archive)));
   if (first.status === 0) {
     return;
   }

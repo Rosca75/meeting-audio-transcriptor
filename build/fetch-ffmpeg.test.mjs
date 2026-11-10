@@ -40,8 +40,10 @@ before(async () => {
   writeFileSync(join(staging, "bin", "ffplay"), "player");
   writeFileSync(join(staging, "doc", "readme.html"), "docs");
   writeFileSync(join(staging, "LICENSE.txt"), licence);
+  // The paths are relative to the work folder: a GNU tar reads a drive letter as a remote host.
   const archive = join(work, "ffmpeg-test.tar.xz");
-  assert.equal(spawnSync("tar", ["-cJf", archive, "-C", join(work, "staging"), root]).status, 0);
+  const created = spawnSync("tar", ["-cJf", "ffmpeg-test.tar.xz", "-C", "staging", root], { cwd: work, encoding: "utf8" });
+  assert.equal(created.status, 0, `tar could not build the test archive: ${created.stderr}`);
   archiveBytes = readFileSync(archive);
 
   server = createServer((request, response) => {
