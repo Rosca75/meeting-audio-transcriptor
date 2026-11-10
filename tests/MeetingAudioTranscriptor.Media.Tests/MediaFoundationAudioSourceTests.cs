@@ -52,8 +52,11 @@ public sealed class MediaFoundationAudioSourceTests : IClassFixture<MediaFixture
         _media.SkipWithoutFfmpeg();
         string sine = MediaFixtures.Sine(44100, 1);
         string stereo = MediaFixtures.CopyToChannels(2);
+
+        // The video is 4:2:0, the chroma format of real recordings: x264 would otherwise write 4:4:4,
+        // which Windows' H.264 decoder does not read.
         string path = withVideo
-            ? _media.Generate(name, "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=25", "-f", "lavfi", "-i", sine, "-filter:a", stereo, "-c:v", "libx264", "-c:a", "aac", "-shortest")
+            ? _media.Generate(name, "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=25", "-f", "lavfi", "-i", sine, "-filter:a", stereo, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest")
             : _media.Generate(name, "-f", "lavfi", "-i", sine, "-af", stereo, "-c:a", "aac");
 
         using MediaFoundationAudioSource source = new(path);
@@ -99,7 +102,7 @@ public sealed class MediaFoundationAudioSourceTests : IClassFixture<MediaFixture
     {
         Assert.SkipUnless(OperatingSystem.IsWindows(), NeedsWindows);
         _media.SkipWithoutFfmpeg();
-        string path = _media.Generate("mf-video-only.mp4", "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=25", "-c:v", "libx264");
+        string path = _media.Generate("mf-video-only.mp4", "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=25", "-c:v", "libx264", "-pix_fmt", "yuv420p");
 
         AudioDecodeException e = Assert.Throws<AudioDecodeException>(() => new MediaFoundationAudioSource(path));
 
