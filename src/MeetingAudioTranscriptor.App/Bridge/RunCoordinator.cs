@@ -118,7 +118,7 @@ internal sealed class RunCoordinator
         string message = !string.IsNullOrWhiteSpace(result.Message) ? result.Message : result.Kind switch
         {
             TranscribeOutcomeKinds.Completed => "The transcript was written.",
-            TranscribeOutcomeKinds.NoSpeech => "No speech was found in this recording, so no transcript was written. Check that the right file is chosen and that it has sound.",
+            TranscribeOutcomeKinds.NoSpeech => "No speech was found in this recording, so the transcript files were written empty. Check that the right file is chosen and that it has sound.",
             TranscribeOutcomeKinds.Cancelled => "The transcription was cancelled. No transcript was written.",
             _ => "The transcription failed. Try again, and if it keeps failing restart the application.",
         };

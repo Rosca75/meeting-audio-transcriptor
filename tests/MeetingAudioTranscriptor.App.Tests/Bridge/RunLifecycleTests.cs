@@ -87,6 +87,20 @@ public sealed class RunLifecycleTests
     }
 
     [Fact]
+    public async Task TheNoSpeechDefaultSaysTheFilesWereWrittenEmpty()
+    {
+        using BridgeHarness h = new();
+        h.Transcriber.Run = (_, _, _) => Task.FromResult(new TranscribeOutcome { Kind = TranscribeOutcomeKinds.NoSpeech });
+
+        await h.CallAsync(BridgeMethods.RunStart, h.Request());
+        JsonElement finished = await h.Host.WaitForEventAsync(BridgeEvents.RunFinished);
+
+        Assert.Equal(
+            "No speech was found in this recording, so the transcript files were written empty. Check that the right file is chosen and that it has sound.",
+            finished.GetProperty("message").GetString());
+    }
+
+    [Fact]
     public async Task AThrowingTranscriberEndsWithOneFailedEventCarryingItsMessage()
     {
         using BridgeHarness h = new();
