@@ -34,3 +34,19 @@ sp-A-8x1-c28-r2: wall 24.7s audio 604s RTFx 24.40 load 2.6s rss 2470MB in-run {'
 sp-B-1x4-c28-r1: wall 46.8s audio 604s RTFx 12.91 load 10.4s rss 2803MB in-run {'mel': 0.8, 'enc': 38.0, 'dec': 7.9, 'dec_loop_total': 8.0} load1 5.09
 sp-B-1x4-c28-r2: wall 44.3s audio 604s RTFx 13.61 load 3.6s rss 2803MB in-run {'mel': 0.8, 'enc': 35.8, 'dec': 7.7, 'dec_loop_total': 7.8} load1 1.1
 sp-B-4x1-c28-r1: wall 30.2s audio 604s RTFx 20.00 load 3.8s rss 2991MB in-run {'mel': 1.1, 'enc': 108.2, 'dec': 8.6, 'dec_loop_total': 8.8} load1 2.3
+sp-B-4x1-c28-r2: wall 44.0s audio 604s RTFx 13.73 load 4.4s rss 3165MB in-run {'mel': 1.4, 'enc': 157.5, 'dec': 13.0, 'dec_loop_total': 13.2} load1 2.85
+sp-B-2x2-c28-r1: wall 53.7s audio 604s RTFx 11.23 load 3.5s rss 2879MB in-run {'mel': 1.0, 'enc': 95.5, 'dec': 10.6, 'dec_loop_total': 10.7} load1 3.31
+sp-B-2x2-c28-r2: wall 40.9s audio 604s RTFx 14.75 load 3.6s rss 2875MB in-run {'mel': 0.9, 'enc': 72.7, 'dec': 7.9, 'dec_loop_total': 8.0} load1 4.62
+BEST B 4x1 {'1x4': 13.260076594924378, '4x1': 16.86748426318122, '2x2': 12.98897169847936}
+sp-B-4x1-c28-nospin-r1: wall 26.9s audio 604s RTFx 22.43 load 3.7s rss 2986MB in-run {'mel': 0.9, 'enc': 95.8, 'dec': 7.7, 'dec_loop_total': 7.8} load1 3.61
+sp-B-4x1-c28-nospin-r2: wall 28.6s audio 604s RTFx 21.08 load 3.7s rss 2993MB in-run {'mel': 0.9, 'enc': 102.1, 'dec': 8.1, 'dec_loop_total': 8.2} load1 3.32
+sp-B-8x1-c28-r1: wall 29.2s audio 604s RTFx 20.64 load 3.8s rss 3209MB in-run {'mel': 2.1, 'enc': 198.9, 'dec': 14.6, 'dec_loop_total': 14.9} load1 3.31
+sp-B-8x1-c28-r2: wall 29.0s audio 604s RTFx 20.80 load 3.5s rss 3317MB in-run {'mel': 1.9, 'enc': 202.3, 'dec': 14.9, 'dec_loop_total': 15.1} load1 4.48
+sp-D-single-r1: wall 25.1s audio 604s RTFx 24.02 load 2.6s rss 1942MB in-run {'mel': 0.9, 'enc': 92.1, 'dec': 2.8, 'dec_loop_total': 2.9} load1 5.06
+sp-E-1x4-r1: wall 247.4s audio 604s RTFx 2.44 load 0.0s rss 4964MB in-run {'all': 247.4} load1 4.4
+chunk-C-c10: wall 22.3s audio 1833s RTFx 82.14 load 2.4s rss 1506MB in-run {'enc': 88.7} load1 5.63
+chunk-C-c20: wall 15.3s audio 1833s RTFx 120.14 load 2.2s rss 1534MB in-run {'enc': 60.3} load1 1.92
+chunk-C-c40: wall 14.3s audio 1833s RTFx 128.06 load 2.1s rss 1767MB in-run {'enc': 56.0} load1 2.19
+chunk-A-c10: wall 72.1s audio 1833s RTFx 25.44 load 5.4s rss 1677MB in-run {'mel': 2.7, 'enc': 272.4, 'dec': 10.6, 'dec_loop_total': 11.0} load1 2.57
+chunk-A-c20: wall 70.7s audio 1833s RTFx 25.94 load 2.7s rss 1803MB in-run {'mel': 2.4, 'enc': 266.8, 'dec': 9.4, 'dec_loop_total': 9.7} load1 4.65
+SWEEPDONE

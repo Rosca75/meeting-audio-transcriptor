@@ -8,4 +8,8 @@
   <ItemGroup>
     <ProjectReference Include="..\MeetingAudioTranscriptor.App\MeetingAudioTranscriptor.App.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- The parser, the exit-code mapping and the console wording are internal and tested directly. -->
+    <InternalsVisibleTo Include="MeetingAudioTranscriptor.Cli.Tests" />
+  </ItemGroup>
 </Project>

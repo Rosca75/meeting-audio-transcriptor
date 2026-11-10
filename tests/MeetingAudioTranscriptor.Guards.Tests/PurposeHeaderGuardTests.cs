@@ -36,6 +36,26 @@ public sealed class PurposeHeaderGuardTests
         AssertAllOpenWith(RepositoryFiles.Under("", "*.yml", "*.yaml", "*.ps1", "*.sh"), "#");
     }
 
+    [Fact]
+    public void EveryFrontendStylesheetOpensWithABlockComment()
+    {
+        // HTML is exempt: a document type declaration must come first. The page's scripts are covered
+        // by the script rule above.
+        IReadOnlyList<string> files = RepositoryFiles.Under("frontend", "*.css");
+
+        Assert.True(files.Count > 0, "got no .css file under frontend, wanted the page's stylesheets; the guard cannot run");
+        AssertAllOpenWith(files, "/*");
+    }
+
+    [Fact]
+    public void EveryFrontendScriptIsCoveredByTheScriptRule()
+    {
+        IReadOnlyList<string> files = RepositoryFiles.Under("frontend", "*.js");
+
+        Assert.True(files.Count > 0, "got no .js file under frontend, wanted the page's modules; the guard cannot run");
+        AssertAllOpenWith(files, "//");
+    }
+
     private static void AssertAllOpenWith(IReadOnlyList<string> files, string marker)
     {
         List<string> offenders = [];

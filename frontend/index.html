@@ -1,0 +1,106 @@
+<!doctype html>
+<!-- The one page of the application: static markup only. Every string shown is set by js/view.js from
+     js/copy.js, and there is no inline script or style, so the host can serve it under a strict CSP. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Meeting transcriptor</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <div class="page">
+    <header class="page-header">
+      <h1 id="app-title"></h1>
+      <p id="app-tagline" class="muted"></p>
+    </header>
+
+    <p id="models-message" class="banner banner-error" role="alert" hidden></p>
+
+    <main>
+      <fieldset id="inputs" class="inputs">
+        <legend id="inputs-legend" class="visually-hidden"></legend>
+
+        <section class="card" aria-labelledby="file-heading">
+          <h2 id="file-heading"></h2>
+          <div id="drop-zone" class="drop-zone">
+            <button id="choose-file" type="button" class="button"></button>
+            <span id="drop-hint" class="muted"></span>
+          </div>
+          <p id="file-name" class="file-name"></p>
+          <p id="file-note" class="notice" role="status" hidden></p>
+          <p id="file-error" class="notice notice-error" role="alert" hidden></p>
+        </section>
+
+        <section class="card" aria-labelledby="options-heading">
+          <h2 id="options-heading" class="visually-hidden"></h2>
+
+          <fieldset class="group">
+            <legend id="language-legend"></legend>
+            <div class="choices" id="language-choices"></div>
+          </fieldset>
+
+          <fieldset class="group">
+            <legend id="formats-legend"></legend>
+            <div class="choices" id="format-choices"></div>
+            <p id="formats-error" class="notice notice-error" role="alert" hidden></p>
+          </fieldset>
+
+          <fieldset class="group">
+            <legend id="speakers-legend"></legend>
+            <label class="choice"><input id="separation" type="checkbox"><span id="separation-label"></span></label>
+            <div class="field">
+              <label for="speaker-count" id="speaker-count-label"></label>
+              <input id="speaker-count" type="text" inputmode="numeric" autocomplete="off" aria-describedby="speaker-count-help speaker-count-error">
+              <p id="speaker-count-help" class="muted small"></p>
+              <p id="speaker-count-error" class="notice notice-error" role="alert" hidden></p>
+            </div>
+          </fieldset>
+
+          <label class="choice"><input id="raw-files" type="checkbox"><span id="raw-files-label"></span></label>
+        </section>
+
+        <section class="card" aria-labelledby="output-heading">
+          <h2 id="output-heading"></h2>
+          <div class="folder-row">
+            <output id="output-folder" class="folder-path" for="choose-folder"></output>
+            <button id="choose-folder" type="button" class="button"></button>
+          </div>
+        </section>
+      </fieldset>
+
+      <section id="run-region" class="actions">
+        <button id="start" type="button" class="button button-primary" aria-describedby="start-problem"></button>
+        <button id="cancel" type="button" class="button" hidden></button>
+        <p id="start-problem" class="muted small"></p>
+      </section>
+
+      <section id="progress-card" class="card" aria-live="polite" hidden>
+        <progress id="progress" max="100" value="0"></progress>
+        <p id="progress-text"></p>
+      </section>
+
+      <p id="message" class="notice" role="status" hidden></p>
+      <p id="error" class="notice notice-error" role="alert" hidden></p>
+
+      <section id="summary" class="card" aria-labelledby="summary-heading" hidden>
+        <h2 id="summary-heading"></h2>
+        <dl id="summary-list" class="summary-list"></dl>
+        <h3 id="files-heading"></h3>
+        <ul id="files-list" class="files-list"></ul>
+        <div class="actions">
+          <button id="open-folder" type="button" class="button button-primary"></button>
+          <button id="another" type="button" class="button"></button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="page-footer muted small">
+      <span id="version"></span>
+    </footer>
+  </div>
+</body>
+</html>
