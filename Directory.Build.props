@@ -16,6 +16,9 @@
          change with the machine's locale. -->
     <InvariantGlobalization>true</InvariantGlobalization>
     <Deterministic>true</Deterministic>
+    <!-- A build without -p:Version is a development build and says so; the SDK would report 1.0.0, which
+         reads as a release. The publish script and the release workflow pass the real version. -->
+    <Version Condition="'$(Version)' == ''">0.0.0-dev</Version>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <!-- Stops a package's symbol and documentation files being copied into the output, where a
          published folder would carry them to every user. -->
