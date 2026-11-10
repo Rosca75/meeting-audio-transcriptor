@@ -11,7 +11,7 @@ trapped `CPUID` instruction with the real answer minus the masked bits. Nothing
 is emulated: the code that runs is the processor's own AVX2 code.
 
 ```
-gcc -O2 -shared -fPIC -o libcpuidmask.so cpuidmask.c
+gcc -O2 -shared -fPIC -o libcpuidmask.so cpuidmask.c -ldl
 CPUIDMASK=avx2 LD_PRELOAD=$PWD/libcpuidmask.so <command>
 ```
 
