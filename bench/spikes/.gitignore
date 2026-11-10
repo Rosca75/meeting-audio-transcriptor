@@ -1,0 +1,5 @@
+# Run debris of the throwaway scripts: bytecode caches, console logs and error captures.
+__pycache__/
+*.pyc
+*.log
+*.err
