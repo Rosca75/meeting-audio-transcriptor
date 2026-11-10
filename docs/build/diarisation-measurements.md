@@ -33,7 +33,8 @@ suites in `tests/MeetingAudioTranscriptor.Pipeline.Tests/Diarisation/` (models a
 | Batch | 4 windows per model call | flat between 4 and 8 (section 5) |
 | Linkage | average | complete linkage is clearly worse at every threshold |
 | Threshold | cosine distance 0.5 | centre of the flat region 0.45 to 0.525 (section 4) |
-| Minimum speaker | 4 s of window hops | 0 s over-counts badly, 8 s merges quiet AMI speakers |
+| Minimum speaker | 4 s of speech, a window counting one hop or its own shorter length | 0 s over-counts badly, 8 s merges quiet AMI speakers; short windows counted as hops pass for speakers (section 7) |
+| Speaker floor | the larger of 4 s and 1.5 % of the speaking time, on the finished transcript | folds the stray speakers of the full pipeline (section 7) |
 | Refinement passes | 0 | two passes change attribution by at most 0.005 |
 | Speaker cap | 10 | product requirement |
 | Two-stage above | 2,000 windows (one 16 MB matrix) | exact for up to about 65 min of speech at a 2 s hop |
@@ -174,7 +175,114 @@ The pyannote segmentation model (optional step) was not evaluated: the AMI attri
 without the hint, 0.938 with it) is above the 0.8 level that would justify it. Its value would be
 in overlapped speech, which is where the remaining AMI DER lies.
 
-## 7. Reproducing
+## 7. Through the full pipeline
+
+The sections above read the reference's own speech regions. A user's run reads the voice-activity
+detector's regions and the recogniser's words, and there the threshold cut named extra speakers.
+Measured with the benchmark command (`--threads 4`, the speaker metrics of each result file, whose
+attribution scores transcript segments against the reference and is therefore lower than the
+window-level figures above) and with `PipelineDiarisationTuningTests` (deep tier), which keeps one
+run's embeddings and words and re-clusters them under each setting.
+
+### Where the extra speakers came from
+
+Every extra speaker was a handful of short speech regions. Voice activity closes a region at a
+pause of 0.3 s, so read speech arrives as many regions of 0.4 to 2 s ("En cet endroit,", "Thus",
+"What is slang?"), each embedded as one window of its own length, and a voice print of under a
+second is unsteady enough to form its own cluster. The minimum cluster size counted every window
+as one 2 s hop, so two such windows (1.5 s of speech) passed the 4 s minimum. The other candidates
+were checked and ruled out: no extra speaker sat on a region straddling two reference speakers or
+on a chunk boundary of the constructed files; the two-stage clustering gives the same speakers as
+direct clustering of all 3,109 windows of the two-hour file; and renumbering after word assignment
+only removes speakers. The stray clusters grow with the recording, because the same short
+fragments recur: about 3.5 s in `en-10min`, 5.9 s and 4.8 s in `en-30min`, 42 s in `en-120min`
+(0.4 to 0.7 % of the speaking time). The two loops repeat the six speakers of `en-10min`, so their
+true count is 6.
+
+Speaking time per estimated speaker, threshold cut alone (seconds of timeline turns; the stray
+speakers in bold):
+
+| File | True | Estimated | Speaking time of each speaker |
+|---|---|---|---|
+| de-multi-03 | 4 | 5 | 15.9, 15.8, 23.5, 26.3, **2.9** |
+| en-10min | 6 | 7 | 57.0, 165.2, 21.8, **3.5**, 75.0, 160.5, 28.1 |
+| fr-10min | 4 | 6 | 173.6, 157.8, 116.8, **2.4**, **2.2**, 40.6 |
+| en-30min | 6 | 8 | 171.2, 495.7, 65.7, **5.9**, **4.8**, 225.1, 482.7, 75.3 |
+| en-120min | 6 | 7 | 684.8, 1948.9, 262.3, **42.4**, 893.3, 1930.3, 328.9 |
+
+The quietest real speakers: 9.8 s in `fr-multi-02` (one reader of one sentence in a 2-minute clip),
+about 4 s in the AMI clips, 25 s (4 to 5 % of the speaking time) in the long files.
+
+### The two rules
+
+1. **A window counts for its own length in the minimum cluster size**, one hop at most. This
+   alone makes `de-multi-03`, `en-10min` and `fr-10min` exact. With a speaker-count hint every
+   window still counts one hop, because the hint path's folding order attributes the AMI clips
+   better that way (0.952 against 0.850 on `en-ami-01` with the reference regions).
+2. **A speaker floor on the finished transcript**: after the words are assigned, a speaker whose
+   speaking time is below the larger of `SpeakerFloorSeconds` and `SpeakerFloorShare` of the
+   total is folded into the speaker with the nearest mean voice print, the timeline is rebuilt and
+   the words assigned again, until none is below it. No hint applies it.
+
+Floor sweep after rule 1 (speaker count exact of 15 files; attribution mean of the constructed
+clips / AMI / long files, from word runs as turns):
+
+| Floor s | Share | Synthetic exact (7) | AMI estimated (4 each) | Long exact (5) | Attribution S / A / L |
+|---|---|---|---|---|---|
+| 0 | 0 | 7 | 5, 3, 3 | 3 | 0.909 / 0.845 / 0.900 |
+| 0 | 1.5 % | 7 | 5, 3, 3 | 5 | 0.909 / 0.845 / 0.902 |
+| 3 | 1.5 % | 7 | 5, 3, 3 | 5 | 0.909 / 0.845 / 0.902 |
+| **4** | **1.5 %** | **7** | **4, 3, 3** | **5** | **0.909 / 0.845 / 0.902** |
+| 5 | 1.5 % | 7 | 4, 2, 3 | 5 | 0.909 / 0.829 / 0.902 |
+| 8 | 1.5 % | 7 | 2, 2, 3 | 5 | 0.909 / 0.809 / 0.902 |
+| 10 | 1.5 % | 6 (fr-multi-02 merged) | 2, 2, 3 | 5 | 0.897 / 0.809 / 0.902 |
+| 15 | 1.5 % | 6 | 1, 2, 3 | 5 | 0.897 / 0.757 / 0.902 |
+| 4 | 0 | 7 | 4, 3, 3 | 3 | 0.909 / 0.845 / 0.900 |
+| 4 | 0.5 % | 7 | 4, 3, 3 | 4 (en-120min 7) | 0.909 / 0.845 / 0.901 |
+| 4 | 1 % to 3 % | 7 | 4, 3, 3 | 5 | 0.909 / 0.845 / 0.902 |
+
+An absolute floor of 8 s or more merges real speakers on the clips, and no absolute floor alone
+catches the 42 s stray of the two-hour file; a share alone does nothing on a clip. Every share from
+1 % to 3 % gives the same result; 1.5 % keeps about twice the largest stray share (0.7 %) and under
+half the quietest real speaker's (4 %). The cost is stated in decision 0005: a participant who
+speaks less than 1.5 % of a meeting is merged into the nearest voice. With the hint every file is
+exact under every floor, and the `en-ami-02` AMI speaker kept at 4 s sits exactly on the floor.
+
+### Before and after, through the benchmark command
+
+`bench/results/2026-11-10-speakers-tuned-clips.json` and `2026-11-10-speakers-tuned-long.json`
+(both with `--speakers-hint-from-reference`); the threshold-cut figures come from the same command
+on the same machine before the two rules. Attribution is the benchmark's (segments as turns).
+
+| File | True | Estimated, threshold cut | Estimated, with the rules | Estimated, hint | Attribution, threshold cut | Attribution, with the rules |
+|---|---|---|---|---|---|---|
+| en-multi-01 | 3 | 3 | 3 | 3 | 0.889 | 0.889 |
+| fr-multi-01 | 2 | 2 | 2 | 2 | 0.799 | 0.799 |
+| fr-multi-02 | 3 | 3 | 3 | 3 | 0.859 | 0.859 |
+| fr-multi-03 | 4 | 4 | 4 | 4 | 0.876 | 0.876 |
+| de-multi-01 | 2 | 2 | 2 | 2 | 0.907 | 0.907 |
+| de-multi-02 | 3 | 3 | 3 | 3 | 0.864 | 0.864 |
+| de-multi-03 | 4 | 5 | 4 | 4 | 0.834 | 0.857 |
+| en-ami-01 | 4 | 6 | 4 | 4 | 0.683 | 0.683 |
+| en-ami-02 | 4 | 3 | 3 | 4 | 0.889 | 0.889 |
+| en-ami-sdm-01 | 4 | 3 | 3 | 4 | 0.885 | 0.885 |
+| en-10min | 6 | 7 | 6 | 6 | 0.883 | 0.889 |
+| fr-10min | 4 | 6 | 4 | 4 | 0.817 | 0.824 |
+| de-10min | 5 | 5 | 5 | 5 | 0.911 | 0.911 |
+| en-30min | 6 | 8 | 6 | 6 | 0.882 | 0.888 |
+| en-120min | 6 | 7 | 6 | 6 | 0.882 | 0.888 |
+
+Per group (mean attribution of the files): constructed clips 0.861 to 0.864, AMI 0.819 to 0.819,
+ten-minute files 0.870 to 0.875, 30 and 120 minutes 0.882 to 0.888. Speaker count exact without the
+hint: 6 of 7 to 7 of 7 clips, 0 of 3 to 1 of 3 AMI clips (all within one), 1 of 5 to 5 of 5 long
+files. The speaker stage (clustering, timeline, floor) takes 0.33 s of the two-hour file's 92 s
+wall time, against 0.26 s for the threshold cut alone; no model runs again.
+
+The models tier asserts the counts through the real pipeline (`PipelineDiarisationTests`): exact on
+the three ten-minute files with and without the hint and on the seven constructed clips, the AMI
+clips within one, and the hint overriding a floor.
+
+## 8. Reproducing
 
 ```
 MAT_MODELS_DIR=<models> MAT_BENCH_DATA=<bench/data> dotnet test --project tests/MeetingAudioTranscriptor.Pipeline.Tests -c Release --filter-trait "Tier=models"
@@ -183,4 +291,6 @@ MAT_MODELS_DIR=<models> MAT_BENCH_DATA=<bench/data> dotnet test --project tests/
 
 The tables are written beside the test binaries: `diarisation-table.md`,
 `diarisation-sweep-clustering.txt`, `diarisation-sweep-window.txt`, `diarisation-two-stage.txt`
-and `diarisation-batch.txt`. The window sweep takes about 17 minutes on one core.
+and `diarisation-batch.txt`; the full-pipeline measurements write `diarisation-pipeline-sizes.txt`
+and `diarisation-pipeline-floor.txt` (about 4 minutes on 4 cores, the two-hour file included). The
+window sweep takes about 17 minutes on one core.

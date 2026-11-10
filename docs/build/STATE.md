@@ -45,10 +45,18 @@ benchmark passes. Phase 7 (hardening, polish, final report) in progress.
 
 ## Agents in flight (worktrees under `.claude/worktrees/`)
 
-- Speaker-count tuning (opus): folds tiny phantom speakers; amends decision
-  0005; result files `bench/results/*speakers-tuned*`.
-- Polish and benchmark summary (sonnet): `docs/BENCHMARKS.md`, the polish list
-  below, README and Windows checklist re-read.
+- End-to-end CI and release dry run (opus): works on remote branch
+  `claude/ci-fix`; adds an `end-to-end` job that transcribes real clips on the
+  Windows and Linux runners (Media Foundation decode asserted on Windows),
+  triggers `release.yml` by dispatch as a dry run, records size budgets.
+- Final review (opus): `docs/build/final-review.md`; fixes small defects;
+  must not touch `.github/**`, `build/publish.ps1`, `bench/testset/**`,
+  `docs/TESTING.md`, `docs/RELEASING.md`, `docs/WINDOWS-VERIFICATION.md`.
+
+Merged since the last note: polish list and `docs/BENCHMARKS.md`, speaker-count
+tuning (floor rule: 4 s or 1.5 percent of speech; counts exact on the 10, 30
+and 120 minute files). Unit tier 1323 passing. CI run 42917288395 on `main`
+(de08870) was green.
 
 ## CI status
 

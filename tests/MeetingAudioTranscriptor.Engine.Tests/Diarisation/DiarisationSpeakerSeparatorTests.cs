@@ -20,7 +20,7 @@ public sealed class DiarisationSpeakerSeparatorTests
     public void SpeakersAreNumberedByTheirFirstWordAndKeepTheirTime()
     {
         // The timeline's speaker 1 spoke first but said no word; speaker 2 speaks the first word.
-        SpeakerAssignment assignment = DiarisationSpeakerSeparator.Renumber([2, 2, 0, 2, 0], [5.0, 1.0, 7.0]);
+        SpeakerAssignment assignment = DiarisationCollector.Renumber([2, 2, 0, 2, 0], [5.0, 1.0, 7.0]);
 
         Assert.True(assignment.SpeakerOfWord.SequenceEqual([0, 0, 1, 0, 1]), $"got {string.Join(",", assignment.SpeakerOfWord)}, wanted 0,0,1,0,1");
         Assert.True(assignment.SpeakingSeconds.SequenceEqual([7.0, 5.0]), $"got {string.Join(",", assignment.SpeakingSeconds)}, wanted the time of the two speakers with words");
@@ -29,7 +29,7 @@ public sealed class DiarisationSpeakerSeparatorTests
     [Fact]
     public void WordsOfATimelineWithoutTurnsMakeOneSpeaker()
     {
-        SpeakerAssignment assignment = DiarisationSpeakerSeparator.Renumber([-1, -1, -1], []);
+        SpeakerAssignment assignment = DiarisationCollector.Renumber([-1, -1, -1], []);
 
         Assert.True(assignment.SpeakerOfWord.All(speaker => speaker == 0) && assignment.SpeakingSeconds.Count == 1, $"got {string.Join(",", assignment.SpeakerOfWord)}");
     }
