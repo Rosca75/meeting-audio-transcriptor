@@ -162,3 +162,23 @@ See `docs/decisions/`.
    model that does not ship.
 6. Re-read `README.md` and `docs/WINDOWS-VERIFICATION.md` against the wired CLI.
 7. `docs/BENCHMARKS.md` from the quiet-machine runs.
+
+## Pending document edits (apply after the end-to-end CI agent's branch merges)
+
+- `docs/WINDOWS-VERIFICATION.md` offline item, replace with: "**Offline.** With
+  Resource Monitor (Network tab) or `Get-NetTCPConnection -OwningProcess
+  (Get-Process msedgewebview2,meeting-audio-transcriptor*).Id`, run a
+  transcription and leave the window open for five minutes. Expected: no TCP or
+  UDP connection from `meeting-audio-transcriptor*.exe`, `ffmpeg.exe` or the
+  `msedgewebview2.exe` processes started by the application (no component
+  update, variations, SmartScreen, sync, metrics or crash upload). Not the
+  application's: `MicrosoftEdgeUpdate.exe` / the Edge Update service, a
+  separate machine-wide service, and anything a group policy forces on. Report
+  any connection from msedgewebview2 with its remote address."
+- Same file: temporary files are now `.<name>.<random>.mat-tmp` and
+  `.mat-bak`, not `*.tmp`.
+- `docs/RELEASING.md`: "release.ps1 orders versions by semantic-version
+  precedence: a pre-release sorts below its final version, so `0.2.0` may
+  follow `0.2.0-rc.1`, but `0.2.0-rc.2` is refused once `0.2.0` is released.
+  Check the ordering with `pwsh build/release-version.test.ps1`." Also:
+  `--version` prints `meeting-audio-transcriptor X.Y.Z`.
