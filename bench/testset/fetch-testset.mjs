@@ -19,8 +19,8 @@
 //                120 are the sizes the benchmarks use.
 //   --long-lang  the languages --long builds; every language when absent.
 //   --subset     ci builds only what continuous integration reads: every clip,
-//                the noise files and en-10min with its .m4a and .mp4, and none of
-//                the other long files. Refused together with --long.
+//                the noise files and the ten-minute files with en-10min's .m4a
+//                and .mp4, and no longer file. Refused together with --long.
 //   --ffmpeg     the ffmpeg executable; MAT_FFMPEG when absent, else ffmpeg on PATH.
 //   --offline    download nothing: verify the cache against the lock, then build
 //                from it, and exit non-zero listing every missing or mismatched
@@ -131,10 +131,11 @@ export function parseArgs(argv) {
  * The named reduced builds: which languages get their ten-minute file. Every
  * subset keeps every clip and the noise files, because the models tier's word
  * error rate floors and noise checks read them, and the containers, because
- * they are the decoders' evidence; the long files of other languages and the
- * default extra lengths are what a subset leaves out.
+ * they are the decoders' evidence; the default extra lengths (en-30min) are
+ * what a subset leaves out. ci keeps the three ten-minute files, because the
+ * speaker separation tests of the models tier read each language's.
  */
-export const subsets = { ci: { longLanguages: ["en"] } };
+export const subsets = { ci: { longLanguages: ["en", "fr", "de"] } };
 
 // ---------------------------------------------------------------------------
 // Small helpers

@@ -17,9 +17,9 @@ node bench/testset/fetch-testset.mjs --subset ci --ffmpeg <path>  # the reduced 
 Needs Node 22 or later and `ffmpeg` (6 or later): `--ffmpeg <path>`, else `MAT_FFMPEG`, else the
 PATH; no package is installed. It runs on Linux and Windows and writes the same WAV, reference and
 RTTM bytes on both (CI's `testset-parity` job compares them).
-`--subset ci` builds every clip, the noise files and `en-10min` with its `.m4a` and `.mp4`, and
-leaves out the French and German ten-minute files and `en-30min`; it downloads the same sources,
-because the clips need every archive.
+`--subset ci` builds every clip, the noise files and the three ten-minute files with
+`en-10min.m4a` and `.mp4`, and leaves out `en-30min` and every longer file; it downloads the same
+sources, because the clips need every archive.
 Behind a proxy, start Node with `NODE_USE_ENV_PROXY=1` (and `NODE_EXTRA_CA_CERTS`
 when the proxy re-signs TLS). Options: `--cache <dir>` (default `bench/.cache/`,
 about 0.7 GB, git-ignored), `--out <dir>` (default `bench/data/`, git-ignored),

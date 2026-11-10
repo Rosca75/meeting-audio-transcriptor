@@ -96,7 +96,8 @@ function tests(args) {
       if (outcome === "Passed" || outcome === "Failed") ran++;
       else {
         skipped++;
-        if ((match[3] ?? "").includes("needs the benchmark audio")) absent.push(name);
+        // Every skip for a missing test set file names the builder or says so.
+        if (/needs the benchmark audio|fetch-testset/.test(match[3] ?? "")) absent.push(name);
       }
     }
   }

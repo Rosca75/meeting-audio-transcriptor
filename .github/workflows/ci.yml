@@ -116,7 +116,7 @@ jobs:
   end-to-end:
     name: end-to-end (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -148,7 +148,7 @@ jobs:
           path: bench/.cache
           key: testset-${{ runner.os }}-${{ hashFiles('bench/testset/testset.lock') }}
 
-      # Every clip, the noise files and en-10min with its .m4a and .mp4, built with the pinned
+      # Every clip, the noise files and the ten-minute files with en-10min's .m4a and .mp4, built with the pinned
       # ffmpeg that MAT_FFMPEG names; the listing of every file's hash goes to the parity job.
       - name: Build the reduced test set
         run: |
@@ -181,10 +181,10 @@ jobs:
         run: dotnet test --no-build -c Release --filter-trait "Tier=models" --ignore-exit-code 8 --report-xunit-trx --results-directory artifacts/e2e/trx
 
       # A missing file skips its test by name, so a green run proves nothing unless the tests ran:
-      # the Pipeline suite runs 57 models-tier tests over the test set (56 here, where the pinned
+      # the Pipeline suite runs 74 models-tier tests over the test set (73 here, where the pinned
       # export the graph comparison needs is not kept).
       - name: Check that the models tier ran over the audio
-        run: node bench/tools/ci-checks.mjs tests artifacts/e2e/trx --suite MeetingAudioTranscriptor.Pipeline.Tests --min-run 50
+        run: node bench/tools/ci-checks.mjs tests artifacts/e2e/trx --suite MeetingAudioTranscriptor.Pipeline.Tests --min-run 70
 
       # The command line as a user runs it. On Windows the default decoder for .m4a must be Media
       # Foundation; a second run with MAT_PREFER_FFMPEG=1 decodes through ffmpeg, and the two
