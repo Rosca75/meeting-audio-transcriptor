@@ -1,10 +1,14 @@
 <!-- The desktop front end. One project hosts both desktop hosts behind one interface: the Windows
-     host (WebView2) and the Linux host live in their own folders, and the build compiles only the
-     one for the target, so each platform ships no code for the other and no reference to it. -->
+     host (WebView2) and the Linux host (GTK 3 and WebKitGTK) live in their own folders, and the build
+     compiles only the one for the target, so each platform ships no code for the other and no
+     reference to it. Both serve the same page, embedded in the assembly. -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>MeetingAudioTranscriptor.Shell</RootNamespace>
     <AssemblyName>meeting-audio-transcriptor</AssemblyName>
+    <!-- Both hosts call the operating system directly: raw Win32 and COM on Windows, GTK and
+         WebKitGTK on Linux, through source-generated imports and function pointers. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- Each build compiles exactly one host, so the analyzer sees one implementer; the interface is
          the seam both hosts share and the entry point must stay written against it. -->
     <NoWarn>$(NoWarn);CA1859</NoWarn>
@@ -30,6 +34,9 @@
 
   <PropertyGroup Condition="'$(ShellHost)' == 'windows'">
     <DefineConstants>$(DefineConstants);SHELL_WINDOWS</DefineConstants>
+    <!-- Per-monitor DPI awareness, long paths, the supported Windows versions and the common
+         controls version are declared before the process starts. -->
+    <ApplicationManifest>Windows/app.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(ShellHost)' == 'linux'">
     <DefineConstants>$(DefineConstants);SHELL_LINUX</DefineConstants>
@@ -41,6 +48,7 @@
   </ItemGroup>
   <ItemGroup Condition="'$(ShellHost)' == 'linux'">
     <Compile Remove="Windows/**" />
+    <None Remove="Windows/**" />
   </ItemGroup>
 
   <!-- The web view package is referenced by the Windows host alone. -->
@@ -48,7 +56,38 @@
     <PackageReference Include="Microsoft.Web.WebView2" />
   </ItemGroup>
 
+  <!-- A trimmed Windows build: the web view's core assembly is not annotated for trimming, so it
+       is rooted whole, and it reaches the browser through the runtime's built-in COM interop, which
+       a trimmed publish switches off by default and without which the executable fails at start-up.
+       The dialogs use raw function-pointer calls and need nothing from the trimmer. -->
+  <ItemGroup Condition="'$(ShellHost)' == 'windows' And '$(PublishTrimmed)' == 'true'">
+    <TrimmerRootAssembly Include="Microsoft.Web.WebView2.Core" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(ShellHost)' == 'windows' And '$(PublishTrimmed)' == 'true'">
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <NoWarn>$(NoWarn);IL2104;IL2026</NoWarn>
+  </PropertyGroup>
+
+  <!-- The page ships inside the assembly, so the installed folder holds nothing a user can edit by
+       accident. Only the page itself is embedded (index.html, its styles and its scripts); its tests,
+       its markdown files, its package file and its hash list are development files the page never
+       requests. Each logical name is "frontend/" plus the path the page asks for, with forward
+       slashes, so the asset lookup can serve only names under that prefix. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\frontend\index.html" LogicalName="frontend/index.html" />
+    <EmbeddedResource Include="..\..\frontend\css\**">
+      <LogicalName>frontend/css/$([System.String]::Copy('%(RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\frontend\js\**" Exclude="..\..\frontend\js\**\*.test.js">
+      <LogicalName>frontend/js/$([System.String]::Copy('%(RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\MeetingAudioTranscriptor.App\MeetingAudioTranscriptor.App.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MeetingAudioTranscriptor.Shell.Tests" />
   </ItemGroup>
 </Project>
