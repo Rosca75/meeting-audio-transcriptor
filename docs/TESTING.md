@@ -52,6 +52,12 @@ MAT_MODELS_DIR=<dir> dotnet test --filter-trait "Tier=models" --ignore-exit-code
 node --test build/*.test.mjs                                       # the fetch tools, against a loopback server
 ```
 
+`MeetingAudioTranscriptor.Pipeline.Tests` runs the engine's stages over the real models and the benchmark audio, in the models and deep tiers only. It reads the audio from `MAT_BENCH_DATA` when that variable is set, and from `bench/data` of the repository otherwise (`node bench/testset/fetch-testset.mjs` builds it); a missing file skips its test by name. Its deep-tier measurements print markdown tables, and also write them to the file `MAT_VAD_REPORT` names when that variable is set; run them pinned to one core, because they report single-core cost.
+
+```
+MAT_BENCH_DATA=<dir> dotnet test --project tests/MeetingAudioTranscriptor.Pipeline.Tests --filter "Tier=models"
+```
+
 The models tier reads its model files from `MAT_MODELS_DIR` when that variable is set, and from the `models` folder of the repository otherwise; the application's catalog resolves the same folder, so a development run and a test see one set of files. A model that is not installed skips its tests by name and prints the fetch command. `build/models.lock` pins every model file by address, size and SHA-256, and `build/ffmpeg.lock` pins the ffmpeg builds; the fetch tools verify each file against them and leave a verified file alone, so a second run downloads nothing.
 
 Read the test count after every run: zero tests proves nothing. A suite with no test in a tier exits with code 8; add `--ignore-exit-code 8` when running a tier some suites do not hold.
