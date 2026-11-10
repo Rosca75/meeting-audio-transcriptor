@@ -203,7 +203,7 @@ public sealed class GraniteCtcRecognizerTests
         // Loud first half, quiet second half; per-region gain levels both halves.
         float[] samples = [.. Tone(16000, 0.2f), .. Tone(16000, 0.01f)];
         FakeGraniteRunner runner = FakeGraniteRunner.Fixed([Hello]);
-        GraniteCtcRecognizer recognizer = new(runner, Vocabulary, new GraniteOptions { Gain = new GainOptions { Mode = GainMode.RegionRms } });
+        GraniteCtcRecognizer recognizer = new(runner, Vocabulary, new GraniteOptions { Gain = new GainOptions { Mode = GainMode.RegionRms, TargetRms = 0.1 } });
 
         recognizer.Recognize(samples, [(0, 16000), (16000, 32000)], CancellationToken.None);
 

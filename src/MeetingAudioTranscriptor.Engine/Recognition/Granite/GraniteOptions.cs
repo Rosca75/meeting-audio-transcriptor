@@ -7,8 +7,12 @@ namespace MeetingAudioTranscriptor.Engine.Recognition.Granite;
 public sealed record GraniteOptions
 {
     /// <summary>
-    /// The longest chunk, in seconds, the recogniser is handed. The model reads chunks of 10 to 30
-    /// seconds equally well, and a longer chunk costs fewer cuts through speech.
+    /// The longest chunk, in seconds, the recogniser is handed. What counts is the chunker's target:
+    /// on the ten-minute files every target from 20 to 30 s reads alike (1.2, 2.4 and 8.2 % in
+    /// English, French and German) and 10 s is worse in German (9.0 %), while the meetings read
+    /// 26.4 % at a 20 s target and 24.1 % at 25 or 30 s, because fewer cuts fall inside overlapping
+    /// speech. A 25 s target under this 30 s limit keeps that gain with room for the chunker to find
+    /// a silence.
     /// </summary>
     public double MaxChunkSeconds { get; init; } = 30;
 
@@ -54,14 +58,26 @@ public enum GainMode
 /// The model computes its log-mel features inside the graph without normalising their mean or
 /// variance, so it reads the absolute level: a quiet speaker or a distant microphone loses whole
 /// stretches of speech. A gain before the model brings the level to where it was trained.
+/// <para>
+/// Measured on VAD chunks (target 20 s, maximum 30 s) of the benchmark clips, word error rate in
+/// percent for read English, the three AMI meeting clips, French and German: no gain 2.2, 30.5,
+/// 3.0, 7.7; one gain per chunk to RMS 0.1 gives 2.2, 31.2, 3.1, 7.7 and to 0.2 gives 2.2, 26.4,
+/// 3.0, 7.4; the speech-region RMS to 0.2 gives 2.2, 26.4, 2.9, 7.3; the slow automatic gain
+/// (0.5 s windows, 30x) to 0.1 gives 2.2, 27.1, 3.1, 8.0 and to 0.4 gives 2.0, 25.4, 3.6, 7.8.
+/// Targets of 0.2 and above all bring the meetings to 25.4 to 26.4, a spread of a dozen words
+/// over 828; the slow gain and targets above 0.2 cost French or German more than 0.2 points. The
+/// default is therefore the speech-region RMS at 0.2: the meetings' gain without a read-speech
+/// loss, and the least clipping of the schemes that reach it. Silence and the four noise files
+/// yield no word under every scheme.
+/// </para>
 /// </remarks>
 public sealed record GainOptions
 {
     /// <summary>How the gain is chosen.</summary>
-    public GainMode Mode { get; init; } = GainMode.SlowAgc;
+    public GainMode Mode { get; init; } = GainMode.SpeechRms;
 
     /// <summary>The RMS the gain aims at, on samples in [-1, 1].</summary>
-    public double TargetRms { get; init; } = 0.1;
+    public double TargetRms { get; init; } = 0.2;
 
     /// <summary>The largest gain applied, so a near-silent stretch is not raised to speech level.</summary>
     public double MaxGain { get; init; } = 30;

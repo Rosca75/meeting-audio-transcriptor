@@ -28,8 +28,9 @@ namespace MeetingAudioTranscriptor.Engine.Recognition.Granite;
 /// so it is safe to call from several threads sharing one loaded model.
 /// </para>
 /// <para>
-/// Measured on the benchmark clips with chunks from the VAD stage (word error rate, lower-case
-/// text without punctuation): see the remarks of <see cref="GainOptions"/> for the level schemes.
+/// On one core the recogniser reads about 30 seconds of audio per CPU second, 99 % of it inside
+/// the graph; the input gain and the decoding are the rest. The level schemes and their measured
+/// word error rates are in the remarks of <see cref="GainOptions"/>.
 /// </para>
 /// </remarks>
 public sealed class GraniteCtcRecognizer : IRegionAwareRecognizer

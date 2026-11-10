@@ -113,7 +113,13 @@ public sealed class GraniteMeasurementTests
         BenchClip[] clips = [.. GraniteFixture.LongFiles, .. GraniteFixture.Clips.Where(clip => clip.Group == "en-ami")];
         GraniteFixture.Report("| chunker target / max | en-10min | fr-10min | de-10min | en-ami | chunks | CPU s |");
         GraniteFixture.Report("|---|---|---|---|---|---|---|");
-        foreach ((double target, double max) in new[] { (10.0, 20.0), (20.0, 30.0), (30.0, 40.0) })
+        // MAT_GRANITE_CUTS lists target/max pairs as "10/20,20/30"; the default compares 10, 20 and 30 s targets.
+        (double, double)[] cuts = (Environment.GetEnvironmentVariable("MAT_GRANITE_CUTS") ?? "10/20,20/30,30/40")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(pair => pair.Split('/'))
+            .Select(parts => (double.Parse(parts[0], CultureInfo.InvariantCulture), double.Parse(parts[1], CultureInfo.InvariantCulture)))
+            .ToArray();
+        foreach ((double target, double max) in cuts)
         {
             GraniteCtcRecognizer recognizer = GraniteFixture.Recognizer(new GraniteOptions { MaxChunkSeconds = max });
             Dictionary<string, List<WordErrorRateResult>> byGroup = [];

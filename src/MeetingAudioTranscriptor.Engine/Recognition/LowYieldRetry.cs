@@ -47,6 +47,13 @@ public sealed record LowYieldRetryOptions
 /// reading replaces the words of the first inside the region only when it finds more words.
 /// </para>
 /// <para>
+/// Behind the Granite recogniser with its default input gain the retry recovers nothing on the
+/// benchmark meetings: with regions of at least 1.5 s under 0.5 words per second it never fires on
+/// 205 chunks, and the laxer settings fire once or twice and, once, replace a German region with a
+/// worse reading. It is therefore an option, off by default, kept for a recogniser
+/// that drops quiet speakers inside a chunk.
+/// </para>
+/// <para>
 /// The decorator turns any recogniser into a region-aware one, so the pipeline needs to know
 /// nothing about the model. Without regions it is the inner recogniser. The counters are updated
 /// atomically; everything else belongs to one call, so it is as thread-safe as the inner recogniser.

@@ -16,17 +16,17 @@ using Xunit;
 namespace MeetingAudioTranscriptor.Pipeline.Tests.Recognition;
 
 /// <remarks>
-/// The recogniser runs with its default settings behind the default low-yield retry, on the chunks
-/// the VAD stage cuts with the default target of 20 s, as the pipeline runs it. The floors are the
+/// The recogniser runs with its default settings (the low-yield retry is off by default), on the chunks
+/// the VAD stage cuts with the recommended 25 s target and the 30 s maximum. The floors are the
 /// measured rates plus a margin, so a regression in decoding, levelling or chunking fails here.
 /// </remarks>
 [Trait("Category", "transcript")]
 [Trait("Tier", "models")]
 public sealed class GraniteRecognitionTests
 {
-    private const double ChunkTarget = 20;
+    private const double ChunkTarget = 25;
 
-    private static LowYieldRetry DefaultRecognizer() => new LowYieldRetry(GraniteFixture.Recognizer());
+    private static GraniteCtcRecognizer DefaultRecognizer() => GraniteFixture.Recognizer();
 
     [Fact]
     public void TheDerivedGraphGivesTheSameIdsAsThePinnedExportAndScoresInRange()
@@ -62,9 +62,9 @@ public sealed class GraniteRecognitionTests
 
     [Theory]
     [InlineData("en-single-01", 4.0)]
-    [InlineData("fr-single-01", 7.0)]
-    [InlineData("de-single-01", 12.0)]
-    [InlineData("en-ami-01", 45.0)]
+    [InlineData("fr-single-01", 5.0)]
+    [InlineData("de-single-01", 8.0)]
+    [InlineData("en-ami-01", 35.0)]
     [InlineData("en-ami-02", 25.0)]
     [InlineData("en-ami-sdm-01", 30.0)]
     public void AClipIsRecognisedWithinItsFloor(string name, double floorPercent)
@@ -87,7 +87,7 @@ public sealed class GraniteRecognitionTests
     public void NoiseFedAsChunksYieldsNoWords(string file)
     {
         float[] audio = TestAudio.ReadWav(TestPaths.RequireBenchFile(Path.Combine("noise", file)));
-        LowYieldRetry recognizer = DefaultRecognizer();
+        GraniteCtcRecognizer recognizer = DefaultRecognizer();
         List<string> words = [];
         int chunk = (int)(recognizer.MaxChunkSeconds * 16000);
 
