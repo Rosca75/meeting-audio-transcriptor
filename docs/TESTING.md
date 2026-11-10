@@ -31,7 +31,11 @@ Every test class carries a `Category` trait, so a run can be scoped to one conce
 
 A failing guard names a real inconsistency: fix the inconsistency and leave the guard as it is. An exemption names its file and its reason.
 
-## 4. Commands
+## 4. Media decoding
+
+`MeetingAudioTranscriptor.Media.Tests` holds the media suite. The unit tier covers the PCM converter (every format, channel count and block split), the ffmpeg banner parser over recorded and hand-written banners, the error wording, the content sniff and the opener's decision table with fake decoders. The integration tier generates its files with the ffmpeg it finds (`MAT_FFMPEG`, beside the test, then the PATH) and skips without one; it also decodes `bench/data/long/en-10min.m4a` and `.mp4` when the test set is present. The Media Foundation tests run on Windows alone and skip elsewhere, because the interop cannot run on Linux.
+
+## 5. Commands
 
 ```
 dotnet test --filter "Tier!=deep&Tier!=integration&Tier!=models"   # the unit tier
