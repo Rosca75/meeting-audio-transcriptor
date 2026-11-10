@@ -18,12 +18,12 @@
 //
 // Extraction uses the system tar (a .tar.xz with `tar -xJf`, a .zip with
 // `tar -xf`, which is bsdtar on Windows). A GNU tar cannot read a zip, so on a
-// machine whose tar fails on one the tool falls back to unzip. The archive is
-// named relative to its own folder, because a GNU tar (Git for Windows ships one)
-// reads "D:\path" as a remote host "D" and refuses it. Node 22 or later, no
-// dependency.
+// machine whose tar fails on one the tool falls back to unzip. tar runs in the
+// target folder and is given the archive as a relative path with forward
+// slashes, because a GNU tar (Git for Windows ships one) misreads a path with a
+// drive letter, taking "D:" for a remote host. Node 22 or later, no dependency.
 import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync } from "node:fs";
-import { basename, dirname, join, resolve } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { download, reexecWithNetworkOptions, sha256Of, verify } from "./fetch-models.mjs";
@@ -82,7 +82,8 @@ function runTool(program, args, cwd = undefined) {
 /** Extracts the named members of an archive into a folder with the system tar, falling back to unzip for a zip. */
 function extractMembers(archive, folder, members) {
   const isZip = archive.toLowerCase().endsWith(".zip");
-  const first = runTool("tar", [isZip ? "-xf" : "-xJf", basename(archive), "-C", resolve(folder), ...members], dirname(resolve(archive)));
+  const archiveFromFolder = relative(resolve(folder), resolve(archive)).split(sep).join("/");
+  const first = runTool("tar", [isZip ? "-xf" : "-xJf", archiveFromFolder, ...members], resolve(folder));
   if (first.status === 0) {
     return;
   }
