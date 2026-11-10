@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using MeetingAudioTranscriptor.App;
+using MeetingAudioTranscriptor.Inference;
 
 namespace MeetingAudioTranscriptor.Cli.Benchmark;
 
@@ -16,15 +17,24 @@ namespace MeetingAudioTranscriptor.Cli.Benchmark;
 /// The value of the <c>CPUIDMASK</c> environment variable, or null: a benchmark may run under a
 /// mask that hides processor features to stand for a laptop, and its numbers mean nothing without it.
 /// </param>
-internal sealed record MachineFacts(string CpuModel, int LogicalCores, string OperatingSystem, string Framework, string OnnxRuntime, string? CpuIdMask)
+/// <param name="ProcessorReportsVnni">Whether the processor, as the process sees it under any mask, has a VNNI extension the runtime can use.</param>
+/// <param name="ExactQuantizedKernels">Whether sessions run on the exact 8-bit kernels (decision 0010): on without VNNI, unless <c>MAT_ORT_QUANT_PRECISION</c> says otherwise. It changes both the speed and the accuracy, so a result is not read without it.</param>
+internal sealed record MachineFacts(string CpuModel, int LogicalCores, string OperatingSystem, string Framework, string OnnxRuntime, string? CpuIdMask, bool ProcessorReportsVnni, bool ExactQuantizedKernels)
 {
+    /// <summary>The machine as the benchmark's first line prints it: processor, cores, mask, VNNI and the kernel precision.</summary>
+    public string Describe() => string.Create(
+        System.Globalization.CultureInfo.InvariantCulture,
+        $"{CpuModel} ({LogicalCores} logical cores{(CpuIdMask is null ? "" : ", CPUIDMASK=" + CpuIdMask)}, VNNI {(ProcessorReportsVnni ? "reported" : "not reported")}, exact 8-bit kernels {(ExactQuantizedKernels ? "on" : "off")})");
+
     public static MachineFacts Read() => new(
         ReadCpuModel(),
         Environment.ProcessorCount,
         RuntimeInformation.OSDescription,
         RuntimeInformation.FrameworkDescription,
         TranscriptionService.RuntimeVersion,
-        Environment.GetEnvironmentVariable("CPUIDMASK") is { Length: > 0 } mask ? mask : null);
+        Environment.GetEnvironmentVariable("CPUIDMASK") is { Length: > 0 } mask ? mask : null,
+        QuantizedKernelPrecision.HasVnni(),
+        QuantizedKernelPrecision.Enabled);
 
     private static string ReadCpuModel()
     {

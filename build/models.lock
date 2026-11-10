@@ -107,7 +107,7 @@
     },
     {
       "name": "pyannote-segmentation-3.0",
-      "set": "default",
+      "set": "candidate",
       "optional": true,
       "licence": "MIT",
       "source": "https://huggingface.co/onnx-community/pyannote-segmentation-3.0 at 733a93b6473d019a773298e08cefa686894b1854 (ONNX re-export of pyannote/segmentation-3.0 at e66f3d3b9eb0873085418a7b813d3b369bf160bb), onnx/model_int8.onnx",

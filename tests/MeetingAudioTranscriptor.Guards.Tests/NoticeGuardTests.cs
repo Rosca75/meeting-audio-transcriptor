@@ -44,6 +44,22 @@ public sealed class NoticeGuardTests
     }
 
     [Fact]
+    public void NoCandidateModelOfTheLockIsNamedInNotice()
+    {
+        string notice = ReadNotice();
+        using JsonDocument models = ReadLock("build/models.lock");
+        List<string> candidates = models.RootElement.GetProperty("models").EnumerateArray()
+            .Where(model => model.GetProperty("set").GetString() == "candidate")
+            .Select(model => model.GetProperty("name").GetString()!)
+            .ToList();
+
+        Assert.True(candidates.Count > 0, "build/models.lock lists no candidate model, wanted at least one; the guard cannot run");
+        List<string> listed = candidates.Where(name => notice.Contains(name, StringComparison.Ordinal)).ToList();
+
+        Assert.True(listed.Count == 0, $"NOTICE names models that no package carries: {string.Join(", ", listed)}. NOTICE lists what ships, so remove their sections, or move the model to the default set of build/models.lock");
+    }
+
+    [Fact]
     public void EveryFfmpegBuildOfTheLockIsNamedInNoticeWithItsVersionAndLicence()
     {
         string notice = ReadNotice();

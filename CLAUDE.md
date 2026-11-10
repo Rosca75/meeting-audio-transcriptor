@@ -30,10 +30,10 @@ minutes and no summary.
 | `CHANGELOG.md` | the changes of every release; the release script refuses a version without a heading |
 | `docs/TESTING.md` | the test tiers, the commands, the guards and the continuous integration |
 | `docs/transcript-schema.md` | the JSON transcript: every field and its meaning |
-| `docs/BENCHMARKS.md` | the measured speed, memory and accuracy of the shipped configuration |
+| `docs/BENCHMARKS.md` | the measured speed, memory and accuracy of the shipped configuration, the method, the limits of the evidence and the commands that reproduce every table |
 | `docs/RELEASING.md` | the exact steps that cut a release |
 | `docs/WINDOWS-VERIFICATION.md` | the checklist the owner runs on a Windows laptop |
-| `docs/decisions/` | one record per significant decision: context, options, evidence, decision, consequences |
+| `docs/decisions/` | one record per significant decision: context, options, evidence, decision, consequences; 0004 owns the CPU-feature mask the benchmarks run under and 0010 the exact 8-bit kernels |
 
 A file added to or removed from this set moves this table in the same change,
 because a charter that does not say which documents are authoritative leaves
@@ -87,7 +87,8 @@ meeting-audio-transcriptor/
 │   └── MeetingAudioTranscriptor.Guards.Tests/     checks over source text, projects and locks
 ├── bench/
 │   ├── testset/                              the builder of the speech test set
-│   ├── tools/cpuidmask/                      hides CPU features from a benchmark process
+│   ├── tools/                                cpuidmask hides CPU features from a benchmark process;
+│   │                                         summarise-results.mjs prints the tables of docs/BENCHMARKS.md
 │   ├── results/                              the committed result files
 │   └── spikes/                               throwaway research scripts, not needed to build or ship
 ├── build/                                    the locks, the fetch tools, the publish and release scripts
@@ -146,17 +147,34 @@ Namespaces follow folders. The reference graph is
 | Granite Speech 5.0 470M TurboCTC | Apache-2.0 | the recogniser, int8, with an appended score output |
 | Silero VAD | MIT | voice activity |
 | WeSpeaker CAM++ LM | Apache-2.0 code, CC-BY-4.0 weights | speaker embeddings |
-| pyannote segmentation 3.0 | MIT | listed in the lock as an optional default; no code reads it |
+| pyannote segmentation 3.0 | MIT | a candidate in the lock that no code reads; no package carries it |
 | ffmpeg | LGPL-3.0-or-later | the bundled decoder, built without GPL and non-free options |
 
 `build/models.lock` and `build/ffmpeg.lock` are the source of truth for every
 model's and ffmpeg build's revision, address, size and hash, and `Directory.Packages.props`
 for every package version; this table names what is shipped and under which licence,
-and a revision written here would rot. The Parakeet model in the lock is a
-candidate that only benchmarks read and no package carries. `NOTICE` credits every
-shipped component, and a guard holds it to the locks.
+and a revision written here would rot. A model of the lock with `"set": "candidate"` (Parakeet, and pyannote
+segmentation 3.0 as a possible later addition) is read by benchmarks alone and no package
+carries it. `NOTICE` credits every shipped component and no candidate, and a guard holds
+it to the locks both ways.
 
 Everything else is the base class library.
+
+The environment variables the programs and the suites read, all in one table; `CPUIDMASK` belongs to the
+benchmark tool `bench/tools/cpuidmask` and is not read by the application.
+
+| Variable | Meaning |
+|---|---|
+| `MAT_MODELS_DIR` | the models folder; else `models` beside the executable, else the checkout's |
+| `MAT_FFMPEG` | the ffmpeg executable to decode with; else the `ffmpeg` folder beside the application, then the PATH |
+| `MAT_PREFER_FFMPEG` | `1` makes a Windows run try ffmpeg before Media Foundation, to compare the two decoders |
+| `MAT_ORT_QUANT_PRECISION` | `0` or `1` overrides the choice of the exact 8-bit kernels, which are on exactly when the processor has no VNNI (decision 0010) |
+| `MAT_BENCH_DATA` | the benchmark's test set folder; else `bench/data` |
+| `MAT_WEBKIT_SOFTWARE` | `1` forces and `0` forbids software drawing in the Linux window |
+| `MAT_UI_DEMO` | `1` selects the demo transcriber that simulates a run |
+| `MAT_UI_AUTOMATION`, `MAT_UI_EXIT_AFTER_MS` | the window's test hook: a script the page runs, and the delay after which the window closes |
+| `MAT_SHELL_PATH` | tests only: another build of the desktop executable |
+| `MAT_VAD_REPORT`, `MAT_GRANITE_REPORT`, `MAT_GRANITE_CANDIDATES`, `MAT_GRANITE_CUTS`, `MAT_GRANITE_GROUPS`, `MAT_GRANITE_TARGETS` | tests only: the deep measurements' report file and what they measure |
 
 ## 7. Build, test, fetch and release
 

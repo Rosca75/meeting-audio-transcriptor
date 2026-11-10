@@ -11,6 +11,16 @@ public sealed class CommandLineTests
 {
     private static ParsedCommandLine Parse(string line) => CommandLine.Parse(line.Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(10)]
+    public void TheSpeakerCountRunsFromOneToTen(int count)
+    {
+        ParsedCommandLine parsed = Parse($"transcribe a.wav --language en --speakers {count}");
+
+        Assert.True(parsed.Kind == CommandKind.Transcribe && parsed.Transcribe!.Speakers == count, $"got {parsed.Kind}: {parsed.Error}, wanted a count of {count}");
+    }
+
     [Fact]
     public void TranscribeReadsEveryOption()
     {
@@ -50,7 +60,9 @@ public sealed class CommandLineTests
     [InlineData("transcribe a.wav --language en --formats ,", "names no format")]
     [InlineData("transcribe a.wav --language en --threads 0", "--threads '0' is not a whole number from 1 to 256")]
     [InlineData("transcribe a.wav --language en --threads two", "--threads 'two'")]
-    [InlineData("transcribe a.wav --language en --speakers -2", "--speakers '-2' is not a whole number from 1 to 32")]
+    [InlineData("transcribe a.wav --language en --speakers -2", "--speakers '-2' is not a whole number from 1 to 10")]
+    [InlineData("transcribe a.wav --language en --speakers 11", "--speakers '11' is not a whole number from 1 to 10; the separator tells at most 10 speakers apart")]
+    [InlineData("transcribe a.wav --language en --speakers 0", "or leave --speakers out to let it count them")]
     [InlineData("transcribe a.wav --language en --speakers 2 --no-speakers", "pass one of the two")]
     [InlineData("transcribe a.wav --language en --colour", "'--colour' is not an option of transcribe; its options are --language")]
     [InlineData("transcribe a.wav --language en -q", "'-q' is not an option")]

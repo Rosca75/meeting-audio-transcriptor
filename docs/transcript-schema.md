@@ -93,7 +93,9 @@ The `.json` transcript is the one file that carries everything a run produced, t
     "createdUtc": "2026-11-10T18:30:00Z",
     "processingSeconds": 3.2,
     "models": [
-      { "role": "recognition", "name": "whisper-small" }
+      { "role": "recognition", "name": "granite-speech-5.0-470m-turboctc" },
+      { "role": "voice-activity", "name": "silero-vad" },
+      { "role": "speaker-embedding", "name": "wespeaker-campplus-lm" }
     ],
     "settings": {
       "speakerSeparation": true,

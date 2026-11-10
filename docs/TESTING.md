@@ -17,7 +17,21 @@ A test whose dependency is missing skips by name (`Assert.SkipUnless(condition, 
 
 ## 2. Categories
 
-Every test class carries a `Category` trait, so a run can be scoped to one concern. The vocabulary: `config`, `audio`, `transcript`, `writers`, `errors`, `desktop`.
+Every test class carries a `Category` trait, so a run can be scoped to one concern. The vocabulary:
+
+| Category | What it holds |
+|---|---|
+| `audio` | decoding, resampling, the WAV reader, the voice activity detector and chunking |
+| `cleaning` | the per-language rules that remove fillers, stutters, false starts and acknowledgements |
+| `config` | locks, versions, options, wiring and the guards |
+| `desktop` | the window hosts, the page transport and the bridge |
+| `diarisation` | speaker embeddings, clustering and the speaker separator |
+| `errors` | failure mapping, exit codes and the wording of messages |
+| `scoring` | word error rate, content retention, the diarisation error rate and the text normaliser |
+| `transcript` | the pipeline, segments, the service and the transcript documents |
+| `writers` | the `.vtt`, `.json` and `.txt` writers |
+
+A new category is added to this table and to `tests/CLAUDE.md` in the same change.
 
 ## 3. Guards
 
@@ -31,7 +45,7 @@ Every test class carries a `Category` trait, so a run can be scoped to one conce
 - Page hashes: every file under `frontend/` except `frontend/frontend-hashes.txt` is listed there as `<sha256> *<path>` and matches. A page edit moves its line in the same commit: `node build/update-frontend-hashes.mjs` rewrites the file.
 - Page tests present: the page suite has a test file per logic module, none silenced, and the charters name its command.
 - Workflow pins: every `uses:` under `.github` is a full 40-character commit SHA, and `NOTICE` names every default model and every ffmpeg build the locks ship.
-- Copy: no em dash in `frontend/js/copy.js` or in any `.cs` file under `src/`. Frontend scripts and stylesheets open with a purpose header like every other source file.
+- Copy: no em dash in `frontend/js/copy.js`, in any `.cs` file under `src/`, or in a document (`docs/**/*.md`, `docs/**/*.json`, `README.md`, `CHANGELOG.md`, `NOTICE` and every charter); `docs/build/reference-digest.md` and `docs/build/research-models.md` are exempt by name in the guard, because they quote titles that carry one. Frontend scripts and stylesheets open with a purpose header like every other source file.
 
 A failing guard names a real inconsistency: fix the inconsistency and leave the guard as it is. An exemption names its file and its reason.
 
@@ -51,7 +65,7 @@ The Pipeline suite's `Pipeline/ServicePipelineTests` runs the real Silero VAD an
 
 The Pipeline suite's `Pipeline/RealServiceTests` runs the shipped service over the real models (the recogniser, the VAD and the speaker model): one clip per language under a word error rate floor of 15 % with its speakers, every segment's speaker listed, speakers numbered by first appearance, speaking times summed from the segments and the three files valid; the four noise files give no word and no speech; `en-10min.m4a` and `.mp4` read within 2 % of the words of the WAV; a run cancelled at 20 % leaves the output folder empty; a second run on the same service loads nothing, is faster and gives the same transcript.
 
-The benchmark runs the real service over the test set and writes `bench/results/<yyyy-MM-dd>-<label>.json`: per file and per group the word error rates, the retention, the words removed, the noise words, the throughput and the stage timings, and for a file with reference turns the speaker figures (the diarisation error rate with a 0.25 s collar, overlap excluded and included, the confusion share, the attribution accuracy and the estimated against the reference speaker count, the hypothesis turns being the transcript's segments); the machine facts, the thread count, `CPUIDMASK` and the peak working set are recorded with them.
+The benchmark runs the real service over the test set and writes `bench/results/<yyyy-MM-dd>-<label>.json`: per file and per group the word error rates, the retention, the words removed, the noise words, the throughput and the stage timings, and for a file with reference turns the speaker figures (the diarisation error rate with a 0.25 s collar, overlap excluded and included, the confusion share, the attribution accuracy and the estimated against the reference speaker count, the hypothesis turns being the transcript's segments); the machine facts, the thread count, `CPUIDMASK`, whether the processor reports VNNI, whether the exact 8-bit kernels are on (`QuantizedKernelPrecision.Enabled`) and the peak working set are recorded with them, and the first printed line names the same facts.
 
 ```
 meeting-audio-transcriptor-cli benchmark --set clips --threads 1          # also long, containers, noise, all or a file id
@@ -102,7 +116,7 @@ node build/fetch-models.mjs --into models --keep-sources           # also keep t
 `MeetingAudioTranscriptor.Pipeline.Tests` runs the engine's stages over the real models and the benchmark audio, in the models and deep tiers only. It reads the audio from `MAT_BENCH_DATA` when that variable is set, and from `bench/data` of the repository otherwise (`node bench/testset/fetch-testset.mjs` builds it); a missing file skips its test by name. Its deep-tier measurements print markdown tables, and also write them to the file `MAT_VAD_REPORT` (the VAD) or `MAT_GRANITE_REPORT` (the recogniser) names when that variable is set; run them pinned to one core, because they report single-core cost. The models-tier test comparing the derived Granite graph with its pinned source skips unless the source was kept with `--keep-sources`.
 
 ```
-MAT_BENCH_DATA=<dir> dotnet test --project tests/MeetingAudioTranscriptor.Pipeline.Tests --filter "Tier=models"
+MAT_BENCH_DATA=<dir> dotnet test --project tests/MeetingAudioTranscriptor.Pipeline.Tests --filter-trait "Tier=models"
 dotnet test --project tests/MeetingAudioTranscriptor.Cli.Tests       # the command line alone
 ```
 
@@ -112,7 +126,7 @@ Read the test count after every run: zero tests proves nothing. A suite with no 
 
 The Windows desktop host builds from Linux with `dotnet build src/MeetingAudioTranscriptor.Shell -r win-x64 -warnaserror`.
 
-## 7. Continuous integration
+## 8. Continuous integration
 
 `.github/workflows/ci.yml` runs on every pull request to `main` and every push to `main`, on `ubuntu-latest` and `windows-latest`, because the application ships for both and a break on one system is invisible on the other.
 

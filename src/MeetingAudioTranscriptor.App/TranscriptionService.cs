@@ -45,10 +45,18 @@ internal sealed record ServiceSeams(
     private static (IAudioSource Source, string Decoder) OpenWithMedia(string path)
     {
         // The engine's WAV reader reads plain WAV; a WAV encoding it refuses goes to the platform decoder.
-        AudioFileOpener opener = new(stream => new WavAudioSource(stream), error => error is AudioFormatException);
+        AudioFileOpener opener = new(stream => new WavAudioSource(stream), error => error is AudioFormatException, OpenerOptions(Environment.GetEnvironmentVariable));
         IAudioSource source = opener.Open(path);
         return (source, opener.DecoderName);
     }
+
+    /// <summary>The environment variable that makes a Windows run try ffmpeg before Media Foundation, to compare the two decoders.</summary>
+    public const string PreferFfmpegVariable = "MAT_PREFER_FFMPEG";
+
+    /// <summary>The opener's options for an environment: ffmpeg first exactly when <c>MAT_PREFER_FFMPEG</c> is <c>1</c>.</summary>
+    /// <param name="read">Reads an environment variable, null when it is not set; injected so a test needs no process-wide state.</param>
+    internal static AudioFileOpenerOptions OpenerOptions(Func<string, string?> read) =>
+        new() { PreferFfmpeg = read(PreferFfmpegVariable) == "1" };
 
     private static long ReadPeakWorkingSet()
     {

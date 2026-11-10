@@ -130,6 +130,28 @@ public sealed class ConsoleOutputTests
     }
 
     [Theory]
+    [InlineData("media-foundation")]
+    [InlineData("ffmpeg (bundled) at /opt/app/ffmpeg/ffmpeg")]
+    public void TheSummaryNamesTheDecoderThatReadTheRecording(string decoder)
+    {
+        TranscriptionOutcome outcome = new() { Kind = TranscriptionOutcomeKind.Succeeded, Message = "", OutputFiles = ["/out/m.vtt"], AudioSeconds = 60, ProcessingSeconds = 6, DecoderName = decoder };
+
+        string text = ConsoleText.Summary(outcome, speakersRequested: false);
+
+        Assert.True(text.Contains("Decoder:    " + decoder + "\n", StringComparison.Ordinal) || text.Contains("Decoder:    " + decoder + "\r\n", StringComparison.Ordinal), $"got summary:\n{text}\nwanted a 'Decoder:' line naming {decoder}");
+    }
+
+    [Fact]
+    public void TheSummaryHasNoDecoderLineWhenNoDecoderIsNamed()
+    {
+        TranscriptionOutcome outcome = new() { Kind = TranscriptionOutcomeKind.Succeeded, Message = "", OutputFiles = ["/out/m.vtt"], AudioSeconds = 60, ProcessingSeconds = 6 };
+
+        string text = ConsoleText.Summary(outcome, speakersRequested: false);
+
+        Assert.True(!text.Contains("Decoder:", StringComparison.Ordinal), $"got summary:\n{text}\nwanted no Decoder line");
+    }
+
+    [Theory]
     [InlineData("en-ami-01", "clip", "en", "en-ami")]
     [InlineData("en-single-01", "clip", "en", "en-read")]
     [InlineData("en-10min", "long", "en", "en-read")]
