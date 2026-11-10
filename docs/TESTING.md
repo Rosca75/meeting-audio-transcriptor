@@ -17,7 +17,21 @@ A test whose dependency is missing skips by name (`Assert.SkipUnless(condition, 
 
 ## 2. Categories
 
-Every test class carries a `Category` trait, so a run can be scoped to one concern. The vocabulary: `config`, `audio`, `transcript`, `writers`, `errors`, `desktop`.
+Every test class carries a `Category` trait, so a run can be scoped to one concern. The vocabulary:
+
+| Category | What it holds |
+|---|---|
+| `audio` | decoding, resampling, the WAV reader, the voice activity detector and chunking |
+| `cleaning` | the per-language rules that remove fillers, stutters, false starts and acknowledgements |
+| `config` | locks, versions, options, wiring and the guards |
+| `desktop` | the window hosts, the page transport and the bridge |
+| `diarisation` | speaker embeddings, clustering and the speaker separator |
+| `errors` | failure mapping, exit codes and the wording of messages |
+| `scoring` | word error rate, content retention, the diarisation error rate and the text normaliser |
+| `transcript` | the pipeline, segments, the service and the transcript documents |
+| `writers` | the `.vtt`, `.json` and `.txt` writers |
+
+A new category is added to this table and to `tests/CLAUDE.md` in the same change.
 
 ## 3. Guards
 
@@ -102,7 +116,7 @@ node build/fetch-models.mjs --into models --keep-sources           # also keep t
 `MeetingAudioTranscriptor.Pipeline.Tests` runs the engine's stages over the real models and the benchmark audio, in the models and deep tiers only. It reads the audio from `MAT_BENCH_DATA` when that variable is set, and from `bench/data` of the repository otherwise (`node bench/testset/fetch-testset.mjs` builds it); a missing file skips its test by name. Its deep-tier measurements print markdown tables, and also write them to the file `MAT_VAD_REPORT` (the VAD) or `MAT_GRANITE_REPORT` (the recogniser) names when that variable is set; run them pinned to one core, because they report single-core cost. The models-tier test comparing the derived Granite graph with its pinned source skips unless the source was kept with `--keep-sources`.
 
 ```
-MAT_BENCH_DATA=<dir> dotnet test --project tests/MeetingAudioTranscriptor.Pipeline.Tests --filter "Tier=models"
+MAT_BENCH_DATA=<dir> dotnet test --project tests/MeetingAudioTranscriptor.Pipeline.Tests --filter-trait "Tier=models"
 dotnet test --project tests/MeetingAudioTranscriptor.Cli.Tests       # the command line alone
 ```
 
@@ -112,7 +126,7 @@ Read the test count after every run: zero tests proves nothing. A suite with no 
 
 The Windows desktop host builds from Linux with `dotnet build src/MeetingAudioTranscriptor.Shell -r win-x64 -warnaserror`.
 
-## 7. Continuous integration
+## 8. Continuous integration
 
 `.github/workflows/ci.yml` runs on every pull request to `main` and every push to `main`, on `ubuntu-latest` and `windows-latest`, because the application ships for both and a break on one system is invisible on the other.
 
