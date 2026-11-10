@@ -37,13 +37,15 @@ the gates are checked in order before each merge to `main`.
   service into the bridge and window, speaker metrics into `benchmark`; runs
   the end-to-end checks; writes `docs/build/e2e-notes.md` and
   `bench/results/*-e2e-*.json`.
-- CI fix (opus): works on remote branch `claude/ci-fix`, triggers `ci.yml` by
-  dispatch on it, reads logs; first run on `main` (42895303733) failed in
-  `build-and-test (windows)` unit tier, `integration (windows)` and
-  `integration (ubuntu)` under xvfb. Merge `claude/ci-fix` when it reports,
-  then delete that remote branch.
-- Documentation (sonnet): README, WINDOWS-VERIFICATION, nested charters, root
-  charter refresh, `bench/spikes` housekeeping.
+
+## CI status
+
+Run 42906481860 on `claude/ci-fix` was green on Windows and Linux for every
+job; the fixes are merged into the work branch. Real Media Foundation on the
+Windows runner decoded M4A and MP4 identically to ffmpeg. The remote branch
+`claude/ci-fix` could not be deleted from this session (the git proxy refuses
+branch deletion); it is fully merged and is named in the final report for the
+owner to delete.
 
 ## Merged so far
 
