@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "application": "meeting-audio-transcriptor",
+  "applicationVersion": "1.0.0",
+  "startedUtc": "2026-11-10T21:33:55Z",
+  "data": "/home/user/meeting-audio-transcriptor/bench/data",
+  "machine": {
+    "cpuModel": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "logicalCores": 4,
+    "operatingSystem": "Ubuntu 24.04.5 LTS",
+    "framework": ".NET 10.0.15",
+    "onnxRuntime": "1.31.1",
+    "cpuIdMask": null
+  },
+  "settings": {
+    "threads": 4,
+    "speakerSeparation": true,
+    "speakersHintFromReference": false,
+    "diarisationCollarSeconds": 0.25,
+    "repeat": 1
+  },
+  "groups": [
+    {
+      "group": "noise",
+      "files": 4,
+      "failed": 0,
+      "audioSeconds": 240,
+      "wallSeconds": 0.859,
+      "throughput": 279.25,
+      "werRaw": null,
+      "werCleaned": null,
+      "retention": null,
+      "words": 0,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "speakers": null,
+      "speakersHinted": null
+    }
+  ],
+  "retention": {
+    "gate": 0.99
+  },
+  "noise": {
+    "files": 4,
+    "words": 0,
+    "gate": 0
+  },
+  "peakWorkingSetBytes": 1429282816,
+  "files": [
+    {
+      "id": "noise-office-60s",
+      "group": "noise",
+      "type": "noise",
+      "language": null,
+      "outcome": "NoSpeech",
+      "audioSeconds": 60,
+      "speechSeconds": 0,
+      "wallSeconds": [
+        0.361
+      ],
+      "throughput": 166,
+      "chunks": 0,
+      "forcedCuts": 0,
+      "segments": 0,
+      "speakers": 0,
+      "words": 0,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": null,
+      "werCleaned": null,
+      "retention": null,
+      "speakerScore": null,
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 2.785,
+        "pipeline": 0.283,
+        "streaming": 0.278,
+        "decodeAndVad": 0.268,
+        "recognitionWorkers": 0,
+        "speakers": 0,
+        "cleaning": 0.006,
+        "writing": 0.05
+      },
+      "peakWorkingSetBytes": 1429282816
+    },
+    {
+      "id": "noise-pink-60s",
+      "group": "noise",
+      "type": "noise",
+      "language": null,
+      "outcome": "NoSpeech",
+      "audioSeconds": 60,
+      "speechSeconds": 0,
+      "wallSeconds": [
+        0.24
+      ],
+      "throughput": 250.09,
+      "chunks": 0,
+      "forcedCuts": 0,
+      "segments": 0,
+      "speakers": 0,
+      "words": 0,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": null,
+      "werCleaned": null,
+      "retention": null,
+      "speakerScore": null,
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 0.234,
+        "streaming": 0.234,
+        "decodeAndVad": 0.231,
+        "recognitionWorkers": 0,
+        "speakers": 0,
+        "cleaning": 0,
+        "writing": 0.004
+      },
+      "peakWorkingSetBytes": 1429282816
+    },
+    {
+      "id": "noise-white-60s",
+      "group": "noise",
+      "type": "noise",
+      "language": null,
+      "outcome": "NoSpeech",
+      "audioSeconds": 60,
+      "speechSeconds": 0,
+      "wallSeconds": [
+        0.244
+      ],
+      "throughput": 245.46,
+      "chunks": 0,
+      "forcedCuts": 0,
+      "segments": 0,
+      "speakers": 0,
+      "words": 0,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": null,
+      "werCleaned": null,
+      "retention": null,
+      "speakerScore": null,
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 0.241,
+        "streaming": 0.24,
+        "decodeAndVad": 0.235,
+        "recognitionWorkers": 0,
+        "speakers": 0,
+        "cleaning": 0,
+        "writing": 0.003
+      },
+      "peakWorkingSetBytes": 1429282816
+    },
+    {
+      "id": "silence-60s",
+      "group": "noise",
+      "type": "noise",
+      "language": null,
+      "outcome": "NoSpeech",
+      "audioSeconds": 60,
+      "speechSeconds": 0,
+      "wallSeconds": [
+        0.014
+      ],
+      "throughput": 4397.22,
+      "chunks": 0,
+      "forcedCuts": 0,
+      "segments": 0,
+      "speakers": 0,
+      "words": 0,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": null,
+      "werCleaned": null,
+      "retention": null,
+      "speakerScore": null,
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 0.01,
+        "streaming": 0.01,
+        "decodeAndVad": 0.008,
+        "recognitionWorkers": 0,
+        "speakers": 0,
+        "cleaning": 0,
+        "writing": 0.003
+      },
+      "peakWorkingSetBytes": 1429282816
+    }
+  ]
+}

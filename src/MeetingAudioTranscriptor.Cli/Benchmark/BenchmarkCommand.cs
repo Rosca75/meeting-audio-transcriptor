@@ -100,7 +100,7 @@ internal static class BenchmarkCommand
         string label = arguments.Label ?? string.Join("-", arguments.Sets.Count > 0 ? arguments.Sets : ["extra"]);
         string outFolder = Path.GetFullPath(arguments.Out ?? Path.Combine("bench", "results"));
         string outFile = Path.Combine(outFolder, started.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "-" + label + ".json");
-        BenchmarkReport report = new(started, machine, threads, !arguments.NoSpeakers && status.SpeakerSeparationAvailable, arguments.Repeat, data, results);
+        BenchmarkReport report = new(started, machine, threads, !arguments.NoSpeakers && status.SpeakerSeparationAvailable, arguments.Repeat, data, results, arguments.SpeakersHintFromReference);
         try
         {
             Directory.CreateDirectory(outFolder);
@@ -154,6 +154,31 @@ internal static class BenchmarkCommand
         }
 
         string? reference = entry.Reference is not null && File.Exists(entry.Reference) ? File.ReadAllText(entry.Reference) : null;
-        return FileResult.From(entry, first!, walls, reference) with { ModelLoadSeconds = loadSeconds };
+        string? rttm = !arguments.NoSpeakers && entry.Rttm is not null && File.Exists(entry.Rttm) ? File.ReadAllText(entry.Rttm) : null;
+        FileResult result = FileResult.From(entry, first!, walls, reference, rttm) with { ModelLoadSeconds = loadSeconds };
+        if (arguments.SpeakersHintFromReference && rttm is not null && first!.Succeeded)
+        {
+            // A separate run told the reference's speaker count, reported beside the automatic one.
+            int count = Engine.Scoring.DiarisationRttm.Parse(rttm).Select(segment => segment.Speaker).Distinct(StringComparer.Ordinal).Count();
+            string folder = Path.Combine(scratch, entry.Id + "-hinted");
+            TranscriptionRequest hinted = new()
+            {
+                InputPath = entry.Path,
+                Language = language,
+                Formats = [TranscriptFormat.Json],
+                OutputFolder = folder,
+                SpeakerSeparation = true,
+                SpeakerCountHint = count,
+                Threads = arguments.Threads,
+            };
+            TranscriptionOutcome outcome = await service.RunAsync(hinted, null, cancellation).ConfigureAwait(false);
+            if (outcome.Succeeded && outcome.Pipeline?.Document is { } document)
+            {
+                result = result with { HintedSpeakers = SpeakerMetrics.Compute(rttm, document) };
+                Directory.Delete(folder, recursive: true);
+            }
+        }
+
+        return result;
     }
 }

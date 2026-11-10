@@ -56,7 +56,9 @@ internal static class ShellLauncher
     /// <param name="shell">The executable.</param>
     /// <param name="script">The automation script's text, or null for none.</param>
     /// <param name="virtualDisplay">False to run without xvfb-run and without a display.</param>
-    public static async Task<ShellRun> RunAsync(string shell, string? script, bool virtualDisplay = true)
+    /// <param name="environment">Variables set after the defaults, so a test can replace one (MAT_UI_DEMO=0 runs the real transcriber); null for none.</param>
+    /// <param name="limit">How long the window may run before it is killed; null for two minutes.</param>
+    public static async Task<ShellRun> RunAsync(string shell, string? script, bool virtualDisplay = true, IReadOnlyDictionary<string, string>? environment = null, TimeSpan? limit = null)
     {
         string scratch = Directory.CreateTempSubdirectory("mat-shell-").FullName;
         try
@@ -86,6 +88,11 @@ internal static class ShellLauncher
             start.Environment["XDG_DATA_HOME"] = Path.Combine(scratch, "data");
             start.Environment["MAT_UI_DEMO"] = "1";
             start.Environment[AutomationOptions.ExitAfterVariable] = "60000";
+            foreach ((string name, string value) in environment ?? new Dictionary<string, string>())
+            {
+                start.Environment[name] = value;
+            }
+
             if (script is not null)
             {
                 string path = Path.Combine(scratch, "automation.js");
@@ -97,7 +104,7 @@ internal static class ShellLauncher
             Task<string> output = process.StandardOutput.ReadToEndAsync();
             Task<string> error = process.StandardError.ReadToEndAsync();
             Task exited = process.WaitForExitAsync();
-            if (await Task.WhenAny(exited, Task.Delay(Limit)) != exited)
+            if (await Task.WhenAny(exited, Task.Delay(limit ?? Limit)) != exited)
             {
                 process.Kill(entireProcessTree: true);
                 await process.WaitForExitAsync();

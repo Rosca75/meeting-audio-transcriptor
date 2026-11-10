@@ -25,8 +25,16 @@ public sealed record PipelineOptions
     /// <summary>The default worker count: the logical cores, at most <see cref="MaxDefaultThreads"/>.</summary>
     public static int DefaultThreads => Math.Clamp(Environment.ProcessorCount, 1, MaxDefaultThreads);
 
-    /// <summary>Where the audio is cut into chunks; the target length is <see cref="SpeechChunkerOptions.TargetChunkSeconds"/>.</summary>
-    public SpeechChunkerOptions Chunker { get; init; } = new();
+    /// <summary>
+    /// The chunk length the shipped pipeline aims for, in seconds. The Granite recogniser reads the
+    /// meeting recordings best at a 25 s target (24.1 % word error rate against 26.4 % at 20 s),
+    /// because fewer cuts fall inside overlapping speech, and 25 s under its 30 s limit leaves the
+    /// chunker room to find a silence.
+    /// </summary>
+    public const double DefaultTargetChunkSeconds = 25;
+
+    /// <summary>Where the audio is cut into chunks; the target length is <see cref="SpeechChunkerOptions.TargetChunkSeconds"/>, <see cref="DefaultTargetChunkSeconds"/> by default.</summary>
+    public SpeechChunkerOptions Chunker { get; init; } = new() { TargetChunkSeconds = DefaultTargetChunkSeconds };
 
     /// <summary>How words become segments, and which segments the hallucination guard removes.</summary>
     public SegmentationOptions Segmentation { get; init; } = new();

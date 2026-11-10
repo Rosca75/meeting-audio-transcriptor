@@ -1,11 +1,8 @@
 // The composition root of the desktop executable: which transcriber the bridge drives, and the
 // bridge itself over the host's window services.
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using MeetingAudioTranscriptor.App;
 using MeetingAudioTranscriptor.App.Bridge;
-using MeetingAudioTranscriptor.Contracts.Bridge;
 
 namespace MeetingAudioTranscriptor.Shell;
 
@@ -23,25 +20,11 @@ internal static class ShellComposition
         return new Bridge(host, transcriber, AppVersion.Current);
     }
 
-    /// <summary>The transcriber a normal start uses; the single place the real service is chosen.</summary>
-    public static ITranscriber CreateTranscriber()
-    {
-        // replaced when the transcription service is wired
-        return new NotConnectedTranscriber();
-    }
-
     /// <summary>
-    /// Stands in for the transcription service until it is wired: it reports the models as not ready
-    /// with a sentence saying so, which the page shows while keeping Start disabled.
+    /// The transcriber a normal start uses, the single place the real service is chosen: the
+    /// transcription service over the catalog's models folder (<c>MAT_MODELS_DIR</c> when set, else
+    /// <c>models</c> beside the executable). The service loads the models on the first run and keeps
+    /// them for later ones; the process exit releases them.
     /// </summary>
-    private sealed class NotConnectedTranscriber : ITranscriber
-    {
-        private const string Message =
-            "Transcription is not available in this build yet. Use meeting-audio-transcriptor-cli, or start the window with MAT_UI_DEMO=1 to try the interface.";
-
-        public ModelCheckResult CheckModels() => new() { Ready = false, Message = Message };
-
-        public Task<TranscribeOutcome> RunAsync(TranscribeRequest request, IProgress<TranscribeProgress> progress, CancellationToken cancellation) =>
-            Task.FromResult(new TranscribeOutcome { Kind = TranscribeOutcomeKinds.Failed, Message = Message });
-    }
+    public static ITranscriber CreateTranscriber() => new ServiceTranscriber();
 }

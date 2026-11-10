@@ -13,7 +13,7 @@ The page speaks through `js/bridge.js`, which detects its host.
 
 The host passes every string it receives from the page to `Bridge.Receive(string)`, and implements `IHostServices.Emit(string)` as the post to the page. `Receive` returns at once and never throws; replies and events leave through `Emit` from any thread, so `Emit` must be callable from any thread and must not throw.
 
-The host injects these globals before the first navigation. Outside a host (a plain browser) no transport exists and every call rejects with a sentence saying so.
+The hosts inject no script: WebView2 provides `window.chrome.webview`, WebKitGTK provides `window.webkit.messageHandlers.host` once the Linux host registers the `host` message handler, and the page's own `js/bridge.js` defines `window.__hostReceive`, which the Linux host calls. Outside a host (a plain browser) no transport exists and every call rejects with a sentence saying so.
 
 ## 2. Envelopes
 
@@ -72,7 +72,7 @@ Arguments are positional and the count is exact.
 | `file:refused` | `{reason}` | a pick or a drop named an unsupported or missing file |
 | `host:error` | `{code}` | a failure with no waiting call; `message_unreadable`, `internal_error` or `drop_failed`; no content rides on it |
 
-`kind` is `completed`, `noSpeech`, `cancelled` or `failed`. `message` is always a sentence. `outputFiles` are full paths and may be empty. The numbers are zero when unknown.
+`stage` is a phrase the page shows as it is; the hosts send `Reading the audio`, `Finding speech`, `Recognising words`, `Telling speakers apart` and `Writing the transcript`. `kind` is `completed`, `noSpeech`, `cancelled` or `failed`. `message` is always a sentence. `outputFiles` are full paths and may be empty. The numbers are zero when unknown.
 
 ## 6. Dropped files
 

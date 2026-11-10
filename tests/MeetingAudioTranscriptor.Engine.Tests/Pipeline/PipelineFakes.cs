@@ -155,7 +155,7 @@ internal sealed class ScriptedSeparator : ISpeakerSeparator
 
     public int FinishCalls { get; private set; }
 
-    public void AddBlock(ReadOnlySpan<float> samples, long startSample, IReadOnlyList<(int Start, int End)> speechRegions)
+    public void AddBlock(ReadOnlySpan<float> samples, long startSample, IReadOnlyList<(int Start, int End)> speechRegions, CancellationToken cancellation)
     {
         Blocks.Add(startSample);
     }

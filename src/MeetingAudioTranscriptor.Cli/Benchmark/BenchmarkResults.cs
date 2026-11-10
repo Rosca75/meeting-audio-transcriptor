@@ -58,8 +58,11 @@ internal sealed record FileResult
     /// <summary>The process's peak working set after this file, in bytes; the peak of the whole process so far.</summary>
     public long PeakWorkingSetBytes { get; init; }
 
-    // Extension point: speaker metrics (the diarisation error rate against Entry.Rttm and the
-    // speaker count error) are computed here once speaker separation is part of the pipeline.
+    /// <summary>The speakers against the entry's RTTM; null without an RTTM or without speaker separation.</summary>
+    public SpeakerMetrics? SpeakerScore { get; init; }
+
+    /// <summary>The speakers of an extra run given the reference's speaker count as the hint; null unless asked for.</summary>
+    public SpeakerMetrics? HintedSpeakers { get; init; }
 
     /// <summary>The median wall time over the repeats.</summary>
     public double MedianWallSeconds => Median(WallSeconds);
@@ -71,7 +74,7 @@ internal sealed record FileResult
     public double RemovedFraction => Words > 0 ? WordsRemoved / (double)Words : 0;
 
     /// <summary>Measures one run's transcript against the entry's reference.</summary>
-    public static FileResult From(BenchEntry entry, TranscriptionOutcome outcome, IReadOnlyList<double> wallSeconds, string? reference)
+    public static FileResult From(BenchEntry entry, TranscriptionOutcome outcome, IReadOnlyList<double> wallSeconds, string? reference, string? rttm = null)
     {
         TranscriptDocument? document = outcome.Pipeline?.Document;
         string raw = document is null ? "" : string.Join(' ', document.Segments.Select(segment => segment.RawText));
@@ -101,6 +104,7 @@ internal sealed record FileResult
             ModelLoadSeconds = outcome.ModelLoadSeconds,
             WriteSeconds = outcome.WriteSeconds,
             PeakWorkingSetBytes = outcome.PeakWorkingSetBytes,
+            SpeakerScore = outcome.Succeeded && rttm is not null && document is not null ? SpeakerMetrics.Compute(rttm, document) : null,
         };
     }
 
@@ -128,7 +132,9 @@ internal sealed record GroupResult(
     WordErrorRateResult? CleanedWer,
     ContentRetentionResult? Retention,
     int Words,
-    int WordsRemoved)
+    int WordsRemoved,
+    SpeakerGroupMetrics? Speakers = null,
+    SpeakerGroupMetrics? HintedSpeakers = null)
 {
     public double Throughput => WallSeconds > 0 ? AudioSeconds / WallSeconds : 0;
 
@@ -149,6 +155,75 @@ internal sealed record GroupResult(
             scored.Count > 0 ? WordErrorRate.Aggregate(scored.Select(file => file.CleanedWer!.Value)) : null,
             retained.Count > 0 ? ContentRetention.Aggregate(retained.Select(file => file.Retention!.Value)) : null,
             files.Sum(file => file.Words),
-            files.Sum(file => file.WordsRemoved));
+            files.Sum(file => file.WordsRemoved),
+            SpeakerGroupMetrics.Of(files.Select(file => file.SpeakerScore)),
+            SpeakerGroupMetrics.Of(files.Select(file => file.HintedSpeakers)));
+    }
+}
+
+/// <summary>How well one file's speakers were told apart, against its reference turns.</summary>
+/// <param name="Excluded">The score with overlapped reference speech left out, collar 0.25 s.</param>
+/// <param name="Included">The score with overlapped reference speech counted, collar 0.25 s.</param>
+/// <param name="ReferenceSpeakers">The speakers the reference names.</param>
+/// <param name="EstimatedSpeakers">The speakers the transcript names.</param>
+internal sealed record SpeakerMetrics(DiarisationScore Excluded, DiarisationScore Included, int ReferenceSpeakers, int EstimatedSpeakers)
+{
+    /// <summary>The collar around every reference boundary that is not scored, in seconds.</summary>
+    public const double CollarSeconds = 0.25;
+
+    /// <summary>The fraction of single-speaker reference time shown with the right speaker.</summary>
+    public double Attribution => Excluded.AttributionAccuracy;
+
+    /// <summary>
+    /// Scores a transcript's speakers: the hypothesis turns are the transcript's segments, each from
+    /// its first word's start to its last word's end under its speaker, removed segments included
+    /// because their words were spoken; null when the transcript names no speaker.
+    /// </summary>
+    public static SpeakerMetrics? Compute(string rttmText, TranscriptDocument document)
+    {
+        if (document.Speakers.Count == 0)
+        {
+            return null;
+        }
+
+        List<SpeakerSegment> reference = DiarisationRttm.Parse(rttmText);
+        List<SpeakerSegment> hypothesis = document.Segments
+            .Where(segment => segment.Speaker is not null && segment.End > segment.Start)
+            .Select(segment => new SpeakerSegment(segment.Speaker!, segment.Start, segment.End))
+            .ToList();
+        DiarisationScore excluded = DiarisationErrorRate.Compute(reference, hypothesis, new DiarisationScoringOptions(CollarSeconds, ExcludeOverlap: true));
+        DiarisationScore included = DiarisationErrorRate.Compute(reference, hypothesis, new DiarisationScoringOptions(CollarSeconds, ExcludeOverlap: false));
+        return new SpeakerMetrics(excluded, included, excluded.ReferenceSpeakers, document.Speakers.Count);
+    }
+}
+
+/// <summary>The speaker figures of a group: error rates over the summed times, attribution weighted by each file's scored time.</summary>
+/// <remarks>
+/// The hypothesis turns are segment spans, which stop at the first and last word and leave pauses
+/// out, so most of the error rate is missed speech; <see cref="ConfusionExcluded"/> is the share of
+/// the scored time given to the wrong speaker, which is what speaker separation alone decides.
+/// </remarks>
+internal sealed record SpeakerGroupMetrics(int Files, double ErrorRateExcluded, double ErrorRateIncluded, double ConfusionExcluded, double Attribution, int ExactCounts, double MeanAbsoluteCountError)
+{
+    /// <summary>The group's figures; null when no file of it was scored.</summary>
+    public static SpeakerGroupMetrics? Of(IEnumerable<SpeakerMetrics?> metrics)
+    {
+        List<SpeakerMetrics> scored = metrics.Where(metric => metric is not null).Select(metric => metric!).ToList();
+        if (scored.Count == 0)
+        {
+            return null;
+        }
+
+        static double Errors(DiarisationScore score) => score.MissedSeconds + score.FalseAlarmSeconds + score.ConfusionSeconds;
+        double excludedReference = scored.Sum(metric => metric.Excluded.ReferenceSeconds);
+        double includedReference = scored.Sum(metric => metric.Included.ReferenceSeconds);
+        return new SpeakerGroupMetrics(
+            scored.Count,
+            excludedReference > 0 ? scored.Sum(metric => Errors(metric.Excluded)) / excludedReference : 0,
+            includedReference > 0 ? scored.Sum(metric => Errors(metric.Included)) / includedReference : 0,
+            excludedReference > 0 ? scored.Sum(metric => metric.Excluded.ConfusionSeconds) / excludedReference : 0,
+            excludedReference > 0 ? scored.Sum(metric => metric.Attribution * metric.Excluded.ReferenceSeconds) / excludedReference : 0,
+            scored.Count(metric => metric.EstimatedSpeakers == metric.ReferenceSpeakers),
+            scored.Average(metric => (double)Math.Abs(metric.EstimatedSpeakers - metric.ReferenceSpeakers)));
     }
 }

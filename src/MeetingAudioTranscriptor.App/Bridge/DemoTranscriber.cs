@@ -25,14 +25,7 @@ public static class DemoMode
 /// <summary>Simulates a run for interface work; reports the models as installed and writes no file.</summary>
 internal sealed class DemoTranscriber : ITranscriber
 {
-    private static readonly string[] Stages =
-    [
-        "Reading the audio",
-        "Finding speech",
-        "Recognising words",
-        "Telling speakers apart",
-        "Writing the transcript",
-    ];
+    private static readonly string[] Stages = BridgeStages.All;
 
     private readonly TimeSpan _total;
 

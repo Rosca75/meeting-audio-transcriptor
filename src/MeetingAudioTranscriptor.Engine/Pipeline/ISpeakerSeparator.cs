@@ -25,7 +25,8 @@ public interface ISpeakerSeparator
     /// <param name="samples">The chunk's samples.</param>
     /// <param name="startSample">The absolute sample at which the chunk starts.</param>
     /// <param name="speechRegions">The padded speech regions inside the chunk, as [Start, End) offsets from its start.</param>
-    void AddBlock(ReadOnlySpan<float> samples, long startSample, IReadOnlyList<(int Start, int End)> speechRegions);
+    /// <param name="cancellation">Stops the work on the block when the run is cancelled or another thread failed.</param>
+    void AddBlock(ReadOnlySpan<float> samples, long startSample, IReadOnlyList<(int Start, int End)> speechRegions, CancellationToken cancellation);
 
     /// <summary>Assigns a speaker to every word.</summary>
     /// <param name="words">Every recognised word of the recording, in time order, with times in seconds from its start.</param>

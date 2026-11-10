@@ -19,7 +19,8 @@ namespace MeetingAudioTranscriptor.Engine.Pipeline;
 /// go into a bounded queue of <see cref="PipelineOptions.QueueCapacity"/> slots, so a producer that
 /// runs ahead waits for a free slot and memory stays flat whatever the length of the recording.
 /// <see cref="PipelineOptions.Threads"/> workers take chunks from the queue, recognise them with
-/// the one shared recogniser, shift the word times by the chunk's start and hand the audio to the
+/// the one shared recogniser (with the chunk's speech regions when it is an
+/// <see cref="IRegionAwareRecognizer"/>), shift the word times by the chunk's start and hand the audio to the
 /// speaker separator; a chunk's samples are dropped once its worker is done. Only the words are
 /// kept, by chunk index, and once the last chunk is in they are put in chunk order, assigned their
 /// speakers, cut into segments and cleaned on the calling thread.
@@ -329,9 +330,12 @@ public sealed class TranscriptionPipeline
                 foreach (SpeechChunk chunk in _queue.GetConsumingEnumerable(token))
                 {
                     long before = time.GetTimestamp();
-                    IReadOnlyList<RecognizedWord> found = _pipeline._recognizer.Recognize(chunk.Samples, token);
+                    // A recogniser that levels each speech region on its own is handed the chunk's regions.
+                    IReadOnlyList<RecognizedWord> found = _pipeline._recognizer is IRegionAwareRecognizer regionAware
+                        ? regionAware.Recognize(chunk.Samples, chunk.SpeechRegions, token)
+                        : _pipeline._recognizer.Recognize(chunk.Samples, token);
                     RecognizedWord[] shifted = Shift(found, chunk.StartSeconds);
-                    _separator?.AddBlock(chunk.Samples, chunk.StartSample, chunk.SpeechRegions);
+                    _separator?.AddBlock(chunk.Samples, chunk.StartSample, chunk.SpeechRegions, token);
                     Interlocked.Add(ref _recognitionTicks, time.GetTimestamp() - before);
 
                     lock (_lock)

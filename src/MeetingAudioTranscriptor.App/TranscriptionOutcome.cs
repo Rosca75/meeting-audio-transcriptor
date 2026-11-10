@@ -56,6 +56,12 @@ public sealed record TranscriptionOutcome
     /// <summary>True when transcript files were written (also when no speech was found).</summary>
     public bool Succeeded => Kind is TranscriptionOutcomeKind.Succeeded or TranscriptionOutcomeKind.NoSpeech;
 
+    /// <summary>
+    /// Sentences about a run that succeeded with less than was asked, such as speakers not told
+    /// apart because their model is not installed; empty when there is nothing to say.
+    /// </summary>
+    public IReadOnlyList<string> Notices { get; init; } = [];
+
     /// <summary>The files written, in the order they were named; empty on failure.</summary>
     public IReadOnlyList<string> OutputFiles { get; init; } = [];
 
@@ -113,6 +119,12 @@ public readonly record struct TranscriptionProgress(TranscriptionStage Stage, do
 /// <param name="SpeakerSeparationAvailable">Whether speaker separation can run.</param>
 public sealed record ModelStatus(string ModelsRoot, IReadOnlyList<string> RequiredFiles, IReadOnlyList<string> MissingFiles, string Message, bool SpeakerSeparationAvailable)
 {
+    /// <summary>The files speaker separation needs, relative to the folder; optional, a run goes without speakers when they are absent.</summary>
+    public IReadOnlyList<string> SpeakerSeparationFiles { get; init; } = [];
+
+    /// <summary>What to do to get speaker separation; empty when it is available.</summary>
+    public string SpeakerSeparationMessage { get; init; } = "";
+
     /// <summary>True when every required file is present.</summary>
     public bool Ready => MissingFiles.Count == 0;
 }

@@ -33,6 +33,12 @@ internal static class TranscribeCommand
 
         if (outcome.Succeeded)
         {
+            // A notice says the run gave less than was asked (no speakers); it goes with the errors, so a script reading stdout is unaffected.
+            foreach (string notice in outcome.Notices)
+            {
+                errors.WriteLine("note: " + notice);
+            }
+
             if (!arguments.Quiet)
             {
                 output.Write(ConsoleText.Summary(outcome, !arguments.NoSpeakers));
@@ -60,7 +66,13 @@ internal static class ModelsCommand
             output.WriteLine((status.MissingFiles.Contains(file) ? "  missing  " : "  found    ") + file);
         }
 
-        output.WriteLine("Speaker separation: " + (status.SpeakerSeparationAvailable ? "available" : "not installed"));
+        // Speaker separation is optional: its model is listed apart, and its absence is not an error.
+        foreach (string file in status.SpeakerSeparationFiles)
+        {
+            output.WriteLine((status.SpeakerSeparationAvailable ? "  found    " : "  missing  ") + file + " (optional: speaker separation)");
+        }
+
+        output.WriteLine(status.SpeakerSeparationAvailable ? "Speaker separation: available" : "Speaker separation: not installed; " + status.SpeakerSeparationMessage);
         if (!status.Ready)
         {
             errors.WriteLine("error: " + status.Message);
