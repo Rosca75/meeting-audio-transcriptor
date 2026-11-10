@@ -3460,7 +3460,90 @@
       "wer": 0.05791876952655611
      }
     }
-   }
+   },
+   "model_load_note": "sherpa loads lazily per language; warmup_s (load of 3 recognisers + first decode) = 10.6 s"
   }
+ },
+ "granite_graph": {
+  "opset": [
+   [
+    "ai.onnx",
+    17
+   ]
+  ],
+  "ir_version": 8,
+  "nodes": 3850,
+  "MatMulInteger": 163,
+  "DynamicQuantizeLinear": 131,
+  "ConvInteger": 0,
+  "QLinearMatMul": 0,
+  "dynamic_quantisation": true,
+  "last6": [
+   "Mul /model/encoder/layers.15/Mul_1",
+   "Add /model/encoder/layers.15/Add_3",
+   "LayerNormalization .../layers.15/norm_out",
+   "MatMul /model/ctc_head/MatMul (fp32, no int8)",
+   "Add /model/ctc_head/Add (inputs: model.encoder.out.bias, MatMul output)",
+   "ArgMax /ArgMax (axis -1, keepdims 0) -> token_ids"
+  ],
+  "argmax_input": "/model/ctc_head/Add_output_0",
+  "argmax_input_kind": "raw logits (logsumexp over vocab 6.7..20, not 0), no Softmax/LogSoftmax in graph",
+  "extra_output_shape": "[1, 350, 16384] float32 for 28 s (12.5 frames/s)",
+  "max_softmax": {
+   "en read 28s": {
+    "emitted_mean": 0.939,
+    "p10": 0.7,
+    "min": 0.471
+   },
+   "AMI headset": {
+    "emitted_mean": 0.95,
+    "p10": 0.802,
+    "min": 0.491
+   },
+   "AMI distant": {
+    "emitted_mean": 0.959,
+    "p10": 0.93,
+    "min": 0.457
+   },
+   "office noise": {
+    "emitted_n": 1,
+    "emitted_mean": 0.991
+   },
+   "silence": {
+    "emitted_n": 1,
+    "mean": 0.839
+   }
+  },
+  "file": "/tmp/granite-with-scores.onnx (temp, not kept in repo)"
+ },
+ "parakeet_int8_dropped_spans": {
+  "file": "fr-single-01 chunk 3 (26.5 s)",
+  "words_per_chunk": {
+   "A int8 enc+int8 dec": [
+    65,
+    78,
+    15,
+    23
+   ],
+   "A int8 enc+fp32 dec": [
+    65,
+    78,
+    17,
+    23
+   ],
+   "B fp32 enc+int8 dec": [
+    65,
+    78,
+    62,
+    23
+   ],
+   "B fp32": [
+    65,
+    78,
+    62,
+    23
+   ]
+  },
+  "conclusion": "istupakov int8 ENCODER drops spans (deterministic, independent of threads); decoder_joint int8 is harmless"
  }
 }
