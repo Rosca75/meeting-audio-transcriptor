@@ -145,7 +145,7 @@ internal sealed class WindowsDesktopHost : IDesktopHost, IAutomationActions
         {
             string profile = DataFolder.WebViewProfile(DataFolder.Current());
             Directory.CreateDirectory(profile);
-            CoreWebView2Environment environment = await CoreWebView2Environment.CreateAsync(null, profile, null);
+            CoreWebView2Environment environment = await CoreWebView2Environment.CreateAsync(null, profile, EnvironmentOptions());
             CoreWebView2Controller controller = await environment.CreateCoreWebView2ControllerAsync(window.Handle);
             try
             {
@@ -178,6 +178,22 @@ internal sealed class WindowsDesktopHost : IDesktopHost, IAutomationActions
             window.Close();
         }
     }
+
+    /// <summary>The browser process's options: no background traffic of its own and no crash upload.</summary>
+    /// <remarks>
+    /// The switches are <see cref="BrowserArguments"/>. Custom crash reporting keeps crash dumps on the
+    /// machine instead of sending them to Microsoft. Tracking prevention is off because the window
+    /// shows only the embedded page, which has no tracker to block, and its block list is one more
+    /// thing the runtime would keep current. What stays outside the application's control: the
+    /// Evergreen runtime's updater is a machine-wide Windows service this process does not start,
+    /// and a machine policy can force a feature back on.
+    /// </remarks>
+    private static CoreWebView2EnvironmentOptions EnvironmentOptions() => new()
+    {
+        AdditionalBrowserArguments = BrowserArguments.CommandLine,
+        IsCustomCrashReportingEnabled = true,
+        EnableTrackingPrevention = false,
+    };
 
     private void Configure(CoreWebView2Environment environment, CoreWebView2 core)
     {
