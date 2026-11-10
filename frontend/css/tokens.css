@@ -1,0 +1,56 @@
+/* tokens.css: the page's design tokens, colours for light and dark and the spacing, type and radius
+   scales. style.css consumes them and declares none of its own, so a value changes in one place.
+   Text colours keep at least 4.5 to 1 contrast on their backgrounds in both schemes. */
+
+:root {
+  color-scheme: light dark;
+
+  --color-bg: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-text: #1b1f24;
+  --color-muted: #4a5560;
+  --color-border: #b8c1ca;
+  --color-primary: #0b5cad;
+  --color-primary-text: #ffffff;
+  --color-primary-hover: #084a8c;
+  --color-error: #a8071a;
+  --color-error-bg: #fdecee;
+  --color-info-bg: #e8f1fb;
+  --color-focus: #0b5cad;
+  --color-drop-bg: #e8f1fb;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  --radius: 0.5rem;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+  --text-small: 0.875rem;
+  --text-base: 1rem;
+  --text-h1: 1.5rem;
+  --text-h2: 1.125rem;
+  --page-width: 44rem;
+  --focus-ring: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #14181d;
+    --color-surface: #1e242b;
+    --color-text: #e8ecf0;
+    --color-muted: #aab4be;
+    --color-border: #4a5560;
+    --color-primary: #5aaeff;
+    --color-primary-text: #08111a;
+    --color-primary-hover: #82c0ff;
+    --color-error: #ff9aa5;
+    --color-error-bg: #3a1a1f;
+    --color-info-bg: #1b2a3a;
+    --color-focus: #82c0ff;
+    --color-drop-bg: #1b2a3a;
+  }
+}

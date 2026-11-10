@@ -28,6 +28,9 @@ Every test class carries a `Category` trait, so a run can be scoped to one conce
 - Inference isolation: only the inference project references the ONNX Runtime package.
 - No network: no file under `src/` names an HTTP or socket type; the exemption list is empty.
 - Package versions: a version appears in `Directory.Packages.props` alone.
+- Page hashes: every file under `frontend/` except `frontend/frontend-hashes.txt` is listed there as `<sha256> *<path>` and matches. A page edit moves its line in the same commit: `node build/update-frontend-hashes.mjs` rewrites the file.
+- Page tests present: the page suite has a test file per logic module, none silenced, and the charters name its command.
+- Copy: no em dash in `frontend/js/copy.js` or in any `.cs` file under `src/`. Frontend scripts and stylesheets open with a purpose header like every other source file.
 
 A failing guard names a real inconsistency: fix the inconsistency and leave the guard as it is. An exemption names its file and its reason.
 
@@ -45,6 +48,13 @@ dotnet test -c Release --filter-trait "Tier=deep" --ignore-exit-code 8   # bench
 dotnet test --project tests/MeetingAudioTranscriptor.Guards.Tests    # the guards alone
 dotnet test --filter-trait "Category=writers" --ignore-exit-code 8   # one category
 ```
+
+```
+node --test "frontend/**/*.test.js"                                # the page suite (the quoted recursive glob is required)
+node build/update-frontend-hashes.mjs                              # after a page edit, rewrites frontend/frontend-hashes.txt
+```
+
+The page suite runs on Node with no DOM and no bridge: state transitions, the api over a fake transport, the controller flows and the copy rules. The bridge's own tests are in `tests/MeetingAudioTranscriptor.App.Tests/Bridge/` over a fake window host and a fake transcriber.
 
 ```
 node build/fetch-models.mjs --into models                          # fetch the default models (add --set all for the candidates)
