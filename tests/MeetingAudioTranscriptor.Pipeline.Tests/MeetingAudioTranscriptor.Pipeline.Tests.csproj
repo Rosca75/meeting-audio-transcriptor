@@ -1,0 +1,17 @@
+<!-- The Pipeline suite: the engine's algorithms run end to end with the real models over the
+     benchmark audio, in the models tier, skipping by name when the models or the audio are absent. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MeetingAudioTranscriptor.Pipeline.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MeetingAudioTranscriptor.Inference\MeetingAudioTranscriptor.Inference.csproj" />
+    <ProjectReference Include="..\..\src\MeetingAudioTranscriptor.Engine\MeetingAudioTranscriptor.Engine.csproj" />
+  </ItemGroup>
+</Project>
