@@ -90,10 +90,11 @@ The page suite runs on Node with no DOM and no bridge: state transitions, the ap
 ```
 node build/fetch-models.mjs --into models                          # fetch the default models (add --set all for the candidates)
 MAT_MODELS_DIR=<dir> dotnet test --filter-trait "Tier=models" --ignore-exit-code 8   # the models tier over a models folder elsewhere
-node --test build/*.test.mjs                                       # the fetch tools, against a loopback server
+node --test build/*.test.mjs                                       # the fetch tools and the graph patch, against a loopback server
+node build/fetch-models.mjs --into models --keep-sources           # also keep the pinned sources a shipped graph is derived from
 ```
 
-`MeetingAudioTranscriptor.Pipeline.Tests` runs the engine's stages over the real models and the benchmark audio, in the models and deep tiers only. It reads the audio from `MAT_BENCH_DATA` when that variable is set, and from `bench/data` of the repository otherwise (`node bench/testset/fetch-testset.mjs` builds it); a missing file skips its test by name. Its deep-tier measurements print markdown tables, and also write them to the file `MAT_VAD_REPORT` names when that variable is set; run them pinned to one core, because they report single-core cost.
+`MeetingAudioTranscriptor.Pipeline.Tests` runs the engine's stages over the real models and the benchmark audio, in the models and deep tiers only. It reads the audio from `MAT_BENCH_DATA` when that variable is set, and from `bench/data` of the repository otherwise (`node bench/testset/fetch-testset.mjs` builds it); a missing file skips its test by name. Its deep-tier measurements print markdown tables, and also write them to the file `MAT_VAD_REPORT` (the VAD) or `MAT_GRANITE_REPORT` (the recogniser) names when that variable is set; run them pinned to one core, because they report single-core cost. The models-tier test comparing the derived Granite graph with its pinned source skips unless the source was kept with `--keep-sources`.
 
 ```
 MAT_BENCH_DATA=<dir> dotnet test --project tests/MeetingAudioTranscriptor.Pipeline.Tests --filter "Tier=models"

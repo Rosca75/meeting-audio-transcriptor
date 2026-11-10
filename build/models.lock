@@ -1,5 +1,5 @@
 {
-  "comment": "The models the application can run, pinned file by file by address, size and hash. Every url names a commit or a release tag, never a moving branch, so a version number names one set of bytes. `path` is relative to the models root (the `models` folder beside the executable, or MAT_MODELS_DIR in development). `set` is `default` for a model a release ships and `candidate` for one only the benchmarks read. `role` is model, tokenizer, config or auxiliary. An entry marked optional is skipped without failing when it cannot be fetched. Fetch with: node build/fetch-models.mjs --into <dir> [--set all] [--model <name>].",
+  "comment": "The models the application can run, pinned file by file by address, size and hash. Every url names a commit or a release tag, never a moving branch, so a version number names one set of bytes. `path` is relative to the models root (the `models` folder beside the executable, or MAT_MODELS_DIR in development). `set` is `default` for a model a release ships and `candidate` for one only the benchmarks read. `role` is model, tokenizer, config or auxiliary, or source for an entry of a model's `sources`: a pinned file a shipped file is derived from (an entry with `derive` names its source and the patch of build/onnx-patch.mjs that makes it, and is verified by size and hash like a download); a source is fetched only to derive and is not shipped unless --keep-sources asks for it. An entry marked optional is skipped without failing when it cannot be fetched. Fetch with: node build/fetch-models.mjs --into <dir> [--set all] [--model <name>] [--keep-sources].",
   "models": [
     {
       "name": "parakeet-tdt-0.6b-v3",
@@ -40,16 +40,19 @@
     },
     {
       "name": "granite-speech-5.0-470m-turboctc",
-      "set": "candidate",
+      "set": "default",
       "licence": "Apache-2.0",
-      "source": "https://huggingface.co/gagni/granite-speech-5.0-470m-turboctc-onnx at 67e808153220ecd3d8614adab9379c0d17bbe024 (int8 ONNX export of https://huggingface.co/ibm-granite/granite-speech-5.0-470m-turboctc at 91dcb0605daf65f88dbb04fef015c423241d941d)",
-      "attribution": "IBM Granite Speech 5.0 470M TurboCTC, Copyright IBM Corp., licensed under the Apache License 2.0; ONNX export with int8 quantisation by gagni, tokenizer.json unchanged.",
+      "source": "https://huggingface.co/gagni/granite-speech-5.0-470m-turboctc-onnx at 67e808153220ecd3d8614adab9379c0d17bbe024 (int8 ONNX export of https://huggingface.co/ibm-granite/granite-speech-5.0-470m-turboctc at 91dcb0605daf65f88dbb04fef015c423241d941d); model.int8.scores.onnx is that export with a per-frame peak probability output (token_scores) appended by build/onnx-patch.mjs",
+      "attribution": "IBM Granite Speech 5.0 470M TurboCTC, Copyright IBM Corp., licensed under the Apache License 2.0; ONNX export with int8 quantisation by gagni, modified to also output per-frame token probabilities; tokenizer.json unchanged.",
       "files": [
         {
-          "path": "granite-speech-5.0-470m-turboctc/model.int8.onnx",
-          "url": "https://huggingface.co/gagni/granite-speech-5.0-470m-turboctc-onnx/resolve/67e808153220ecd3d8614adab9379c0d17bbe024/model.int8.onnx",
-          "sha256": "3db95700883af468c8b78c09131ede9302b273e8388c1467a778a02f1d00c632",
-          "bytes": 552434296,
+          "path": "granite-speech-5.0-470m-turboctc/model.int8.scores.onnx",
+          "derive": {
+            "from": "granite-speech-5.0-470m-turboctc/model.int8.onnx",
+            "patch": "ctc-token-scores"
+          },
+          "sha256": "6cf799e8dfea6deb341dc1dcf1dcb0fcd9b88a70c7b90edcd552d363e8505986",
+          "bytes": 552434586,
           "role": "model"
         },
         {
@@ -58,6 +61,15 @@
           "sha256": "a1c3ca763ce0690faf0df3456365358547acfdf766122c9e4a69be8e8708042e",
           "bytes": 1699784,
           "role": "tokenizer"
+        }
+      ],
+      "sources": [
+        {
+          "path": "granite-speech-5.0-470m-turboctc/model.int8.onnx",
+          "url": "https://huggingface.co/gagni/granite-speech-5.0-470m-turboctc-onnx/resolve/67e808153220ecd3d8614adab9379c0d17bbe024/model.int8.onnx",
+          "sha256": "3db95700883af468c8b78c09131ede9302b273e8388c1467a778a02f1d00c632",
+          "bytes": 552434296,
+          "role": "source"
         }
       ]
     },
