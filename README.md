@@ -9,7 +9,7 @@ Status: under construction. The solution builds and its tests pass, and no trans
 ```
 dotnet build -warnaserror
 dotnet build src/MeetingAudioTranscriptor.Shell -r win-x64 -warnaserror
-dotnet test --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models"
+dotnet test --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models" --ignore-exit-code 8
 ```
 
 The second command builds the Windows desktop host; the first builds the Linux one on Linux. See `docs/TESTING.md` for the test tiers.

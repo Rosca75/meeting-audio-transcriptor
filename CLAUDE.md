@@ -108,7 +108,7 @@ Everything else is the base class library.
 
 ```
 dotnet build -warnaserror
-dotnet test --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models"
+dotnet test --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models" --ignore-exit-code 8
 dotnet build src/MeetingAudioTranscriptor.Shell -r win-x64 -warnaserror
 ```
 

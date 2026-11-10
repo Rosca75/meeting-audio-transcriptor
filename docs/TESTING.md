@@ -56,7 +56,7 @@ meeting-audio-transcriptor-cli benchmark --long-file <path> --language en  # tim
 ## 6. Commands
 
 ```
-dotnet test --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models"   # the unit tier
+dotnet test --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models" --ignore-exit-code 8   # the unit tier
 dotnet test --filter-trait "Tier=integration" --ignore-exit-code 8   # integration
 dotnet test --filter-trait "Tier=models" --ignore-exit-code 8        # real models
 dotnet test -c Release --filter-trait "Tier=deep" --ignore-exit-code 8   # benchmarks, on a quiet machine
