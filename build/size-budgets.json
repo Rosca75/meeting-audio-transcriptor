@@ -1,0 +1,4 @@
+{
+  "comment": "Expected sizes in bytes of each platform's full package, checked by build/publish.ps1 with a tolerance of ten percent. Rewritten only by a run with -RecordBudgets (the release workflow's record_budgets input) in a pull request that shows the numbers moving.",
+  "budgets": {}
+}

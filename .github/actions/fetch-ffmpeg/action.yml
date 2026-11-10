@@ -1,0 +1,28 @@
+# Puts the pinned LGPL ffmpeg of the runner's platform into artifacts/cache/ffmpeg, which is where
+# build/publish.ps1 looks by default, and points MAT_FFMPEG at the binary so the media tests and the
+# application under test decode with it.
+#
+# The cache is keyed on the lock, so a new pin is a fresh download. The fetch tool verifies the
+# archive and the extracted binary against the lock either way. The caller sets up Node first.
+
+name: Fetch ffmpeg
+description: Restores or downloads the pinned ffmpeg for this runner and verifies it against build/ffmpeg.lock.
+
+runs:
+  using: composite
+  steps:
+    - name: Cache ffmpeg
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: artifacts/cache/ffmpeg
+        key: ffmpeg-${{ runner.os }}-${{ hashFiles('build/ffmpeg.lock') }}
+
+    - name: Fetch and verify ffmpeg
+      shell: pwsh
+      run: |
+        $rid = if ($IsWindows) { 'win-x64' } else { 'linux-x64' }
+        node build/fetch-ffmpeg.mjs --rid $rid --into artifacts/cache/ffmpeg
+        if ($LASTEXITCODE -ne 0) { throw "build/fetch-ffmpeg.mjs failed with exit code $LASTEXITCODE; its message above names what could not be fetched or verified. If the build address has gone away, see docs/RELEASING.md" }
+        $binary = if ($IsWindows) { 'ffmpeg.exe' } else { 'ffmpeg' }
+        $path = (Resolve-Path "artifacts/cache/ffmpeg/$rid/$binary").Path
+        "MAT_FFMPEG=$path" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV

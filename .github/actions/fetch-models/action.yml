@@ -1,0 +1,28 @@
+# Puts the model files build/models.lock ships into artifacts/cache/models, which is where
+# build/publish.ps1 looks by default, and points MAT_MODELS_DIR at the folder so the models tier
+# reads the same files.
+#
+# The cache is keyed on the lock, so a changed hash is a changed model and a fresh download, and an
+# unchanged lock restores 800 MB in seconds instead of fetching it. The fetch tool verifies every
+# file by size and SHA-256 whether it was restored or downloaded, so a damaged cache cannot ship.
+# The caller sets up Node first.
+
+name: Fetch the model files
+description: Restores or downloads the default model set and verifies it against build/models.lock.
+
+runs:
+  using: composite
+  steps:
+    - name: Cache the model files
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: artifacts/cache/models
+        key: models-${{ runner.os }}-${{ hashFiles('build/models.lock') }}
+
+    - name: Fetch and verify the model files
+      shell: pwsh
+      run: |
+        node build/fetch-models.mjs --into artifacts/cache/models
+        if ($LASTEXITCODE -ne 0) { throw "build/fetch-models.mjs failed with exit code $LASTEXITCODE; its message above names the file that could not be fetched or verified. If a model address has gone away, see docs/RELEASING.md" }
+        $folder = (Resolve-Path artifacts/cache/models).Path
+        "MAT_MODELS_DIR=$folder" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
