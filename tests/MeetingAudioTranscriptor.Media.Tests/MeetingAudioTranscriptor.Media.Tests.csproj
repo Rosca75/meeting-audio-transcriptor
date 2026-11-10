@@ -1,0 +1,17 @@
+<!-- The Media suite: the converter, the ffmpeg parsing and the opener's decisions in the unit tier; real
+     ffmpeg decodes in the integration tier; Media Foundation on Windows alone. Run on Microsoft.Testing.Platform. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MeetingAudioTranscriptor.Media.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MeetingAudioTranscriptor.Media\MeetingAudioTranscriptor.Media.csproj" />
+    <ProjectReference Include="..\..\src\MeetingAudioTranscriptor.Engine\MeetingAudioTranscriptor.Engine.csproj" />
+  </ItemGroup>
+</Project>
