@@ -43,10 +43,11 @@ public sealed class SpeakerTimeline
     private readonly SpeakerTurn[] _turns;
     private readonly double _strongTurnSeconds;
 
-    private SpeakerTimeline(SpeakerTurn[] turns, int speakerCount, double strongTurnSeconds)
+    private SpeakerTimeline(SpeakerTurn[] turns, int[] clusterOfSpeaker, double strongTurnSeconds)
     {
         _turns = turns;
-        SpeakerCount = speakerCount;
+        SpeakerCount = clusterOfSpeaker.Length;
+        ClusterOfSpeaker = clusterOfSpeaker;
         _strongTurnSeconds = strongTurnSeconds;
     }
 
@@ -55,6 +56,9 @@ public sealed class SpeakerTimeline
 
     /// <summary>The number of distinct speakers.</summary>
     public int SpeakerCount { get; }
+
+    /// <summary>The cluster label each speaker index was built from.</summary>
+    internal IReadOnlyList<int> ClusterOfSpeaker { get; }
 
     /// <summary>The anonymous label of a speaker index: Speaker 1 for index 0.</summary>
     public static string Label(int speaker)
@@ -195,7 +199,13 @@ public sealed class SpeakerTimeline
             }
         }
 
-        return new SpeakerTimeline([.. turns], numbering.Count, strongTurnSeconds);
+        int[] clusterOfSpeaker = new int[numbering.Count];
+        foreach ((int cluster, int speaker) in numbering)
+        {
+            clusterOfSpeaker[speaker] = cluster;
+        }
+
+        return new SpeakerTimeline([.. turns], clusterOfSpeaker, strongTurnSeconds);
     }
 
     /// <summary>The speaker of every word, by the word's mid-point, smoothed so a lone word inside a sentence follows its neighbours.</summary>

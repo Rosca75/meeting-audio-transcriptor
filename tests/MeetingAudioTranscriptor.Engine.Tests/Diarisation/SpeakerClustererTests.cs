@@ -171,6 +171,32 @@ public sealed class SpeakerClustererTests
     }
 
     [Fact]
+    public void ShortWindowsCountForTheirOwnLengthAgainstTheMinimum()
+    {
+        // Three speakers of 40 full windows and a stray voice of three windows. As full 3 s windows at a
+        // 2 s hop the stray holds 6 s, above the 4 s minimum; as three 0.8 s windows, cut from short
+        // speech regions, it holds 2.4 s and is folded.
+        (List<float[]> points, _) = Gaussians([40, 40, 40, 3], seed: 5, shuffle: false);
+        double[] full = Enumerable.Repeat(3.0, points.Count).ToArray();
+        double[] shortStray = full.Select((length, i) => i >= 120 ? 0.8 : length).ToArray();
+
+        int[] asFull = SpeakerClusterer.Cluster(points, new DiarisationOptions(), CancellationToken.None, full);
+        int[] asShort = SpeakerClusterer.Cluster(points, new DiarisationOptions(), CancellationToken.None, shortStray);
+
+        Assert.True(Count(asFull) == 4, $"got {Count(asFull)} clusters with the stray's windows full, wanted 4");
+        Assert.True(Count(asShort) == 3, $"got {Count(asShort)} clusters with the stray's windows 0.8 s long, wanted 3");
+    }
+
+    [Fact]
+    public void WindowLengthsMustMatchTheEmbeddings()
+    {
+        (List<float[]> points, _) = Gaussians([5, 5], seed: 3);
+
+        ArgumentException error = Assert.Throws<ArgumentException>(() => SpeakerClusterer.Cluster(points, new DiarisationOptions(), CancellationToken.None, [3.0]));
+        Assert.Contains("one length per window", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TheResultIsDeterministic()
     {
         (List<float[]> points, _) = Gaussians([25, 25, 25], spread: 0.15, seed: 11);
