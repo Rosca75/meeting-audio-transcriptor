@@ -97,6 +97,9 @@ public static class OrtRunnerFactory
             LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_ERROR,
         };
         session.AddSessionConfigEntry(AllowSpinningKey, options.AllowSpinning ? "1" : "0");
+
+        // Without VNNI the fast 8-bit kernels saturate and cost accuracy; see QuantizedKernelPrecision.
+        session.AddSessionConfigEntry(QuantizedKernelPrecision.ConfigurationKey, QuantizedKernelPrecision.Enabled ? "1" : "0");
         if (options.OptimizedModelCachePath is { Length: > 0 } cachePath)
         {
             session.OptimizedModelFilePath = cachePath;
