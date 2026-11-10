@@ -49,7 +49,7 @@ public sealed class FfmpegAudioSourceTests : IClassFixture<MediaFixtures>
             "video+audio.mp4",
             "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=25",
             "-f", "lavfi", "-i", MediaFixtures.Sine(44100, 1),
-            "-filter:a", MediaFixtures.CopyToChannels(2), "-c:v", "libx264", "-c:a", "aac", "-shortest");
+            "-filter:a", MediaFixtures.CopyToChannels(2), "-c:v", "libopenh264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest");
 
         using FfmpegAudioSource source = new(path, _media.Ffmpeg!);
         float[] samples = MediaFixtures.ReadAll(source);
@@ -117,7 +117,7 @@ public sealed class FfmpegAudioSourceTests : IClassFixture<MediaFixtures>
     public void AVideoWithoutSoundSaysItHasNoAudioStream()
     {
         _media.SkipWithoutFfmpeg();
-        string path = _media.Generate("video-only.mp4", "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=25", "-c:v", "libx264");
+        string path = _media.Generate("video-only.mp4", "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=25", "-c:v", "libopenh264", "-pix_fmt", "yuv420p");
 
         AudioDecodeException e = Assert.Throws<AudioDecodeException>(() => new FfmpegAudioSource(path, _media.Ffmpeg!));
 

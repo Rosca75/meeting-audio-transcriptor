@@ -282,7 +282,7 @@ public sealed class AudioFileOpenerTests : IDisposable
     }
 
     private static FfmpegLocator Locator(FfmpegLocation? ffmpeg) =>
-        new(_ => null, "/opt/mat", isWindows: false, path => ffmpeg is not null && path == "/opt/mat/ffmpeg/ffmpeg");
+        new(_ => null, "/opt/mat", isWindows: false, path => ffmpeg is not null && path == Path.Combine("/opt/mat", "ffmpeg", "ffmpeg"));
 
     /// <summary>A decoder stand-in that owns the stream it was given, as a real source does.</summary>
     private sealed class FakeSource(string name, Stream? stream) : INamedAudioSource

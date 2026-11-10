@@ -57,7 +57,9 @@ public sealed class ConsoleOutputTests
     [Fact]
     public void ATerminalGetsOneUpdatingLine()
     {
-        StringWriter writer = new();
+        // A console ends a line with the platform's newline; the writer pins it to one character so
+        // the counts below mean the same on Windows, whose newline is two.
+        StringWriter writer = new() { NewLine = "\n" };
         ProgressDisplay display = new(writer, terminal: true);
 
         display.Report(new TranscriptionProgress(TranscriptionStage.Transcribing, 0, 0.10));
@@ -72,7 +74,7 @@ public sealed class ConsoleOutputTests
     [Fact]
     public void ALogGetsALineEveryTenthAndEveryStage()
     {
-        StringWriter writer = new();
+        StringWriter writer = new() { NewLine = "\n" };
         ProgressDisplay display = new(writer, terminal: false);
 
         for (int i = 0; i <= 100; i++)

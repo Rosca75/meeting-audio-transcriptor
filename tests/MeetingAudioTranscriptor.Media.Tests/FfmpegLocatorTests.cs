@@ -1,6 +1,7 @@
 // Tests the ffmpeg lookup order (the override, the bundled copy, the PATH) over an injected environment and file system.
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Xunit;
 
 namespace MeetingAudioTranscriptor.Media.Tests;
@@ -10,12 +11,16 @@ public sealed class FfmpegLocatorTests
 {
     private const string AppDirectory = "/opt/mat";
 
+    // The locator joins folders with the platform's separator, as a real path needs: the expected
+    // paths are joined the same way, so the tests read alike on Windows and elsewhere.
+    private static readonly string Bundled = Path.Combine(AppDirectory, "ffmpeg", "ffmpeg");
+
     [Fact]
     public void TheEnvironmentVariableWinsWhenItsFileExists()
     {
         FfmpegLocator locator = Locator(
             new() { ["MAT_FFMPEG"] = " /custom/ffmpeg ", ["PATH"] = "/usr/bin" },
-            "/custom/ffmpeg", "/opt/mat/ffmpeg/ffmpeg", "/usr/bin/ffmpeg");
+            "/custom/ffmpeg", Bundled, Path.Combine("/usr/bin", "ffmpeg"));
 
         FfmpegLocation? found = locator.Locate();
 
@@ -27,11 +32,11 @@ public sealed class FfmpegLocatorTests
     [Fact]
     public void AMissingOverrideFallsThroughToTheBundledCopyAndIsNamedInTheSearch()
     {
-        FfmpegLocator locator = Locator(new() { ["MAT_FFMPEG"] = "/nowhere/ffmpeg" }, "/opt/mat/ffmpeg/ffmpeg");
+        FfmpegLocator locator = Locator(new() { ["MAT_FFMPEG"] = "/nowhere/ffmpeg" }, Bundled);
 
         FfmpegLocation? found = locator.Locate();
 
-        Assert.True(found == new FfmpegLocation("/opt/mat/ffmpeg/ffmpeg", FfmpegOrigin.Bundled), $"got {found}, wanted the bundled copy");
+        Assert.True(found == new FfmpegLocation(Bundled, FfmpegOrigin.Bundled), $"got {found}, wanted the bundled copy");
         Assert.True(
             locator.DescribeSearch().Contains("MAT_FFMPEG=/nowhere/ffmpeg (no such file)", StringComparison.Ordinal),
             $"got '{locator.DescribeSearch()}', wanted the missing override named");
@@ -40,23 +45,25 @@ public sealed class FfmpegLocatorTests
     [Fact]
     public void TheFirstPathEntryHoldingFfmpegIsChosen()
     {
-        FfmpegLocator locator = Locator(new() { ["PATH"] = "/a::/b:/c" }, "/b/ffmpeg", "/c/ffmpeg");
+        string inB = Path.Combine("/b", "ffmpeg");
+        FfmpegLocator locator = Locator(new() { ["PATH"] = "/a::/b:/c" }, inB, Path.Combine("/c", "ffmpeg"));
 
         FfmpegLocation? found = locator.Locate();
 
-        Assert.True(found == new FfmpegLocation("/b/ffmpeg", FfmpegOrigin.SearchPath), $"got {found}, wanted /b/ffmpeg from the PATH");
-        Assert.True(found!.ToString() == "ffmpeg (PATH) at /b/ffmpeg", $"got '{found}', wanted the origin named");
+        Assert.True(found == new FfmpegLocation(inB, FfmpegOrigin.SearchPath), $"got {found}, wanted {inB} from the PATH");
+        Assert.True(found!.ToString() == $"ffmpeg (PATH) at {inB}", $"got '{found}', wanted the origin named");
     }
 
     [Fact]
     public void OnWindowsTheExecutableIsFfmpegExeAndThePathIsSplitOnSemicolons()
     {
-        FfmpegLocator locator = Locator(new() { ["PATH"] = "\"/tools/x\";/tools/y" }, isWindows: true, "/tools/x/ffmpeg.exe");
+        string inX = Path.Combine("/tools/x", "ffmpeg.exe");
+        FfmpegLocator locator = Locator(new() { ["PATH"] = "\"/tools/x\";/tools/y" }, isWindows: true, inX);
 
         FfmpegLocation? found = locator.Locate();
 
-        Assert.True(found == new FfmpegLocation("/tools/x/ffmpeg.exe", FfmpegOrigin.SearchPath), $"got {found}, wanted the quoted PATH entry unquoted");
-        Assert.True(locator.BundledPath == "/opt/mat/ffmpeg/ffmpeg.exe", $"got {locator.BundledPath}, wanted ffmpeg.exe in the ffmpeg folder");
+        Assert.True(found == new FfmpegLocation(inX, FfmpegOrigin.SearchPath), $"got {found}, wanted the quoted PATH entry unquoted");
+        Assert.True(locator.BundledPath == Path.Combine(AppDirectory, "ffmpeg", "ffmpeg.exe"), $"got {locator.BundledPath}, wanted ffmpeg.exe in the ffmpeg folder");
     }
 
     [Fact]
@@ -69,7 +76,7 @@ public sealed class FfmpegLocatorTests
 
         Assert.True(found is null, $"got {found}, wanted none");
         Assert.True(
-            search.Contains("/opt/mat/ffmpeg/ffmpeg", StringComparison.Ordinal) && search.Contains("PATH", StringComparison.Ordinal),
+            search.Contains(Bundled, StringComparison.Ordinal) && search.Contains("PATH", StringComparison.Ordinal),
             $"got '{search}', wanted the bundled path and the PATH named");
     }
 
