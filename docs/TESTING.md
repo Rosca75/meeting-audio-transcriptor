@@ -30,6 +30,7 @@ Every test class carries a `Category` trait, so a run can be scoped to one conce
 - Package versions: a version appears in `Directory.Packages.props` alone.
 - Page hashes: every file under `frontend/` except `frontend/frontend-hashes.txt` is listed there as `<sha256> *<path>` and matches. A page edit moves its line in the same commit: `node build/update-frontend-hashes.mjs` rewrites the file.
 - Page tests present: the page suite has a test file per logic module, none silenced, and the charters name its command.
+- Workflow pins: every `uses:` under `.github` is a full 40-character commit SHA, and `NOTICE` names every default model and every ffmpeg build the locks ship.
 - Copy: no em dash in `frontend/js/copy.js` or in any `.cs` file under `src/`. Frontend scripts and stylesheets open with a purpose header like every other source file.
 
 A failing guard names a real inconsistency: fix the inconsistency and leave the guard as it is. An exemption names its file and its reason.
@@ -104,3 +105,16 @@ The models tier reads its model files from `MAT_MODELS_DIR` when that variable i
 Read the test count after every run: zero tests proves nothing. A suite with no test in a tier exits with code 8; add `--ignore-exit-code 8` when running a tier some suites do not hold.
 
 The Windows desktop host builds from Linux with `dotnet build src/MeetingAudioTranscriptor.Shell -r win-x64 -warnaserror`.
+
+## 7. Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request to `main` and every push to `main`, on `ubuntu-latest` and `windows-latest`, because the application ships for both and a break on one system is invisible on the other.
+
+| Job | Runs |
+|---|---|
+| `build-and-test` | restore, `dotnet build --no-restore -warnaserror`, the unit tier (guards included), the page suite and the build tool suites |
+| `integration` | the integration tier with the pinned ffmpeg (`MAT_FFMPEG`); on Windows the Media Foundation tests run against a real Windows, on Linux the window tests run under `xvfb-run` |
+| `models` | the models tier over the real default models (`MAT_MODELS_DIR`), without the benchmark audio: tests that need it skip by name |
+| `package` | `build/publish.ps1 -SkipModels`: publish, shared-runtime check, removal, unexpected-file refusal and smoke test, without the models |
+
+The models and ffmpeg are fetched by the Node tools through the composite actions under `.github/actions/` and cached keyed on the hash of their lock files. Two guards cover the CI files: every `uses:` in `.github` is a full 40-character commit SHA (local `./.github/actions/` paths excepted), and every model of the default set and every ffmpeg build is credited in `NOTICE`. `docs/RELEASING.md` owns the release workflow.

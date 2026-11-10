@@ -1,0 +1,171 @@
+# The continuous integration workflow: builds the solution with warnings as errors and runs every
+# tier on both operating systems the application ships for, because a Windows-only or Linux-only
+# break is the likeliest kind in a program with one engine and two window hosts.
+#
+#   build-and-test  build, the unit tier (guards included), the page suite and the tool suites
+#   integration     the integration tier with the pinned ffmpeg; on Windows this runs the Media
+#                   Foundation tests against a real Windows, on Linux the window tests under xvfb
+#   models          the models tier over the real models, without the benchmark audio
+#   package         build/publish.ps1 without models, to prove the publish pipeline end to end
+#
+# Pushes to main and every pull request to main run it; a newer run of the same ref cancels the
+# older one. A feature branch is built when its pull request opens, so a push and its pull request
+# are not built twice.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+  TESTINGPLATFORM_TELEMETRY_OPTOUT: 1
+
+jobs:
+  build-and-test:
+    name: build-and-test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up the toolchain
+        uses: ./.github/actions/setup
+
+      - name: Restore
+        run: dotnet restore
+
+      # Each host builds its own desktop host: the Windows runner the web view host, the Linux
+      # runner the GTK host. Warnings are errors, and CI=true also switches the trim analyzer on.
+      - name: Build
+        run: dotnet build --no-restore -warnaserror
+
+      - name: Unit tier, the guards included
+        run: dotnet test --no-build --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models" --ignore-exit-code 8
+
+      - name: Page suite
+        run: node --test "frontend/**/*.test.js"
+
+      - name: Build tool suites
+        run: node --test build/*.test.mjs
+
+  integration:
+    name: integration (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up the toolchain
+        uses: ./.github/actions/setup
+
+      - name: Fetch ffmpeg
+        uses: ./.github/actions/fetch-ffmpeg
+
+      # The desktop host's window tests need the system web view libraries and a display, which
+      # xvfb provides; Windows has both.
+      - name: Install the window libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libwebkit2gtk-4.1-0 libgtk-3-0 xvfb
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -warnaserror
+
+      - name: Integration tier
+        if: runner.os == 'Windows'
+        run: dotnet test --no-build --filter-trait "Tier=integration" --ignore-exit-code 8
+
+      - name: Integration tier under a virtual display
+        if: runner.os == 'Linux'
+        run: xvfb-run -a dotnet test --no-build --filter-trait "Tier=integration" --ignore-exit-code 8
+
+  models:
+    name: models (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up the toolchain
+        uses: ./.github/actions/setup
+
+      - name: Fetch the model files
+        uses: ./.github/actions/fetch-models
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -warnaserror
+
+      # The benchmark audio is not fetched here: the tests that need it skip by name, and the
+      # tests that run read the real models through MAT_MODELS_DIR.
+      - name: Models tier
+        run: dotnet test --no-build --filter-trait "Tier=models" --ignore-exit-code 8
+
+  package:
+    name: package (${{ matrix.rid }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: windows-latest
+            rid: win-x64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up the toolchain
+        uses: ./.github/actions/setup
+
+      - name: Fetch ffmpeg
+        uses: ./.github/actions/fetch-ffmpeg
+
+      # Without models, so the job stays quick and its archive is named "-nomodels" and can never be
+      # taken for a release. It still publishes both executables, checks the shared runtime, removes
+      # the unneeded files, refuses unexpected ones and runs the smoke test on the staged folder.
+      - name: Publish without models
+        shell: pwsh
+        env:
+          RID: ${{ matrix.rid }}
+        run: ./build/publish.ps1 -Rid $env:RID -SkipModels

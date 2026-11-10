@@ -1,0 +1,208 @@
+# The release workflow: builds the portable package of each operating system on its own hosted
+# runner and attaches both, with their checksums, to the GitHub release of the tag.
+#
+# It starts when build/release.ps1 pushes a tag vX.Y.Z. The version comes only from that tag
+# ("v" removed) and reaches the build as -Version, so no file holds it. A manual run (workflow
+# dispatch) is a dry run: it builds both packages with the version typed in and keeps them as
+# workflow artefacts for 7 days, and creates no release. A tag is never moved or reused.
+#
+#   build     one leg per operating system: fetch models and ffmpeg (cached), unit tier, publish
+#   publish   gathers both archives, writes SHA256SUMS.txt and creates the release (tag runs only)
+#   budgets   with record_budgets, merges the legs' measured sizes into one build/size-budgets.json
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build for the dry run, such as 0.1.0 or 0.1.0-rc.1'
+        required: true
+        default: '0.0.0-dryrun'
+      record_budgets:
+        description: 'Record the packages sizes as the new build/size-budgets.json (uploaded as an artefact, never committed)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+  TESTINGPLATFORM_TELEMETRY_OPTOUT: 1
+
+jobs:
+  build:
+    name: build (${{ matrix.rid }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The version is read from the tag, or from the dispatch input, and validated before anything
+      # uses it. Event data reaches the script through env: only, never spliced into it, because a
+      # tag name or an input is text a stranger could have chosen.
+      - name: Read the version
+        id: version
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$EVENT_NAME" = "push" ]; then
+            number="${REF_NAME#v}"
+          else
+            number="$INPUT_VERSION"
+          fi
+          if ! printf '%s' "$number" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+            echo "::error::'$number' is not a version of the form 1.2.3 or 1.2.3-label; tag it with build/release.ps1 or type a valid version for the dry run"
+            exit 1
+          fi
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+
+      - name: Set up the toolchain
+        uses: ./.github/actions/setup
+
+      - name: Fetch the model files
+        uses: ./.github/actions/fetch-models
+
+      - name: Fetch ffmpeg
+        uses: ./.github/actions/fetch-ffmpeg
+
+      - name: Restore
+        shell: bash
+        run: dotnet restore
+
+      - name: Build
+        shell: bash
+        run: dotnet build --no-restore -warnaserror
+
+      # A release is never cut from a build whose unit tier fails.
+      - name: Unit tier
+        shell: bash
+        run: dotnet test --no-build --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models" --ignore-exit-code 8
+
+      # build/publish.ps1 verifies the models and ffmpeg against their locks, smoke-tests the staged
+      # folder, refuses an archive over the 2,000,000,000 bytes a release asset may hold, and checks
+      # the size budget (or records it).
+      - name: Publish the package
+        shell: pwsh
+        env:
+          RID: ${{ matrix.rid }}
+          VERSION: ${{ steps.version.outputs.number }}
+          RECORD_BUDGETS: ${{ inputs.record_budgets }}
+        run: |
+          $arguments = @{ Rid = $env:RID; Version = $env:VERSION }
+          if ($env:RECORD_BUDGETS -eq 'true') { $arguments.RecordBudgets = $true }
+          ./build/publish.ps1 @arguments
+
+      # The archive is already compressed, so the upload stores it as it is.
+      - name: Keep the package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-${{ matrix.rid }}
+          path: |
+            artifacts/meeting-audio-transcriptor-*.zip
+            artifacts/meeting-audio-transcriptor-*.tar.gz
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Keep the measured sizes
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sizes-${{ matrix.rid }}
+          path: artifacts/sizes.json
+          if-no-files-found: error
+
+      - name: Keep the recorded budgets
+        if: inputs.record_budgets
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: size-budgets-${{ matrix.rid }}
+          path: build/size-budgets.json
+          if-no-files-found: error
+
+  publish:
+    name: publish
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - name: Download both packages
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: dist
+          pattern: release-*
+          merge-multiple: true
+
+      - name: Write the checksums
+        shell: bash
+        working-directory: dist
+        run: |
+          ls -l
+          sha256sum -b *.zip *.tar.gz > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      # Only a tag creates a release; a dry run ends here with the packages kept as artefacts.
+      - name: Create the release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          files: |
+            dist/*.zip
+            dist/*.tar.gz
+            dist/SHA256SUMS.txt
+          generate_release_notes: true
+
+  budgets:
+    name: budgets
+    needs: build
+    if: inputs.record_budgets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download each leg's budgets
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: legs
+          pattern: size-budgets-*
+
+      # Each leg wrote only its own platform's numbers, so the merge is a union by platform.
+      - name: Merge them
+        shell: pwsh
+        run: |
+          $merged = [ordered]@{}
+          foreach ($file in Get-ChildItem legs -Recurse -Filter size-budgets.json) {
+            $leg = Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json -AsHashtable
+            foreach ($rid in $leg['budgets'].Keys) { $merged[$rid] = $leg['budgets'][$rid] }
+          }
+          if ($merged.Count -eq 0) { throw 'no leg uploaded a budget; read the build legs'' logs' }
+          $sorted = [ordered]@{}
+          foreach ($rid in ($merged.Keys | Sort-Object)) { $sorted[$rid] = $merged[$rid] }
+          $comment = 'Expected sizes in bytes of each platform''s full package, checked by build/publish.ps1 with a tolerance of ten percent. Rewritten only by a run with -RecordBudgets (the release workflow''s record_budgets input) in a pull request that shows the numbers moving.'
+          New-Item -ItemType Directory -Force merged | Out-Null
+          $json = ([ordered]@{ comment = $comment; budgets = $sorted } | ConvertTo-Json -Depth 6) + "`n"
+          [System.IO.File]::WriteAllText("$PWD/merged/size-budgets.json", $json, (New-Object System.Text.UTF8Encoding($false)))
+          Get-Content merged/size-budgets.json
+
+      # Never committed from here: a person commits it in a pull request that shows the numbers.
+      - name: Keep the merged budgets
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: size-budgets
+          path: merged/size-budgets.json
+          if-no-files-found: error

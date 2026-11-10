@@ -1,0 +1,19 @@
+# Sets up the toolchain every job needs: the .NET SDK named in global.json and Node 24, which runs
+# the fetch tools and the page tests. One composite action keeps the two pins in one place, so a
+# job cannot be set up with a different SDK than the one the repository builds with.
+
+name: Set up the toolchain
+description: Installs the .NET SDK from global.json and Node 24.
+
+runs:
+  using: composite
+  steps:
+    - name: Set up .NET
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      with:
+        global-json-file: global.json
+
+    - name: Set up Node
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: '24'
