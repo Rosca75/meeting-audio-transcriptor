@@ -1,0 +1,1346 @@
+{
+  "schemaVersion": 1,
+  "application": "meeting-audio-transcriptor",
+  "applicationVersion": "1.0.0",
+  "startedUtc": "2026-11-10T22:42:10Z",
+  "data": "/home/user/meeting-audio-transcriptor/bench/data",
+  "machine": {
+    "cpuModel": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "logicalCores": 4,
+    "operatingSystem": "Ubuntu 24.04.5 LTS",
+    "framework": ".NET 10.0.15",
+    "onnxRuntime": "1.31.1",
+    "cpuIdMask": null
+  },
+  "settings": {
+    "threads": 4,
+    "speakerSeparation": true,
+    "speakersHintFromReference": false,
+    "diarisationCollarSeconds": 0.25,
+    "repeat": 1
+  },
+  "groups": [
+    {
+      "group": "en-read",
+      "files": 4,
+      "failed": 0,
+      "audioSeconds": 886.524,
+      "wallSeconds": 13.206,
+      "throughput": 67.13,
+      "werRaw": {
+        "wer": 0.0149,
+        "substitutions": 24,
+        "deletions": 6,
+        "insertions": 3,
+        "referenceWords": 2209
+      },
+      "werCleaned": {
+        "wer": 0.0158,
+        "substitutions": 24,
+        "deletions": 8,
+        "insertions": 3,
+        "referenceWords": 2209
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 1046,
+        "total": 1046
+      },
+      "words": 2174,
+      "wordsRemoved": 2,
+      "removedFraction": 0.0009,
+      "speakers": {
+        "files": 2,
+        "derOverlapExcluded": 0.0728,
+        "derOverlapIncluded": 0.0728,
+        "confusionOverlapExcluded": 0.004,
+        "attributionAccuracy": 0.884,
+        "speakerCountExact": 1,
+        "speakerCountMeanAbsoluteError": 0.5
+      },
+      "speakersHinted": null
+    },
+    {
+      "group": "en-ami",
+      "files": 3,
+      "failed": 0,
+      "audioSeconds": 261.865,
+      "wallSeconds": 5.466,
+      "throughput": 47.91,
+      "werRaw": {
+        "wer": 0.2412,
+        "substitutions": 27,
+        "deletions": 182,
+        "insertions": 3,
+        "referenceWords": 879
+      },
+      "werCleaned": {
+        "wer": 0.2605,
+        "substitutions": 26,
+        "deletions": 200,
+        "insertions": 3,
+        "referenceWords": 879
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 273,
+        "total": 273
+      },
+      "words": 667,
+      "wordsRemoved": 16,
+      "removedFraction": 0.024,
+      "speakers": {
+        "files": 3,
+        "derOverlapExcluded": 0.1298,
+        "derOverlapIncluded": 0.253,
+        "confusionOverlapExcluded": 0.0266,
+        "attributionAccuracy": 0.8287,
+        "speakerCountExact": 0,
+        "speakerCountMeanAbsoluteError": 1.333
+      },
+      "speakersHinted": null
+    },
+    {
+      "group": "fr",
+      "files": 6,
+      "failed": 0,
+      "audioSeconds": 1130.285,
+      "wallSeconds": 18.153,
+      "throughput": 62.27,
+      "werRaw": {
+        "wer": 0.0265,
+        "substitutions": 52,
+        "deletions": 13,
+        "insertions": 7,
+        "referenceWords": 2717
+      },
+      "werCleaned": {
+        "wer": 0.0272,
+        "substitutions": 52,
+        "deletions": 15,
+        "insertions": 7,
+        "referenceWords": 2717
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 1270,
+        "total": 1270
+      },
+      "words": 2517,
+      "wordsRemoved": 2,
+      "removedFraction": 0.0008,
+      "speakers": {
+        "files": 4,
+        "derOverlapExcluded": 0.1459,
+        "derOverlapIncluded": 0.1459,
+        "confusionOverlapExcluded": 0.0048,
+        "attributionAccuracy": 0.8277,
+        "speakerCountExact": 3,
+        "speakerCountMeanAbsoluteError": 0.5
+      },
+      "speakersHinted": null
+    },
+    {
+      "group": "de",
+      "files": 6,
+      "failed": 0,
+      "audioSeconds": 1104.011,
+      "wallSeconds": 16.547,
+      "throughput": 66.72,
+      "werRaw": {
+        "wer": 0.078,
+        "substitutions": 145,
+        "deletions": 15,
+        "insertions": 19,
+        "referenceWords": 2295
+      },
+      "werCleaned": {
+        "wer": 0.0802,
+        "substitutions": 141,
+        "deletions": 24,
+        "insertions": 19,
+        "referenceWords": 2295
+      },
+      "retention": {
+        "fraction": 0.9983,
+        "retained": 1188,
+        "total": 1190
+      },
+      "words": 2290,
+      "wordsRemoved": 9,
+      "removedFraction": 0.0039,
+      "speakers": {
+        "files": 4,
+        "derOverlapExcluded": 0.08,
+        "derOverlapIncluded": 0.08,
+        "confusionOverlapExcluded": 0.0026,
+        "attributionAccuracy": 0.8964,
+        "speakerCountExact": 3,
+        "speakerCountMeanAbsoluteError": 0.25
+      },
+      "speakersHinted": null
+    }
+  ],
+  "retention": {
+    "gate": 0.99,
+    "en": {
+      "fraction": 1,
+      "retained": 1319,
+      "total": 1319
+    },
+    "fr": {
+      "fraction": 1,
+      "retained": 1270,
+      "total": 1270
+    },
+    "de": {
+      "fraction": 0.9983,
+      "retained": 1188,
+      "total": 1190
+    },
+    "all": {
+      "fraction": 0.9995,
+      "retained": 3777,
+      "total": 3779
+    }
+  },
+  "noise": {
+    "files": 0,
+    "words": 0,
+    "gate": 0
+  },
+  "peakWorkingSetBytes": 1947213824,
+  "files": [
+    {
+      "id": "de-multi-01",
+      "group": "de",
+      "type": "clip",
+      "language": "de",
+      "outcome": "Succeeded",
+      "audioSeconds": 90.731,
+      "speechSeconds": 78.531,
+      "wallSeconds": [
+        1.94
+      ],
+      "throughput": 46.78,
+      "chunks": 9,
+      "forcedCuts": 0,
+      "segments": 13,
+      "speakers": 2,
+      "words": 192,
+      "wordsRemoved": 2,
+      "removedFraction": 0.0104,
+      "werRaw": {
+        "wer": 0.0876,
+        "substitutions": 15,
+        "deletions": 2,
+        "insertions": 0,
+        "referenceWords": 194
+      },
+      "werCleaned": {
+        "wer": 0.0979,
+        "substitutions": 15,
+        "deletions": 4,
+        "insertions": 0,
+        "referenceWords": 194
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 105,
+        "total": 105
+      },
+      "speakerScore": {
+        "referenceSpeakers": 2,
+        "estimatedSpeakers": 2,
+        "derOverlapExcluded": 0.0738,
+        "derOverlapIncluded": 0.0738,
+        "confusionOverlapExcluded": 0,
+        "attributionAccuracy": 0.9066,
+        "referenceSeconds": 82.65,
+        "missedSeconds": 6.1,
+        "falseAlarmSeconds": 0,
+        "confusionSeconds": 0
+      },
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 2.691,
+        "pipeline": 1.868,
+        "streaming": 1.837,
+        "decodeAndVad": 0.367,
+        "recognitionWorkers": 5.236,
+        "speakers": 0.021,
+        "cleaning": 0.01,
+        "writing": 0.047
+      },
+      "peakWorkingSetBytes": 1589702656
+    },
+    {
+      "id": "de-multi-02",
+      "group": "de",
+      "type": "clip",
+      "language": "de",
+      "outcome": "Succeeded",
+      "audioSeconds": 103.891,
+      "speechSeconds": 89.424,
+      "wallSeconds": [
+        1.806
+      ],
+      "throughput": 57.51,
+      "chunks": 12,
+      "forcedCuts": 0,
+      "segments": 17,
+      "speakers": 3,
+      "words": 244,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": {
+        "wer": 0.0667,
+        "substitutions": 5,
+        "deletions": 2,
+        "insertions": 9,
+        "referenceWords": 240
+      },
+      "werCleaned": {
+        "wer": 0.0667,
+        "substitutions": 5,
+        "deletions": 2,
+        "insertions": 9,
+        "referenceWords": 240
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 119,
+        "total": 119
+      },
+      "speakerScore": {
+        "referenceSpeakers": 3,
+        "estimatedSpeakers": 3,
+        "derOverlapExcluded": 0.1127,
+        "derOverlapIncluded": 0.1127,
+        "confusionOverlapExcluded": 0,
+        "attributionAccuracy": 0.8641,
+        "referenceSeconds": 95.36,
+        "missedSeconds": 10.75,
+        "falseAlarmSeconds": 0,
+        "confusionSeconds": 0
+      },
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 1.8,
+        "streaming": 1.793,
+        "decodeAndVad": 0.272,
+        "recognitionWorkers": 5.376,
+        "speakers": 0.006,
+        "cleaning": 0.002,
+        "writing": 0.004
+      },
+      "peakWorkingSetBytes": 1640706048
+    },
+    {
+      "id": "de-multi-03",
+      "group": "de",
+      "type": "clip",
+      "language": "de",
+      "outcome": "Succeeded",
+      "audioSeconds": 100.256,
+      "speechSeconds": 84.376,
+      "wallSeconds": [
+        1.697
+      ],
+      "throughput": 59.06,
+      "chunks": 12,
+      "forcedCuts": 0,
+      "segments": 15,
+      "speakers": 5,
+      "words": 204,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": {
+        "wer": 0.0534,
+        "substitutions": 9,
+        "deletions": 1,
+        "insertions": 1,
+        "referenceWords": 206
+      },
+      "werCleaned": {
+        "wer": 0.0534,
+        "substitutions": 9,
+        "deletions": 1,
+        "insertions": 1,
+        "referenceWords": 206
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 96,
+        "total": 96
+      },
+      "speakerScore": {
+        "referenceSpeakers": 4,
+        "estimatedSpeakers": 5,
+        "derOverlapExcluded": 0.1422,
+        "derOverlapIncluded": 0.1422,
+        "confusionOverlapExcluded": 0.0235,
+        "attributionAccuracy": 0.8342,
+        "referenceSeconds": 91.85,
+        "missedSeconds": 10.9,
+        "falseAlarmSeconds": 0,
+        "confusionSeconds": 2.16
+      },
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 1.692,
+        "streaming": 1.69,
+        "decodeAndVad": 0.295,
+        "recognitionWorkers": 4.963,
+        "speakers": 0.001,
+        "cleaning": 0.001,
+        "writing": 0.004
+      },
+      "peakWorkingSetBytes": 1673871360
+    },
+    {
+      "id": "de-single-01",
+      "group": "de",
+      "type": "clip",
+      "language": "de",
+      "outcome": "Succeeded",
+      "audioSeconds": 101.256,
+      "speechSeconds": 85.728,
+      "wallSeconds": [
+        1.494
+      ],
+      "throughput": 67.79,
+      "chunks": 11,
+      "forcedCuts": 0,
+      "segments": 16,
+      "speakers": 1,
+      "words": 244,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": {
+        "wer": 0.037,
+        "substitutions": 8,
+        "deletions": 0,
+        "insertions": 1,
+        "referenceWords": 243
+      },
+      "werCleaned": {
+        "wer": 0.037,
+        "substitutions": 8,
+        "deletions": 0,
+        "insertions": 1,
+        "referenceWords": 243
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 117,
+        "total": 117
+      },
+      "speakerScore": null,
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 1.489,
+        "streaming": 1.486,
+        "decodeAndVad": 0.225,
+        "recognitionWorkers": 4.941,
+        "speakers": 0.003,
+        "cleaning": 0,
+        "writing": 0.003
+      },
+      "peakWorkingSetBytes": 1673871360
+    },
+    {
+      "id": "de-single-02",
+      "group": "de",
+      "type": "clip",
+      "language": "de",
+      "outcome": "Succeeded",
+      "audioSeconds": 93.914,
+      "speechSeconds": 80.736,
+      "wallSeconds": [
+        1.496
+      ],
+      "throughput": 62.79,
+      "chunks": 9,
+      "forcedCuts": 0,
+      "segments": 12,
+      "speakers": 1,
+      "words": 156,
+      "wordsRemoved": 2,
+      "removedFraction": 0.0128,
+      "werRaw": {
+        "wer": 0.1474,
+        "substitutions": 21,
+        "deletions": 1,
+        "insertions": 1,
+        "referenceWords": 156
+      },
+      "werCleaned": {
+        "wer": 0.1603,
+        "substitutions": 21,
+        "deletions": 3,
+        "insertions": 1,
+        "referenceWords": 156
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 93,
+        "total": 93
+      },
+      "speakerScore": null,
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 1.488,
+        "streaming": 1.486,
+        "decodeAndVad": 0.253,
+        "recognitionWorkers": 4.561,
+        "speakers": 0.001,
+        "cleaning": 0.001,
+        "writing": 0.005
+      },
+      "peakWorkingSetBytes": 1687982080
+    },
+    {
+      "id": "en-ami-01",
+      "group": "en-ami",
+      "type": "clip",
+      "language": "en",
+      "outcome": "Succeeded",
+      "audioSeconds": 91.665,
+      "speechSeconds": 56.88,
+      "wallSeconds": [
+        1.737
+      ],
+      "throughput": 52.77,
+      "chunks": 16,
+      "forcedCuts": 0,
+      "segments": 24,
+      "speakers": 6,
+      "words": 162,
+      "wordsRemoved": 5,
+      "removedFraction": 0.0309,
+      "werRaw": {
+        "wer": 0.2882,
+        "substitutions": 6,
+        "deletions": 58,
+        "insertions": 2,
+        "referenceWords": 229
+      },
+      "werCleaned": {
+        "wer": 0.31,
+        "substitutions": 6,
+        "deletions": 63,
+        "insertions": 2,
+        "referenceWords": 229
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 68,
+        "total": 68
+      },
+      "speakerScore": {
+        "referenceSpeakers": 4,
+        "estimatedSpeakers": 6,
+        "derOverlapExcluded": 0.2751,
+        "derOverlapIncluded": 0.3919,
+        "confusionOverlapExcluded": 0.0684,
+        "attributionAccuracy": 0.6829,
+        "referenceSeconds": 54.96,
+        "missedSeconds": 16.47,
+        "falseAlarmSeconds": 0.17,
+        "confusionSeconds": 4.9
+      },
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 1.731,
+        "streaming": 1.729,
+        "decodeAndVad": 0.285,
+        "recognitionWorkers": 4.601,
+        "speakers": 0,
+        "cleaning": 0.001,
+        "writing": 0.005
+      },
+      "peakWorkingSetBytes": 1696112640
+    },
+    {
+      "id": "en-ami-02",
+      "group": "en-ami",
+      "type": "clip",
+      "language": "en",
+      "outcome": "Succeeded",
+      "audioSeconds": 69.37,
+      "speechSeconds": 67.01,
+      "wallSeconds": [
+        1.572
+      ],
+      "throughput": 44.13,
+      "chunks": 4,
+      "forcedCuts": 1,
+      "segments": 14,
+      "speakers": 3,
+      "words": 212,
+      "wordsRemoved": 7,
+      "removedFraction": 0.033,
+      "werRaw": {
+        "wer": 0.2061,
+        "substitutions": 5,
+        "deletions": 49,
+        "insertions": 0,
+        "referenceWords": 262
+      },
+      "werCleaned": {
+        "wer": 0.2328,
+        "substitutions": 5,
+        "deletions": 56,
+        "insertions": 0,
+        "referenceWords": 262
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 83,
+        "total": 83
+      },
+      "speakerScore": {
+        "referenceSpeakers": 4,
+        "estimatedSpeakers": 3,
+        "derOverlapExcluded": 0.0874,
+        "derOverlapIncluded": 0.2121,
+        "confusionOverlapExcluded": 0.0168,
+        "attributionAccuracy": 0.8887,
+        "referenceSeconds": 55.16,
+        "missedSeconds": 10.9,
+        "falseAlarmSeconds": 0.05,
+        "confusionSeconds": 0.75
+      },
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 1.567,
+        "streaming": 1.566,
+        "decodeAndVad": 0.174,
+        "recognitionWorkers": 3.793,
+        "speakers": 0,
+        "cleaning": 0,
+        "writing": 0.004
+      },
+      "peakWorkingSetBytes": 1736945664
+    },
+    {
+      "id": "en-ami-sdm-01",
+      "group": "en-ami",
+      "type": "clip",
+      "language": "en",
+      "outcome": "Succeeded",
+      "audioSeconds": 100.83,
+      "speechSeconds": 91.104,
+      "wallSeconds": [
+        2.157
+      ],
+      "throughput": 46.74,
+      "chunks": 10,
+      "forcedCuts": 0,
+      "segments": 30,
+      "speakers": 3,
+      "words": 293,
+      "wordsRemoved": 4,
+      "removedFraction": 0.0137,
+      "werRaw": {
+        "wer": 0.2371,
+        "substitutions": 16,
+        "deletions": 75,
+        "insertions": 1,
+        "referenceWords": 388
+      },
+      "werCleaned": {
+        "wer": 0.25,
+        "substitutions": 15,
+        "deletions": 81,
+        "insertions": 1,
+        "referenceWords": 388
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 122,
+        "total": 122
+      },
+      "speakerScore": {
+        "referenceSpeakers": 4,
+        "estimatedSpeakers": 3,
+        "derOverlapExcluded": 0.0611,
+        "derOverlapIncluded": 0.1859,
+        "confusionOverlapExcluded": 0.0051,
+        "attributionAccuracy": 0.8853,
+        "referenceSeconds": 80.3,
+        "missedSeconds": 13.84,
+        "falseAlarmSeconds": 0.09,
+        "confusionSeconds": 1
+      },
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 2.152,
+        "streaming": 2.151,
+        "decodeAndVad": 0.312,
+        "recognitionWorkers": 5.42,
+        "speakers": 0,
+        "cleaning": 0.001,
+        "writing": 0.004
+      },
+      "peakWorkingSetBytes": 1758818304
+    },
+    {
+      "id": "en-multi-01",
+      "group": "en-read",
+      "type": "clip",
+      "language": "en",
+      "outcome": "Succeeded",
+      "audioSeconds": 92.161,
+      "speechSeconds": 76.288,
+      "wallSeconds": [
+        1.792
+      ],
+      "throughput": 51.42,
+      "chunks": 15,
+      "forcedCuts": 0,
+      "segments": 16,
+      "speakers": 3,
+      "words": 248,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": {
+        "wer": 0.0465,
+        "substitutions": 8,
+        "deletions": 3,
+        "insertions": 1,
+        "referenceWords": 258
+      },
+      "werCleaned": {
+        "wer": 0.0465,
+        "substitutions": 8,
+        "deletions": 3,
+        "insertions": 1,
+        "referenceWords": 258
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 111,
+        "total": 111
+      },
+      "speakerScore": {
+        "referenceSpeakers": 3,
+        "estimatedSpeakers": 3,
+        "derOverlapExcluded": 0.043,
+        "derOverlapIncluded": 0.043,
+        "confusionOverlapExcluded": 0,
+        "attributionAccuracy": 0.8892,
+        "referenceSeconds": 74.37,
+        "missedSeconds": 3.2,
+        "falseAlarmSeconds": 0,
+        "confusionSeconds": 0
+      },
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 1.788,
+        "streaming": 1.787,
+        "decodeAndVad": 0.276,
+        "recognitionWorkers": 4.861,
+        "speakers": 0,
+        "cleaning": 0,
+        "writing": 0.003
+      },
+      "peakWorkingSetBytes": 1758371840
+    },
+    {
+      "id": "en-single-01",
+      "group": "en-read",
+      "type": "clip",
+      "language": "en",
+      "outcome": "Succeeded",
+      "audioSeconds": 95.065,
+      "speechSeconds": 80.032,
+      "wallSeconds": [
+        1.502
+      ],
+      "throughput": 63.29,
+      "chunks": 13,
+      "forcedCuts": 0,
+      "segments": 14,
+      "speakers": 1,
+      "words": 221,
+      "wordsRemoved": 2,
+      "removedFraction": 0.009,
+      "werRaw": {
+        "wer": 0.009,
+        "substitutions": 2,
+        "deletions": 0,
+        "insertions": 0,
+        "referenceWords": 222
+      },
+      "werCleaned": {
+        "wer": 0.018,
+        "substitutions": 2,
+        "deletions": 2,
+        "insertions": 0,
+        "referenceWords": 222
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 112,
+        "total": 112
+      },
+      "speakerScore": null,
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 1.497,
+        "streaming": 1.496,
+        "decodeAndVad": 0.2,
+        "recognitionWorkers": 4.093,
+        "speakers": 0,
+        "cleaning": 0,
+        "writing": 0.004
+      },
+      "peakWorkingSetBytes": 1764433920
+    },
+    {
+      "id": "en-single-02",
+      "group": "en-read",
+      "type": "clip",
+      "language": "en",
+      "outcome": "Succeeded",
+      "audioSeconds": 95.636,
+      "speechSeconds": 80.704,
+      "wallSeconds": [
+        1.626
+      ],
+      "throughput": 58.83,
+      "chunks": 12,
+      "forcedCuts": 0,
+      "segments": 19,
+      "speakers": 1,
+      "words": 248,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": {
+        "wer": 0.0078,
+        "substitutions": 2,
+        "deletions": 0,
+        "insertions": 0,
+        "referenceWords": 256
+      },
+      "werCleaned": {
+        "wer": 0.0078,
+        "substitutions": 2,
+        "deletions": 0,
+        "insertions": 0,
+        "referenceWords": 256
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 117,
+        "total": 117
+      },
+      "speakerScore": null,
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 1.621,
+        "streaming": 1.62,
+        "decodeAndVad": 0.243,
+        "recognitionWorkers": 4.95,
+        "speakers": 0,
+        "cleaning": 0,
+        "writing": 0.004
+      },
+      "peakWorkingSetBytes": 1793593344
+    },
+    {
+      "id": "fr-multi-01",
+      "group": "fr",
+      "type": "clip",
+      "language": "fr",
+      "outcome": "Succeeded",
+      "audioSeconds": 90.213,
+      "speechSeconds": 71.744,
+      "wallSeconds": [
+        2.085
+      ],
+      "throughput": 43.26,
+      "chunks": 18,
+      "forcedCuts": 0,
+      "segments": 21,
+      "speakers": 2,
+      "words": 198,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": {
+        "wer": 0,
+        "substitutions": 0,
+        "deletions": 0,
+        "insertions": 0,
+        "referenceWords": 209
+      },
+      "werCleaned": {
+        "wer": 0,
+        "substitutions": 0,
+        "deletions": 0,
+        "insertions": 0,
+        "referenceWords": 209
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 94,
+        "total": 94
+      },
+      "speakerScore": {
+        "referenceSpeakers": 2,
+        "estimatedSpeakers": 2,
+        "derOverlapExcluded": 0.1755,
+        "derOverlapIncluded": 0.1755,
+        "confusionOverlapExcluded": 0,
+        "attributionAccuracy": 0.799,
+        "referenceSeconds": 82.51,
+        "missedSeconds": 14.48,
+        "falseAlarmSeconds": 0,
+        "confusionSeconds": 0
+      },
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 2.08,
+        "streaming": 2.079,
+        "decodeAndVad": 0.298,
+        "recognitionWorkers": 4.979,
+        "speakers": 0,
+        "cleaning": 0.001,
+        "writing": 0.004
+      },
+      "peakWorkingSetBytes": 1793593344
+    },
+    {
+      "id": "fr-multi-02",
+      "group": "fr",
+      "type": "clip",
+      "language": "fr",
+      "outcome": "Succeeded",
+      "audioSeconds": 115.527,
+      "speechSeconds": 97.6,
+      "wallSeconds": [
+        2.127
+      ],
+      "throughput": 54.31,
+      "chunks": 18,
+      "forcedCuts": 0,
+      "segments": 22,
+      "speakers": 3,
+      "words": 270,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": {
+        "wer": 0.0403,
+        "substitutions": 12,
+        "deletions": 0,
+        "insertions": 0,
+        "referenceWords": 298
+      },
+      "werCleaned": {
+        "wer": 0.0403,
+        "substitutions": 12,
+        "deletions": 0,
+        "insertions": 0,
+        "referenceWords": 298
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 144,
+        "total": 144
+      },
+      "speakerScore": {
+        "referenceSpeakers": 3,
+        "estimatedSpeakers": 3,
+        "derOverlapExcluded": 0.1181,
+        "derOverlapIncluded": 0.1181,
+        "confusionOverlapExcluded": 0,
+        "attributionAccuracy": 0.8586,
+        "referenceSeconds": 107.53,
+        "missedSeconds": 12.7,
+        "falseAlarmSeconds": 0,
+        "confusionSeconds": 0
+      },
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 2.122,
+        "streaming": 2.121,
+        "decodeAndVad": 0.35,
+        "recognitionWorkers": 6.062,
+        "speakers": 0,
+        "cleaning": 0,
+        "writing": 0.004
+      },
+      "peakWorkingSetBytes": 1793593344
+    },
+    {
+      "id": "fr-multi-03",
+      "group": "fr",
+      "type": "clip",
+      "language": "fr",
+      "outcome": "Succeeded",
+      "audioSeconds": 115.209,
+      "speechSeconds": 99.84,
+      "wallSeconds": [
+        2.31
+      ],
+      "throughput": 49.87,
+      "chunks": 17,
+      "forcedCuts": 0,
+      "segments": 19,
+      "speakers": 4,
+      "words": 273,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": {
+        "wer": 0.0332,
+        "substitutions": 8,
+        "deletions": 1,
+        "insertions": 1,
+        "referenceWords": 301
+      },
+      "werCleaned": {
+        "wer": 0.0332,
+        "substitutions": 8,
+        "deletions": 1,
+        "insertions": 1,
+        "referenceWords": 301
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 128,
+        "total": 128
+      },
+      "speakerScore": {
+        "referenceSpeakers": 4,
+        "estimatedSpeakers": 4,
+        "derOverlapExcluded": 0.0987,
+        "derOverlapIncluded": 0.0987,
+        "confusionOverlapExcluded": 0,
+        "attributionAccuracy": 0.8759,
+        "referenceSeconds": 107.56,
+        "missedSeconds": 10.62,
+        "falseAlarmSeconds": 0,
+        "confusionSeconds": 0
+      },
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 2.306,
+        "streaming": 2.305,
+        "decodeAndVad": 0.375,
+        "recognitionWorkers": 6.548,
+        "speakers": 0.001,
+        "cleaning": 0,
+        "writing": 0.004
+      },
+      "peakWorkingSetBytes": 1793593344
+    },
+    {
+      "id": "fr-single-01",
+      "group": "fr",
+      "type": "clip",
+      "language": "fr",
+      "outcome": "Succeeded",
+      "audioSeconds": 94.178,
+      "speechSeconds": 74.944,
+      "wallSeconds": [
+        1.726
+      ],
+      "throughput": 54.56,
+      "chunks": 12,
+      "forcedCuts": 0,
+      "segments": 16,
+      "speakers": 1,
+      "words": 236,
+      "wordsRemoved": 1,
+      "removedFraction": 0.0042,
+      "werRaw": {
+        "wer": 0.0159,
+        "substitutions": 2,
+        "deletions": 0,
+        "insertions": 2,
+        "referenceWords": 251
+      },
+      "werCleaned": {
+        "wer": 0.0199,
+        "substitutions": 2,
+        "deletions": 1,
+        "insertions": 2,
+        "referenceWords": 251
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 126,
+        "total": 126
+      },
+      "speakerScore": null,
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 1.72,
+        "streaming": 1.719,
+        "decodeAndVad": 0.282,
+        "recognitionWorkers": 4.18,
+        "speakers": 0,
+        "cleaning": 0,
+        "writing": 0.005
+      },
+      "peakWorkingSetBytes": 1793593344
+    },
+    {
+      "id": "fr-single-02",
+      "group": "fr",
+      "type": "clip",
+      "language": "fr",
+      "outcome": "Succeeded",
+      "audioSeconds": 99.305,
+      "speechSeconds": 83.92,
+      "wallSeconds": [
+        1.901
+      ],
+      "throughput": 52.23,
+      "chunks": 14,
+      "forcedCuts": 0,
+      "segments": 20,
+      "speakers": 1,
+      "words": 211,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": {
+        "wer": 0.0487,
+        "substitutions": 10,
+        "deletions": 0,
+        "insertions": 1,
+        "referenceWords": 226
+      },
+      "werCleaned": {
+        "wer": 0.0487,
+        "substitutions": 10,
+        "deletions": 0,
+        "insertions": 1,
+        "referenceWords": 226
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 109,
+        "total": 109
+      },
+      "speakerScore": null,
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 1.896,
+        "streaming": 1.896,
+        "decodeAndVad": 0.305,
+        "recognitionWorkers": 5.612,
+        "speakers": 0,
+        "cleaning": 0,
+        "writing": 0.004
+      },
+      "peakWorkingSetBytes": 1793593344
+    },
+    {
+      "id": "de-10min",
+      "group": "de",
+      "type": "long",
+      "language": "de",
+      "outcome": "Succeeded",
+      "audioSeconds": 613.963,
+      "speechSeconds": 540.064,
+      "wallSeconds": [
+        8.115
+      ],
+      "throughput": 75.66,
+      "chunks": 51,
+      "forcedCuts": 0,
+      "segments": 79,
+      "speakers": 5,
+      "words": 1250,
+      "wordsRemoved": 5,
+      "removedFraction": 0.004,
+      "werRaw": {
+        "wer": 0.082,
+        "substitutions": 87,
+        "deletions": 9,
+        "insertions": 7,
+        "referenceWords": 1256
+      },
+      "werCleaned": {
+        "wer": 0.0828,
+        "substitutions": 83,
+        "deletions": 14,
+        "insertions": 7,
+        "referenceWords": 1256
+      },
+      "retention": {
+        "fraction": 0.997,
+        "retained": 658,
+        "total": 660
+      },
+      "speakerScore": {
+        "referenceSpeakers": 5,
+        "estimatedSpeakers": 5,
+        "derOverlapExcluded": 0.0651,
+        "derOverlapIncluded": 0.0651,
+        "confusionOverlapExcluded": 0,
+        "attributionAccuracy": 0.9107,
+        "referenceSeconds": 557.75,
+        "missedSeconds": 36.3,
+        "falseAlarmSeconds": 0,
+        "confusionSeconds": 0
+      },
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 8.108,
+        "streaming": 8.097,
+        "decodeAndVad": 1.975,
+        "recognitionWorkers": 30.651,
+        "speakers": 0.01,
+        "cleaning": 0.001,
+        "writing": 0.005
+      },
+      "peakWorkingSetBytes": 1891971072
+    },
+    {
+      "id": "en-10min",
+      "group": "en-read",
+      "type": "long",
+      "language": "en",
+      "outcome": "Succeeded",
+      "audioSeconds": 603.662,
+      "speechSeconds": 511.072,
+      "wallSeconds": [
+        8.287
+      ],
+      "throughput": 72.85,
+      "chunks": 72,
+      "forcedCuts": 0,
+      "segments": 80,
+      "speakers": 7,
+      "words": 1457,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": {
+        "wer": 0.0115,
+        "substitutions": 12,
+        "deletions": 3,
+        "insertions": 2,
+        "referenceWords": 1473
+      },
+      "werCleaned": {
+        "wer": 0.0115,
+        "substitutions": 12,
+        "deletions": 3,
+        "insertions": 2,
+        "referenceWords": 1473
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 706,
+        "total": 706
+      },
+      "speakerScore": {
+        "referenceSpeakers": 6,
+        "estimatedSpeakers": 7,
+        "derOverlapExcluded": 0.0771,
+        "derOverlapIncluded": 0.0771,
+        "confusionOverlapExcluded": 0.0046,
+        "attributionAccuracy": 0.8833,
+        "referenceSeconds": 518.8,
+        "missedSeconds": 37.6,
+        "falseAlarmSeconds": 0,
+        "confusionSeconds": 2.39
+      },
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 8.28,
+        "streaming": 8.274,
+        "decodeAndVad": 2.183,
+        "recognitionWorkers": 31.091,
+        "speakers": 0.005,
+        "cleaning": 0.001,
+        "writing": 0.005
+      },
+      "peakWorkingSetBytes": 1943900160
+    },
+    {
+      "id": "fr-10min",
+      "group": "fr",
+      "type": "long",
+      "language": "fr",
+      "outcome": "Succeeded",
+      "audioSeconds": 615.853,
+      "speechSeconds": 493.264,
+      "wallSeconds": [
+        8.002
+      ],
+      "throughput": 76.96,
+      "chunks": 88,
+      "forcedCuts": 0,
+      "segments": 105,
+      "speakers": 6,
+      "words": 1329,
+      "wordsRemoved": 1,
+      "removedFraction": 0.0008,
+      "werRaw": {
+        "wer": 0.0244,
+        "substitutions": 20,
+        "deletions": 12,
+        "insertions": 3,
+        "referenceWords": 1432
+      },
+      "werCleaned": {
+        "wer": 0.0251,
+        "substitutions": 20,
+        "deletions": 13,
+        "insertions": 3,
+        "referenceWords": 1432
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 669,
+        "total": 669
+      },
+      "speakerScore": {
+        "referenceSpeakers": 4,
+        "estimatedSpeakers": 6,
+        "derOverlapExcluded": 0.1559,
+        "derOverlapIncluded": 0.1559,
+        "confusionOverlapExcluded": 0.0074,
+        "attributionAccuracy": 0.8169,
+        "referenceSeconds": 563.79,
+        "missedSeconds": 83.73,
+        "falseAlarmSeconds": 0,
+        "confusionSeconds": 4.16
+      },
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 7.996,
+        "streaming": 7.991,
+        "decodeAndVad": 1.827,
+        "recognitionWorkers": 29.964,
+        "speakers": 0.004,
+        "cleaning": 0.001,
+        "writing": 0.005
+      },
+      "peakWorkingSetBytes": 1947213824
+    }
+  ]
+}

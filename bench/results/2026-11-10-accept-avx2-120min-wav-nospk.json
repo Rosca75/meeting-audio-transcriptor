@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "application": "meeting-audio-transcriptor",
+  "applicationVersion": "1.0.0",
+  "startedUtc": "2026-11-10T22:25:59Z",
+  "data": "/home/user/meeting-audio-transcriptor/bench/data",
+  "machine": {
+    "cpuModel": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "logicalCores": 4,
+    "operatingSystem": "Ubuntu 24.04.5 LTS",
+    "framework": ".NET 10.0.15",
+    "onnxRuntime": "1.31.1",
+    "cpuIdMask": "avx2"
+  },
+  "settings": {
+    "threads": 4,
+    "speakerSeparation": false,
+    "speakersHintFromReference": false,
+    "diarisationCollarSeconds": 0.25,
+    "repeat": 1
+  },
+  "groups": [
+    {
+      "group": "en-read",
+      "files": 1,
+      "failed": 0,
+      "audioSeconds": 95.065,
+      "wallSeconds": 4.363,
+      "throughput": 21.79,
+      "werRaw": {
+        "wer": 0.009,
+        "substitutions": 2,
+        "deletions": 0,
+        "insertions": 0,
+        "referenceWords": 222
+      },
+      "werCleaned": {
+        "wer": 0.018,
+        "substitutions": 2,
+        "deletions": 2,
+        "insertions": 0,
+        "referenceWords": 222
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 112,
+        "total": 112
+      },
+      "words": 221,
+      "wordsRemoved": 2,
+      "removedFraction": 0.009,
+      "speakers": null,
+      "speakersHinted": null
+    },
+    {
+      "group": "extra",
+      "files": 1,
+      "failed": 0,
+      "audioSeconds": 7201.896,
+      "wallSeconds": 241.943,
+      "throughput": 29.77,
+      "werRaw": null,
+      "werCleaned": null,
+      "retention": {
+        "fraction": 1,
+        "retained": 8414,
+        "total": 8414
+      },
+      "words": 17361,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "speakers": null,
+      "speakersHinted": null
+    }
+  ],
+  "retention": {
+    "gate": 0.99,
+    "en": {
+      "fraction": 1,
+      "retained": 8526,
+      "total": 8526
+    },
+    "all": {
+      "fraction": 1,
+      "retained": 8526,
+      "total": 8526
+    }
+  },
+  "noise": {
+    "files": 0,
+    "words": 0,
+    "gate": 0
+  },
+  "peakWorkingSetBytes": 1925070848,
+  "files": [
+    {
+      "id": "en-single-01",
+      "group": "en-read",
+      "type": "clip",
+      "language": "en",
+      "outcome": "Succeeded",
+      "audioSeconds": 95.065,
+      "speechSeconds": 80.032,
+      "wallSeconds": [
+        4.363
+      ],
+      "throughput": 21.79,
+      "chunks": 13,
+      "forcedCuts": 0,
+      "segments": 13,
+      "speakers": 0,
+      "words": 221,
+      "wordsRemoved": 2,
+      "removedFraction": 0.009,
+      "werRaw": {
+        "wer": 0.009,
+        "substitutions": 2,
+        "deletions": 0,
+        "insertions": 0,
+        "referenceWords": 222
+      },
+      "werCleaned": {
+        "wer": 0.018,
+        "substitutions": 2,
+        "deletions": 2,
+        "insertions": 0,
+        "referenceWords": 222
+      },
+      "retention": {
+        "fraction": 1,
+        "retained": 112,
+        "total": 112
+      },
+      "speakerScore": null,
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 4.042,
+        "pipeline": 4.287,
+        "streaming": 4.276,
+        "decodeAndVad": 0.339,
+        "recognitionWorkers": 12.479,
+        "speakers": 0,
+        "cleaning": 0.012,
+        "writing": 0.052
+      },
+      "peakWorkingSetBytes": 1485324288
+    },
+    {
+      "id": "en-120min",
+      "group": "extra",
+      "type": "extra",
+      "language": "en",
+      "outcome": "Succeeded",
+      "audioSeconds": 7201.896,
+      "speechSeconds": 6097.664,
+      "wallSeconds": [
+        241.943
+      ],
+      "throughput": 29.77,
+      "chunks": 851,
+      "forcedCuts": 0,
+      "segments": 931,
+      "speakers": 0,
+      "words": 17361,
+      "wordsRemoved": 0,
+      "removedFraction": 0,
+      "werRaw": null,
+      "werCleaned": null,
+      "retention": {
+        "fraction": 1,
+        "retained": 8414,
+        "total": 8414
+      },
+      "speakerScore": null,
+      "speakerScoreHinted": null,
+      "stageSeconds": {
+        "modelLoad": 0,
+        "pipeline": 241.882,
+        "streaming": 241.842,
+        "decodeAndVad": 25.373,
+        "recognitionWorkers": 960.582,
+        "speakers": 0,
+        "cleaning": 0.04,
+        "writing": 0.058
+      },
+      "peakWorkingSetBytes": 1925070848
+    }
+  ]
+}
