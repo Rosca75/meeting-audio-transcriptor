@@ -42,6 +42,14 @@ dotnet test --project tests/MeetingAudioTranscriptor.Guards.Tests  # the guards 
 dotnet test --filter "Category=writers"                            # one category
 ```
 
+```
+node build/fetch-models.mjs --into models                          # fetch the default models (add --set all for the candidates)
+MAT_MODELS_DIR=<dir> dotnet test --filter "Tier=models"            # the models tier over a models folder elsewhere
+node --test build/*.test.mjs                                       # the fetch tools, against a loopback server
+```
+
+The models tier reads its model files from `MAT_MODELS_DIR` when that variable is set, and from the `models` folder of the repository otherwise; the application's catalog resolves the same folder, so a development run and a test see one set of files. A model that is not installed skips its tests by name and prints the fetch command. `build/models.lock` pins every model file by address, size and SHA-256, and `build/ffmpeg.lock` pins the ffmpeg builds; the fetch tools verify each file against them and leave a verified file alone, so a second run downloads nothing.
+
 Read the test count after every run: zero tests proves nothing. A suite with no test in a tier exits with code 8; add `--ignore-exit-code 8` when running a tier some suites do not hold.
 
 The Windows desktop host builds from Linux with `dotnet build src/MeetingAudioTranscriptor.Shell -r win-x64 -warnaserror`.

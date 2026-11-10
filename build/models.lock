@@ -1,0 +1,114 @@
+{
+  "comment": "The models the application can run, pinned file by file by address, size and hash. Every url names a commit or a release tag, never a moving branch, so a version number names one set of bytes. `path` is relative to the models root (the `models` folder beside the executable, or MAT_MODELS_DIR in development). `set` is `default` for a model a release ships and `candidate` for one only the benchmarks read. `role` is model, tokenizer, config or auxiliary. An entry marked optional is skipped without failing when it cannot be fetched. Fetch with: node build/fetch-models.mjs --into <dir> [--set all] [--model <name>].",
+  "models": [
+    {
+      "name": "parakeet-tdt-0.6b-v3",
+      "set": "candidate",
+      "licence": "CC-BY-4.0",
+      "source": "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx at 8f23f0c03c8761650bdb5b40aaf3e40d2c15f1ce (ONNX export of nvidia/parakeet-tdt-0.6b-v3)",
+      "attribution": "NVIDIA Parakeet TDT 0.6B v3, Copyright NVIDIA Corporation, licensed under CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/); ONNX export and int8 quantisation by istupakov.",
+      "files": [
+        {
+          "path": "parakeet-tdt-0.6b-v3/encoder-model.int8.onnx",
+          "url": "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx/resolve/8f23f0c03c8761650bdb5b40aaf3e40d2c15f1ce/encoder-model.int8.onnx",
+          "sha256": "6139d2fa7e1b086097b277c7149725edbab89cc7c7ae64b23c741be4055aff09",
+          "bytes": 652183999,
+          "role": "model"
+        },
+        {
+          "path": "parakeet-tdt-0.6b-v3/decoder_joint-model.int8.onnx",
+          "url": "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx/resolve/8f23f0c03c8761650bdb5b40aaf3e40d2c15f1ce/decoder_joint-model.int8.onnx",
+          "sha256": "eea7483ee3d1a30375daedc8ed83e3960c91b098812127a0d99d1c8977667a70",
+          "bytes": 18202004,
+          "role": "model"
+        },
+        {
+          "path": "parakeet-tdt-0.6b-v3/vocab.txt",
+          "url": "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx/resolve/8f23f0c03c8761650bdb5b40aaf3e40d2c15f1ce/vocab.txt",
+          "sha256": "d58544679ea4bc6ac563d1f545eb7d474bd6cfa467f0a6e2c1dc1c7d37e3c35d",
+          "bytes": 93939,
+          "role": "tokenizer"
+        },
+        {
+          "path": "parakeet-tdt-0.6b-v3/config.json",
+          "url": "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx/resolve/8f23f0c03c8761650bdb5b40aaf3e40d2c15f1ce/config.json",
+          "sha256": "666903c76b9798caf2c210afd4f6cd60b08a8dbf9800ec8d7a3bc0d2148ac466",
+          "bytes": 97,
+          "role": "config"
+        }
+      ]
+    },
+    {
+      "name": "granite-speech-5.0-470m-turboctc",
+      "set": "candidate",
+      "licence": "Apache-2.0",
+      "source": "https://huggingface.co/gagni/granite-speech-5.0-470m-turboctc-onnx at 67e808153220ecd3d8614adab9379c0d17bbe024 (int8 ONNX export of https://huggingface.co/ibm-granite/granite-speech-5.0-470m-turboctc at 91dcb0605daf65f88dbb04fef015c423241d941d)",
+      "attribution": "IBM Granite Speech 5.0 470M TurboCTC, Copyright IBM Corp., licensed under the Apache License 2.0; ONNX export with int8 quantisation by gagni, tokenizer.json unchanged.",
+      "files": [
+        {
+          "path": "granite-speech-5.0-470m-turboctc/model.int8.onnx",
+          "url": "https://huggingface.co/gagni/granite-speech-5.0-470m-turboctc-onnx/resolve/67e808153220ecd3d8614adab9379c0d17bbe024/model.int8.onnx",
+          "sha256": "3db95700883af468c8b78c09131ede9302b273e8388c1467a778a02f1d00c632",
+          "bytes": 552434296,
+          "role": "model"
+        },
+        {
+          "path": "granite-speech-5.0-470m-turboctc/tokenizer.json",
+          "url": "https://huggingface.co/gagni/granite-speech-5.0-470m-turboctc-onnx/resolve/67e808153220ecd3d8614adab9379c0d17bbe024/tokenizer.json",
+          "sha256": "a1c3ca763ce0690faf0df3456365358547acfdf766122c9e4a69be8e8708042e",
+          "bytes": 1699784,
+          "role": "tokenizer"
+        }
+      ]
+    },
+    {
+      "name": "silero-vad",
+      "set": "default",
+      "licence": "MIT",
+      "source": "https://github.com/snakers4/silero-vad at 5cd7945676eb32225748052e2e6a0580e4686a08 (tag v6.2.3), src/silero_vad/data/silero_vad.onnx",
+      "attribution": "Silero VAD, Copyright (c) 2020-present Silero Team, licensed under the MIT License.",
+      "files": [
+        {
+          "path": "silero-vad/silero_vad.onnx",
+          "url": "https://raw.githubusercontent.com/snakers4/silero-vad/5cd7945676eb32225748052e2e6a0580e4686a08/src/silero_vad/data/silero_vad.onnx",
+          "sha256": "1a153a22f4509e292a94e67d6f9b85e8deb25b4988682b7e174c65279d8788e3",
+          "bytes": 2327524,
+          "role": "model"
+        }
+      ]
+    },
+    {
+      "name": "wespeaker-campplus-lm",
+      "set": "default",
+      "licence": "Apache-2.0 (code), CC-BY-4.0 (weights, trained on VoxCeleb)",
+      "source": "https://github.com/k2-fsa/sherpa-onnx/releases/tag/speaker-recongition-models, file wespeaker_en_voxceleb_CAM++_LM.onnx (ONNX export of the WeSpeaker CAM++ model with large-margin fine-tuning)",
+      "attribution": "WeSpeaker CAM++ (VoxCeleb, large-margin fine-tuned), https://github.com/wenet-e2e/wespeaker, code under the Apache License 2.0, weights under CC-BY-4.0; ONNX export distributed by k2-fsa/sherpa-onnx.",
+      "files": [
+        {
+          "path": "wespeaker-campplus-lm/wespeaker_en_voxceleb_campplus_lm.onnx",
+          "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/wespeaker_en_voxceleb_CAM++_LM.onnx",
+          "sha256": "e197af7e9d473030cf486b3124149a19bf37014d0e4485e4c70c483b0ec10cb2",
+          "bytes": 29292687,
+          "role": "model"
+        }
+      ]
+    },
+    {
+      "name": "pyannote-segmentation-3.0",
+      "set": "default",
+      "optional": true,
+      "licence": "MIT",
+      "source": "https://huggingface.co/onnx-community/pyannote-segmentation-3.0 at 733a93b6473d019a773298e08cefa686894b1854 (ONNX re-export of pyannote/segmentation-3.0 at e66f3d3b9eb0873085418a7b813d3b369bf160bb), onnx/model_int8.onnx",
+      "attribution": "pyannote.audio segmentation-3.0, Copyright (c) CNRS, licensed under the MIT License; ONNX int8 re-export by onnx-community.",
+      "files": [
+        {
+          "path": "pyannote-segmentation-3.0/model_int8.onnx",
+          "url": "https://huggingface.co/onnx-community/pyannote-segmentation-3.0/resolve/733a93b6473d019a773298e08cefa686894b1854/onnx/model_int8.onnx",
+          "sha256": "465d0975bf70fbf14fb77c0589a5d346a9c07c2170345f529cf774678446db76",
+          "bytes": 1542304,
+          "role": "model"
+        }
+      ]
+    }
+  ]
+}
