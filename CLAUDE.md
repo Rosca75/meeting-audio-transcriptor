@@ -188,6 +188,7 @@ node --test "frontend/**/*.test.js"
 node build/update-frontend-hashes.mjs          # after a page edit
 dotnet build src/MeetingAudioTranscriptor.Shell -r win-x64 -warnaserror
 pwsh build/publish.ps1 -Rid linux-x64 -Version 0.1.0 -SkipModels    # a package without models, for a structural check
+pwsh build/release-version.test.ps1                                 # the release script's version ordering
 pwsh build/release.ps1 -Version X.Y.Z -DryRun                       # then without -DryRun to tag
 ```
 

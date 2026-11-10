@@ -8,8 +8,9 @@
 # It refuses, saying what to do, when the version is not of the form 1.2.3 or 1.2.3-label, when the
 # checkout is not main, holds uncommitted changes or differs from the remote's main, when CHANGELOG.md
 # has no entry for the version, when the tag exists here or on the remote, or when the version is
-# below the highest one already released. A tag is a public promise that these bytes are that
-# version, so it is cut once, from what everyone can see, and never moved or reused.
+# not above the highest one already released (a pre-release sorts below its final version). A tag
+# is a public promise that these bytes are that version, so it is cut once, from what everyone can
+# see, and never moved or reused.
 #
 # -DryRun performs every check and prints the commands it would run, and creates and pushes nothing.
 [CmdletBinding()]
@@ -72,14 +73,18 @@ if (Invoke-Git ls-remote --tags origin "refs/tags/$tag") {
     throw "the remote already has the tag $tag; a version is released once, so choose the next number"
 }
 
-# The numbers of every released version, compared as numbers so 0.10.0 is above 0.9.0; a label is
-# ignored here, so 1.2.0-rc.1 counts as 1.2.0 and the final 1.2.0 may follow it.
-function Get-Number([string]$text) { return [version]($text -replace '^v', '' -replace '-.*$', '') }
+# Every released version, ordered by semantic-version precedence (release-version.ps1): numbers as
+# numbers, so 0.10.0 is above 0.9.0, and a pre-release below its final version, so 1.2.0 may follow
+# 1.2.0-rc.1 while 1.2.0-rc.2 may not follow 1.2.0. A new version must be above every released one.
+. (Join-Path $PSScriptRoot 'release-version.ps1')
 $released = @(Invoke-Git tag --list 'v*' | Where-Object { $_ -match '^v\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$' })
 if ($released.Count -gt 0) {
-    $highest = $released | Sort-Object { Get-Number $_ } -Descending | Select-Object -First 1
-    if ((Get-Number $tag) -lt (Get-Number $highest)) {
-        throw "$tag is below the highest released version, $highest; choose a number above it, or cut a hot fix from a branch that tags a higher number"
+    $highest = $released[0]
+    foreach ($candidate in $released) {
+        if ((Compare-ReleaseVersion $candidate $highest) -gt 0) { $highest = $candidate }
+    }
+    if ((Compare-ReleaseVersion $tag $highest) -le 0) {
+        throw "$tag is not above the highest released version, $highest (a pre-release sorts below its final version); choose a number above it, or cut a hot fix from a branch that tags a higher number"
     }
 }
 
