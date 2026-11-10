@@ -1,5 +1,7 @@
 # Build state
 
+> Working document, not authoritative: where it differs from `CLAUDE.md`, `docs/decisions/` or `docs/BENCHMARKS.md`, those win.
+
 Working file of the autonomous build. Re-read after any context reset.
 
 ## Phase

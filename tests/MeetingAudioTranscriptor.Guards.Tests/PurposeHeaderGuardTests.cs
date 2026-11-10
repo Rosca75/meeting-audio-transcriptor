@@ -30,10 +30,15 @@ public sealed class PurposeHeaderGuardTests
     [Fact]
     public void EveryScriptAndWorkflowFileOpensWithAComment()
     {
-        // A file kind that does not exist yet is not an error: the rule applies as soon as one is added.
         // A shebang may precede the comment of a shell script, and a script may open with its own block.
-        AssertAllOpenWith(RepositoryFiles.Under("", "*.js", "*.mjs"), "//");
-        AssertAllOpenWith(RepositoryFiles.Under("", "*.yml", "*.yaml", "*.ps1", "*.sh"), "#");
+        // Each group must find files (the build tools, the workflows and the publish script exist), so a
+        // broken file listing fails here rather than passing over nothing.
+        IReadOnlyList<string> scripts = RepositoryFiles.Under("", "*.js", "*.mjs");
+        IReadOnlyList<string> hashed = RepositoryFiles.Under("", "*.yml", "*.yaml", "*.ps1", "*.sh");
+        Assert.True(scripts.Count > 0, "got no .js or .mjs file, wanted the build tools and the page; the guard cannot run");
+        Assert.True(hashed.Count > 0, "got no .yml, .ps1 or .sh file, wanted the workflows and the publish script; the guard cannot run");
+        AssertAllOpenWith(scripts, "//");
+        AssertAllOpenWith(hashed, "#");
     }
 
     [Fact]

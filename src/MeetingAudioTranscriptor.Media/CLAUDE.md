@@ -4,7 +4,7 @@ The charter of `src/MeetingAudioTranscriptor.Media/`. The root `CLAUDE.md` overr
 
 ## 1. What this project owns
 
-Everything that turns an audio file into an `IAudioSource` for the engine: the container sniff, the opener that chooses a decoder, the ffmpeg child process decoder, the Media Foundation decoder, the shared PCM converter and the wording of every decode failure. It references the Engine alone. It is the only project that allows unsafe code, because the Media Foundation calls are made through function pointers.
+Everything that turns an audio file into an `IAudioSource` for the engine: the container sniff, the opener that chooses a decoder, the ffmpeg child process decoder, the Media Foundation decoder, the shared PCM converter and the wording of every decode failure. It references the Engine alone. It allows unsafe code, as the Shell's native hosts do and no other project, because the Media Foundation calls are made through function pointers.
 
 ## 2. The decoder order
 
@@ -12,7 +12,7 @@ Everything that turns an audio file into an `IAudioSource` for the engine: the c
 
 **A plain WAV goes to the engine's own reader on every system.** The composition root supplies the reader and the predicate that says "an encoding I do not read", and a WAV the reader refuses (ADPCM, MP3 in WAV) falls through to the platform decoder, because one reader means one behaviour for the common case.
 
-**On Windows `.m4a` and `.mp4` go to Media Foundation, then to ffmpeg when one is found; on Linux they go to ffmpeg alone.** Media Foundation is the system's decoder and needs no binary; ffmpeg is the bundled fallback that Linux has no alternative to (`docs/decisions/0009-audio-decoding.md`). `AudioFileOpenerOptions.PreferFfmpeg` reverses the Windows order for a diagnosis; no environment variable or option of a front end sets it. When every decoder fails the message names each one's answer, and the failure kind is the first one's, because that is the one the user acts on.
+**On Windows `.m4a` and `.mp4` go to Media Foundation, then to ffmpeg when one is found; on Linux they go to ffmpeg alone.** Media Foundation is the system's decoder and needs no binary; ffmpeg is the bundled fallback that Linux has no alternative to (`docs/decisions/0009-audio-decoding.md`). `AudioFileOpenerOptions.PreferFfmpeg` reverses the Windows order for a diagnosis; the service sets it when `MAT_PREFER_FFMPEG` is `1`, and no command-line option or window control does. When every decoder fails the message names each one's answer, and the failure kind is the first one's, because that is the one the user acts on.
 
 **ffmpeg is found in the order of intent.** `MAT_FFMPEG` (an administrator or developer naming the binary), then the `ffmpeg` folder beside the application (the build the release was tested with), then the PATH. The locator takes its environment, folder and file system as parameters, so every branch is tested without touching the machine's PATH.
 

@@ -46,7 +46,7 @@ WEBVTT
 
 ```
 Transcript of meeting.m4a
-Duration: 00:42:10.0
+Duration: 0:42:10
 Language: en
 Date: 2026-11-10
 Speakers: 2
@@ -84,6 +84,7 @@ The program tells the voices in a recording apart and labels them `Speaker 1`, `
 - If you know how many people speak, give the number (`--speakers 4`, or the speaker count field). The count is a hint that makes the result steadier; without it the program may find one speaker too many or too few in a real meeting.
 - Overlapping speech goes to one speaker only: the recogniser reads one voice at a time, so when two people talk at once the louder or earlier one is transcribed and the other is mostly lost.
 - Two voices that sound alike, or one person speaking from very different microphones, can be confused.
+- At most 10 speakers are told apart; in a larger meeting the voices nearest each other share a label.
 
 ## 4. Cleaning
 
@@ -100,7 +101,7 @@ Never removed:
 
 - meaningful words such as `like`, `well`, `so`, `you know`, `en fait`, `du coup`, `also`, `halt`, because each has a real meaning in some sentences;
 - negations (`no`, `not`, `pas`, `nicht`, `nein`);
-- numbers, repeated numbers and repeated names (`two two five`, `Anna Anna` stay);
+- numbers and repeated numbers (`two two five` stays), and in English and French a repeated capitalised name (`Anna Anna` stays; German capitalises every noun, so there the repetition rule cannot tell a name);
 - an answer to a question (`yes` after a question may be a decision, so it stays), and a question like `Okay?`.
 
 The raw text is always in the JSON, and in `.raw.vtt` and `.raw.txt` with `--raw`.

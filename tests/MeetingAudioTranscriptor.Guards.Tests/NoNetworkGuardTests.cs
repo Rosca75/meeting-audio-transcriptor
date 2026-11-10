@@ -13,8 +13,8 @@ public sealed class NoNetworkGuardTests
     private static readonly string[] Forbidden =
     [
         "HttpClient", "System.Net.Http", "System.Net.Sockets", "WebRequest", "TcpClient",
+        "UdpClient", "HttpListener", "WebSocket",
     ];
-
     /// <summary>Files allowed to mention a forbidden name, each with its reason. Empty: nothing leaves the machine.</summary>
     private static readonly Dictionary<string, string> Exemptions = [];
 
