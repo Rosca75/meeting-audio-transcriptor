@@ -139,8 +139,11 @@ jobs:
         uses: ./.github/actions/fetch-ffmpeg
 
       # The builder verifies every cached source against the lock, so a damaged cache cannot pass.
-      - name: Cache the test set sources
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      # Restored here and saved right after the build below rather than at the end of the job, so a
+      # later failing step does not throw away 0.7 GB of downloads.
+      - name: Restore the test set sources
+        id: testset-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: bench/.cache
           key: testset-${{ runner.os }}-${{ hashFiles('bench/testset/testset.lock') }}
@@ -152,6 +155,13 @@ jobs:
           node bench/testset/fetch-testset.mjs --subset ci --cache bench/.cache --out bench/data
           mkdir -p artifacts/e2e
           node bench/tools/ci-checks.mjs hashes bench/data > artifacts/e2e/testset-hashes.json
+
+      - name: Save the test set sources
+        if: steps.testset-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: bench/.cache
+          key: testset-${{ runner.os }}-${{ hashFiles('bench/testset/testset.lock') }}
 
       - name: Keep the test set hashes
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

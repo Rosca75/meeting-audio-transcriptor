@@ -23,6 +23,14 @@ namespace MeetingAudioTranscriptor.Media;
 /// uninitialises COM only when it runs on that same thread, since an uninitialise belongs to the
 /// thread that initialised. Every COM pointer is released as soon as its step is done.
 /// </para>
+/// <para>
+/// The first decoded block is read while the file is opened, because the format the reader states
+/// before decoding is not always the one it delivers: Media Foundation's AAC decoder assumes implicit
+/// SBR for AAC at 24 kHz or below, states twice the file's rate (32 kHz for a 16 kHz file) and
+/// changes the type to the real rate with its first block. A rate change before any sample was handed
+/// on is therefore taken as the real rate; a change after that is refused, since the rate the caller
+/// read would then be wrong.
+/// </para>
 /// </remarks>
 [SupportedOSPlatform("windows")]
 internal sealed unsafe class MediaFoundationAudioSource : INamedAudioSource
@@ -34,6 +42,10 @@ internal sealed unsafe class MediaFoundationAudioSource : INamedAudioSource
     private readonly PcmSampleReader _reader;
     private readonly int _comThreadId;
     private void* _sourceReader;
+    private PcmConverter _converter = null!;
+    private int _rate;
+    private PcmPendingBytes? _firstBlock;
+    private bool _firstBlockHasData;
     private bool _comInitialized;
     private bool _mediaFoundationStarted;
     private bool _endOfStream;
@@ -57,9 +69,11 @@ internal sealed unsafe class MediaFoundationAudioSource : INamedAudioSource
             Check(SetStreamSelection(_sourceReader, AllStreams, false), "deselect the streams of");
             Check(SetStreamSelection(_sourceReader, FirstAudioStream, true), "select the audio stream of");
             ChooseOutputType();
-            (PcmConverter converter, int rate) = ReadCurrentFormat();
-            SampleRate = rate;
-            _reader = new PcmSampleReader(converter, Refill);
+            (_converter, _rate) = ReadCurrentFormat();
+            _firstBlock = new PcmPendingBytes(1 << 16);
+            _firstBlockHasData = ReadBlock(_firstBlock, beforeFirstBlock: true);
+            SampleRate = _rate;
+            _reader = new PcmSampleReader(_converter, Refill);
             DurationSeconds = ReadDuration();
         }
         catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException)
@@ -205,8 +219,24 @@ internal sealed unsafe class MediaFoundationAudioSource : INamedAudioSource
         }
     }
 
-    /// <summary>Reads samples until one carries data, copies it into the pending bytes, and reports the end.</summary>
+    /// <summary>Hands on the block read at open first, then reads the next ones; false at the end.</summary>
     private bool Refill(PcmPendingBytes pending)
+    {
+        if (_firstBlock is not null)
+        {
+            pending.Append(_firstBlock.Pending);
+            _firstBlock = null;
+            if (_firstBlockHasData)
+            {
+                return true;
+            }
+        }
+
+        return ReadBlock(pending, beforeFirstBlock: false);
+    }
+
+    /// <summary>Reads samples until one carries data, copies it into the pending bytes, and reports the end.</summary>
+    private bool ReadBlock(PcmPendingBytes pending, bool beforeFirstBlock)
     {
         while (!_endOfStream)
         {
@@ -231,14 +261,21 @@ internal sealed unsafe class MediaFoundationAudioSource : INamedAudioSource
                 {
                     // Only whole frames are pending when a refill runs, so the converter can be replaced.
                     (PcmConverter converter, int rate) = ReadCurrentFormat();
-                    if (rate != SampleRate)
+                    if (beforeFirstBlock)
+                    {
+                        // Nothing was handed on yet, so the type the decoder settles on is the file's.
+                        (_converter, _rate) = (converter, rate);
+                    }
+                    else if (rate != SampleRate)
                     {
                         throw new AudioDecodeException(
                             AudioDecodeFailure.CorruptOrUnsupportedData,
                             $"the sample rate of '{_path}' changes from {SampleRate} Hz to {rate} Hz part way through, which Media Foundation decoding does not follow; convert the file to .wav with one rate and try again");
                     }
-
-                    _reader.Converter = converter;
+                    else
+                    {
+                        _reader.Converter = converter;
+                    }
                 }
 
                 if (sample != null && CopySample(sample, pending))

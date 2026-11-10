@@ -44,14 +44,17 @@ public sealed class MediaFoundationAudioSourceTests : IClassFixture<MediaFixture
 
     [Theory]
     [Trait("Tier", "integration")]
-    [InlineData("mf-stereo-44k.m4a", false)]
-    [InlineData("mf-video+audio.mp4", true)]
-    public void AnAacFileMatchesFfmpegsDecode(string name, bool withVideo)
+    [InlineData("mf-stereo-44k.m4a", false, 44100, 2)]
+    [InlineData("mf-video+audio.mp4", true, 44100, 2)]
+    // 16 kHz mono is what a meeting recorder writes, and the rate at which Media Foundation's AAC
+    // decoder first states twice the rate (implicit SBR) and corrects it with the first block.
+    [InlineData("mf-mono-16k.m4a", false, 16000, 1)]
+    public void AnAacFileMatchesFfmpegsDecode(string name, bool withVideo, int rate, int channels)
     {
         Assert.SkipUnless(OperatingSystem.IsWindows(), NeedsWindows);
         _media.SkipWithoutFfmpeg();
-        string sine = MediaFixtures.Sine(44100, 1);
-        string stereo = MediaFixtures.CopyToChannels(2);
+        string sine = MediaFixtures.Sine(rate, 1);
+        string stereo = MediaFixtures.CopyToChannels(channels);
 
         // The video is H.264 through OpenH264, the one H.264 encoder the pinned LGPL ffmpeg carries, in
         // 4:2:0, the chroma format of real recordings and the one Windows' H.264 decoder reads.
