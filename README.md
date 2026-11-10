@@ -1,19 +1,265 @@
 # meeting-audio-transcriptor
 
-Transcribes recorded meetings in English, French and German entirely offline, writing `.vtt`, `.json` and `.txt` files. One engine serves a command-line tool and a basic desktop window, on Windows x64 and Linux x64, and runs ONNX models on the CPU.
+Turns a recording of a business meeting into a transcript, on your own computer. You choose the language (English, French or German), the program writes the transcript as subtitles (`.vtt`), as data (`.json`) and as readable text (`.txt`), and tells the speakers apart with anonymous labels such as "Speaker 1".
 
-Status: under construction. The solution builds and its tests pass, and no transcription exists yet.
+It is a desktop window and a command-line tool on one engine, for Windows x64 and Linux x64.
 
-## Build and test
+## 1. What it does and does not do
+
+- It writes a transcript and stops there. It writes no minutes, no summary and no action list.
+- It works entirely offline. It opens no network connection, sends no telemetry and downloads nothing: the speech models and the audio decoder are inside the package.
+- It reads `.wav`, `.m4a` and the audio track of an `.mp4`.
+- It transcribes English, French or German. You choose the language for each file. It does not detect the language, and one file holds one language.
+- It cleans the text by default (section 4). No generative model rewrites what was said; the raw text stays available.
+- It does not translate, does not name speakers and does not read live audio.
+
+## 2. Outputs
+
+For `meeting.m4a` the program writes next to the recording (or into the folder you choose):
+
+| File | What it holds |
+|---|---|
+| `meeting.vtt` | subtitles, one cue per segment, the speaker as a voice tag |
+| `meeting.json` | everything: metadata, speakers, and for each segment the cleaned text and the raw text, with word times and confidences; the fields are in `docs/transcript-schema.md` |
+| `meeting.txt` | readable text grouped into speaker turns |
+| `meeting.raw.vtt`, `meeting.raw.txt` | the same without cleaning; written only when you ask (`--raw`, or the checkbox in the window) |
+
+You pick which of the three formats to write. The JSON always carries both texts, so a raw file is only a convenience. Files are written whole or not at all: a cancelled or failed run leaves no partial file, and an existing transcript of the same name is replaced only when the new one is complete.
+
+Examples (made up, to show the shapes).
+
+`meeting.vtt`:
 
 ```
+WEBVTT
+
+1
+00:00:00.500 --> 00:00:03.600
+<v Speaker 1>Good morning everyone.</v>
+
+2
+00:00:04.100 --> 00:00:09.800
+<v Speaker 2>Let's start with the budget for the second quarter.</v>
+```
+
+`meeting.txt`:
+
+```
+Transcript of meeting.m4a
+Duration: 00:42:10.0
+Language: en
+Date: 2026-11-10
+Speakers: 2
+
+[00:00:00] Speaker 1:
+Good morning everyone.
+
+[00:00:04] Speaker 2:
+Let's start with the budget for the second quarter.
+```
+
+`meeting.json` (shortened):
+
+```json
+{
+  "schemaVersion": "1",
+  "metadata": { "sourceFile": "meeting.m4a", "language": "en", "durationSeconds": 2530.0 },
+  "speakers": [ { "id": "S1", "label": "Speaker 1", "speakingSeconds": 812.4 } ],
+  "segments": [
+    {
+      "id": 1, "start": 0.5, "end": 3.6, "speaker": "S1",
+      "text": "Good morning everyone.",
+      "rawText": "um good morning everyone",
+      "confidence": 0.93
+    }
+  ]
+}
+```
+
+## 3. Speaker separation
+
+The program tells the voices in a recording apart and labels them `Speaker 1`, `Speaker 2` and so on, in order of first appearance. The labels are anonymous: the program never knows who is who.
+
+- It is on by default. `--no-speakers` (or its checkbox) switches it off; the transcript then has no labels.
+- If you know how many people speak, give the number (`--speakers 4`, or the speaker count field). The count is a hint that makes the result steadier; without it the program may find one speaker too many or too few in a real meeting.
+- Overlapping speech goes to one speaker only: the recogniser reads one voice at a time, so when two people talk at once the louder or earlier one is transcribed and the other is mostly lost.
+- Two voices that sound alike, or one person speaking from very different microphones, can be confused.
+
+## 4. Cleaning
+
+Cleaning only removes words; it never rewrites or reorders them. The rules run per language and are listed word by word in `src/MeetingAudioTranscriptor.Engine/Cleaning/Lexicons/`.
+
+Removed:
+
+- hesitation sounds (`um`, `uh`, `euh`, `ähm`, and stretched forms);
+- immediate repetitions and stutters (`I I think` becomes `I think`; `th- the plan` becomes `the plan`);
+- clear false starts made only of function words (`I was, I think we should` becomes `I think we should`);
+- segments that are only an acknowledgement (`yeah`, `mm-hmm`, `oui`, `d'accord`, `ja`, `genau`).
+
+Never removed:
+
+- meaningful words such as `like`, `well`, `so`, `you know`, `en fait`, `du coup`, `also`, `halt`, because each has a real meaning in some sentences;
+- negations (`no`, `not`, `pas`, `nicht`, `nein`);
+- numbers, repeated numbers and repeated names (`two two five`, `Anna Anna` stay);
+- an answer to a question (`yes` after a question may be a decision, so it stays), and a question like `Okay?`.
+
+The raw text is always in the JSON, and in `.raw.vtt` and `.raw.txt` with `--raw`.
+
+## 5. Install and run
+
+Download the portable package for your system from the Releases page of this repository, check it against `SHA256SUMS.txt` if you wish, and extract it anywhere. Nothing is installed. The package holds both programs, the models, the decoder and the notices.
+
+### Windows
+
+Extract `meeting-audio-transcriptor-<version>-win-x64.zip` and run `meeting-audio-transcriptor.exe`. The window needs the Microsoft Edge WebView2 runtime, which is part of Windows 11; on Windows 10 install it from `https://developer.microsoft.com/microsoft-edge/webview2/`. Nothing in the package is signed, so the first start of a downloaded copy shows the SmartScreen prompt "Windows protected your PC": choose "More info", then "Run anyway". If you would rather not, extract with a tool that does not mark the files as downloaded, or right-click the zip, open Properties and tick "Unblock" before extracting.
+
+### Linux
+
+The window needs GTK 3 and WebKitGTK 4.1 from the distribution:
+
+```
+sudo apt install libgtk-3-0 libwebkit2gtk-4.1-0     # Debian, Ubuntu (24.04 names the first libgtk-3-0t64)
+sudo dnf install gtk3 webkit2gtk4.1                 # Fedora
+```
+
+Then `tar -xzf meeting-audio-transcriptor-<version>-linux-x64.tar.gz` and run `./meeting-audio-transcriptor` from the extracted folder. The command-line tool needs neither library.
+
+## 6. The desktop window
+
+1. Start `meeting-audio-transcriptor`. The window shows the version and whether the models are in place.
+2. Choose the recording: press "Choose file...", or drop a `.m4a`, `.mp4` or `.wav` file on the window. Anything else is refused with a message; when several files are dropped the first supported one is used.
+3. Choose the language the meeting is spoken in.
+4. Choose the formats to write. Tick the raw files box if you want `.raw.vtt` and `.raw.txt`.
+5. Leave speaker separation on, or switch it off. Enter the number of speakers (1 to 10) if you know it.
+6. Optionally choose an output folder; by default the transcripts go next to the recording.
+7. Press Start. A progress bar shows the stage (loading models, transcribing, identifying speakers, cleaning, writing). All options are locked while it runs. Cancel stops it and writes nothing.
+8. When it ends, a summary shows what was written, how long the recording was and how fast the run was. "Open output folder" shows the files.
+
+## 7. The command line
+
+The tool is `meeting-audio-transcriptor-cli` (`.exe` on Windows).
+
+```
+meeting-audio-transcriptor-cli transcribe <file> --language en|fr|de [options]
+meeting-audio-transcriptor-cli benchmark [options]
+meeting-audio-transcriptor-cli models [--models <dir>] [--verify]
+meeting-audio-transcriptor-cli --version
+meeting-audio-transcriptor-cli <command> --help
+```
+
+Options are written `--name value` or `--name=value`; switches take no value.
+
+### transcribe
+
+| Option | Meaning |
+|---|---|
+| `--language en\|fr\|de` | the language spoken; required |
+| `--formats <list>` | any of `vtt`, `json`, `txt`, separated by commas; default all three |
+| `--output <dir>` | the folder to write to; default the recording's folder |
+| `--no-speakers` | do not tell speakers apart |
+| `--speakers <n>` | the number of speakers, 1 to 32, when known; not with `--no-speakers` |
+| `--threads <n>` | recognition threads, 1 to 256; default the logical cores, at most 4 |
+| `--raw` | also write `.raw.vtt` and `.raw.txt` |
+| `--models <dir>` | the models folder; default `MAT_MODELS_DIR`, else `models` beside the program |
+| `--quiet` | print nothing but errors |
+
+Progress goes to standard error and the summary to standard output. Ctrl+C cancels and leaves no partial file; a second Ctrl+C ends the process at once.
+
+```
+meeting-audio-transcriptor-cli transcribe standup.m4a --language en
+meeting-audio-transcriptor-cli transcribe reunion.mp4 --language fr --speakers 4 --raw
+meeting-audio-transcriptor-cli transcribe sitzung.wav --language de --formats txt,json --output transcripts
+```
+
+### models
+
+`models` lists the files a transcription needs and whether each is installed; `--verify` also checks every file's size and SHA-256 against `models.lock`, which takes a while for the large model.
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | done (also when the recording held no speech and an empty transcript was written) |
+| 1 | the command line could not be read |
+| 2 | the recording is missing, unreadable, unsupported or damaged |
+| 3 | a model file is missing or does not load |
+| 4 | the transcripts could not be written (folder, permissions, full disk) |
+| 5 | unexpected failure |
+| 130 | cancelled with Ctrl+C |
+
+### benchmark and your own speed check
+
+```
+meeting-audio-transcriptor-cli benchmark --long-file <recording> --language en --threads 4
+```
+
+This runs the real service on your recording, transcripts included, and prints the audio length, the wall time and the speed as a multiple of real time ("12.0x" means one hour of audio in five minutes), the peak memory and writes a result file under `bench/results/` (change it with `--out`). `--repeat <n>` runs each file n times and reports the median; `--long-file ... --language ...` may be repeated; `--set clips|long|containers|noise|all` runs the test set of section 12. Close other programs while measuring.
+
+## 8. Performance
+
+The design target is a two-hour meeting transcribed in ten minutes or less on a 4-core laptop with AVX2 (12 times real time). The measured speed, memory and accuracy of the shipped build, and how they were measured, are in `docs/BENCHMARKS.md`. Speed depends mostly on the core count and on the processor's vector instructions; a machine below the requirements will be slower, and `--threads` and `--no-speakers` are the two levers (section 11).
+
+## 9. System requirements
+
+- Windows 10 or 11 x64, or a 64-bit Linux with glibc (Ubuntu 22.04 or later, Debian 12, Fedora and equivalents).
+- An x64 processor with AVX2 (any laptop from about 2015 on), 4 cores or more.
+- 16 GB of memory recommended; see `docs/BENCHMARKS.md` for the measured peak.
+- About 1 GB of disk for the extracted package.
+
+## 10. Privacy
+
+Nothing leaves your machine. The program has no network code, and the window refuses every address except its own embedded page. Where it writes:
+
+- the transcripts, only into the folder you chose (or beside the recording);
+- a temporary file named after each transcript, in the same folder, while it is being written;
+- the window's web view profile, in `%LOCALAPPDATA%\meeting-audio-transcriptor\webview` on Windows and `$XDG_DATA_HOME/meeting-audio-transcriptor/webview` (default `~/.local/share/meeting-audio-transcriptor/webview`) on Linux.
+
+It writes no registry key. To uninstall, delete the extracted folder and that data folder. The recording itself is only ever read.
+
+## 11. Troubleshooting
+
+| Message or symptom | What to do |
+|---|---|
+| "ffmpeg was not found" on Linux | the package holds an `ffmpeg` folder beside the program; keep it there, or install ffmpeg, or point `MAT_FFMPEG` at an ffmpeg executable |
+| The window says the WebView2 runtime is missing (Windows) | install the runtime from the address in section 5; exit code 2 |
+| The window says GTK or WebKitGTK could not be loaded (Linux) | install the packages of section 5, or use the command-line tool |
+| "no display could be opened" (Linux) | start the window from a desktop session |
+| "not a supported recording" | choose a `.wav`, `.m4a` or `.mp4` file, or convert the recording with a media player or ffmpeg |
+| "damaged" or "no audio stream" | the file is cut short or has no audio; play it in a media player, and export it again |
+| Windows N edition cannot decode `.m4a` | install the Media Feature Pack from Microsoft, or convert the file to `.wav` |
+| "models folder lacks ..." | run from the extracted package, or pass `--models <dir>` or set `MAT_MODELS_DIR`; from source see section 12 |
+| Slow on an older or small machine | `--threads 2` if the machine is also busy, `--no-speakers` to skip speaker separation, and close other programs |
+| Quiet speakers missing | compare `.txt` with `.raw.txt`; if the words are in the raw file, cleaning removed them, and if not the recogniser did not hear them |
+
+## 12. Building from source
+
+Prerequisites: the .NET 10 SDK (pinned in `global.json`), Node 22 or later, and ffmpeg on the PATH for the integration tests. No npm package is installed.
+
+```
+node build/fetch-models.mjs --into models           # the speech, voice-activity and speaker models, verified against build/models.lock
+node build/fetch-ffmpeg.mjs --rid linux-x64         # or win-x64; lands in tools/ffmpeg/<rid>/, then set MAT_FFMPEG to it for a source build
 dotnet build -warnaserror
-dotnet build src/MeetingAudioTranscriptor.Shell -r win-x64 -warnaserror
 dotnet test --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models" --ignore-exit-code 8
+dotnet run --project src/MeetingAudioTranscriptor.Cli -- transcribe meeting.m4a --language en
+dotnet run --project src/MeetingAudioTranscriptor.Shell
+dotnet build src/MeetingAudioTranscriptor.Shell -r win-x64 -warnaserror     # the Windows host, from Linux
 ```
 
-The second command builds the Windows desktop host; the first builds the Linux one on Linux. See `docs/TESTING.md` for the test tiers.
+A source build finds its models in `models/` of the checkout (or `MAT_MODELS_DIR`). The test tiers and their commands are in `docs/TESTING.md`. The speech test set used by the benchmark is built from public sources with `node bench/testset/fetch-testset.mjs` (see `bench/testset/README.md`). Releases are cut only by the tag workflow, described in `docs/RELEASING.md`.
 
-## License
+## 13. How it works
 
-MIT, see `LICENSE`.
+A recording goes through these stages, each a folder of `src/MeetingAudioTranscriptor.Engine/`:
+
+1. Decode: the engine's own reader for WAV, Media Foundation on Windows and a bundled LGPL ffmpeg elsewhere for `.m4a` and `.mp4`, to mono samples (`docs/decisions/0009-audio-decoding.md`).
+2. Resample to 16 kHz and cut the audio at silences with Silero VAD, so silence and noise are never recognised.
+3. Recognise each chunk with IBM Granite Speech 5.0 470M TurboCTC (int8, ONNX Runtime, CPU), several chunks at once over one shared model (`docs/decisions/0002-recogniser.md`, `docs/decisions/0003-threading-model.md`).
+4. Tell speakers apart with WeSpeaker CAM++ voice embeddings and clustering (`docs/decisions/0005-speaker-separation.md`).
+5. Cut the words into segments and clean them with the per-language rules of section 4.
+6. Write the files.
+
+Why these choices, and the measurements behind them, are in `docs/decisions/`; the packaging is `docs/decisions/0007-models-and-packaging.md`; the two window hosts are `docs/decisions/0006-desktop-hosts.md`. The charters of each part start at `CLAUDE.md`.
+
+## 14. Licence
+
+MIT, see `LICENSE`. The models, the decoder and the libraries the package carries are under their own licences, credited with their texts in `NOTICE`.

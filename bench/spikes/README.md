@@ -1,7 +1,7 @@
 # Phase 1 candidate spike (throwaway)
 
-Python + onnxruntime 1.31.1 comparison of speech-recognition candidates (speed and WER). Not production code; the final
-engine is C#. Report: `docs/build/phase1-candidates.md`. Results: `bench/results/2026-11-10-phase1-candidates.json`,
+Python + onnxruntime 1.31.1 comparison of speech-recognition candidates (speed and WER). Not production code and not needed to build or ship the application; the final
+engine is C#. The scripts, `runs/` and the tables are kept because they back the report; console logs and bytecode caches are ignored (`.gitignore`). Report: `docs/build/phase1-candidates.md`. Results: `bench/results/2026-11-10-phase1-candidates.json`,
 hypotheses in `bench/results/2026-11-10-phase1-hypotheses/<candidate>/<file-id>.txt` (`<candidate>/noise-*` and
 `silence-60s` are the noise runs).
 
