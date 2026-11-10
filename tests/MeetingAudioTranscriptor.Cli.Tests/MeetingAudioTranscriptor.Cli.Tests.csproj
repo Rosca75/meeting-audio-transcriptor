@@ -1,0 +1,15 @@
+<!-- The Cli suite: unit tests over the command-line front end (parsing, exit codes, console wording), run on Microsoft.Testing.Platform. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MeetingAudioTranscriptor.Cli.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MeetingAudioTranscriptor.Cli\MeetingAudioTranscriptor.Cli.csproj" />
+  </ItemGroup>
+</Project>

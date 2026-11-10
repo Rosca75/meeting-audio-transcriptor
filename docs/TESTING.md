@@ -35,7 +35,22 @@ A failing guard names a real inconsistency: fix the inconsistency and leave the 
 
 `MeetingAudioTranscriptor.Media.Tests` holds the media suite. The unit tier covers the PCM converter (every format, channel count and block split), the ffmpeg banner parser over recorded and hand-written banners, the error wording, the content sniff and the opener's decision table with fake decoders. The integration tier generates its files with the ffmpeg it finds (`MAT_FFMPEG`, beside the test, then the PATH) and skips without one; it also decodes `bench/data/long/en-10min.m4a` and `.mp4` when the test set is present. The Media Foundation tests run on Windows alone and skip elsewhere, because the interop cannot run on Linux.
 
-## 5. Commands
+## 5. Pipeline, service and command line
+
+The Engine suite's `Pipeline/` tests drive the streaming pipeline with scripted chunks, a scripted recogniser and a scripted speaker separator: word order when chunks finish out of order, the bounded queue holding the producer back, cancellation within a second, a worker's or the source's own exception surfacing unwrapped, monotonic progress ending at 1, the segment builder's cuts, the low-confidence guard, the transcript assembly, empty and silent audio, and the same document whatever the thread count.
+
+`MeetingAudioTranscriptor.App.Tests` drives the transcription service through its seams (the opener, the model loader) with an energy-based VAD graph and a fake recogniser over WAV files it writes: the files and their names, the formats and raw files, overwriting, every failure kind, the cleanup of temporary files on failure and cancellation, and one model load for several runs. `MeetingAudioTranscriptor.Cli.Tests` holds the argument parser's table tests, the exit code of every outcome and the console wording.
+
+The Pipeline suite's `Pipeline/ServicePipelineTests` runs the real Silero VAD and the pipeline through the service with a fake recogniser over `long/en-10min.wav`, `.m4a` and `.mp4` (chunk statistics, progress, every output format) and over the four noise files (no speech, an empty transcript).
+
+The benchmark runs the real service over the test set and writes `bench/results/<yyyy-MM-dd>-<label>.json`:
+
+```
+meeting-audio-transcriptor-cli benchmark --set clips --threads 1          # also long, containers, noise, all or a file id
+meeting-audio-transcriptor-cli benchmark --long-file <path> --language en  # time a recording outside the test set
+```
+
+## 6. Commands
 
 ```
 dotnet test --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models"   # the unit tier
@@ -56,6 +71,7 @@ node --test build/*.test.mjs                                       # the fetch t
 
 ```
 MAT_BENCH_DATA=<dir> dotnet test --project tests/MeetingAudioTranscriptor.Pipeline.Tests --filter "Tier=models"
+dotnet test --project tests/MeetingAudioTranscriptor.Cli.Tests       # the command line alone
 ```
 
 The models tier reads its model files from `MAT_MODELS_DIR` when that variable is set, and from the `models` folder of the repository otherwise; the application's catalog resolves the same folder, so a development run and a test see one set of files. A model that is not installed skips its tests by name and prints the fetch command. `build/models.lock` pins every model file by address, size and SHA-256, and `build/ffmpeg.lock` pins the ffmpeg builds; the fetch tools verify each file against them and leave a verified file alone, so a second run downloads nothing.

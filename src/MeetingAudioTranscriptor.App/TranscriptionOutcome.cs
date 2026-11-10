@@ -107,10 +107,11 @@ public readonly record struct TranscriptionProgress(TranscriptionStage Stage, do
 
 /// <summary>Whether the models a run needs are installed.</summary>
 /// <param name="ModelsRoot">The models folder looked in.</param>
+/// <param name="RequiredFiles">Every file a run needs, relative to the folder.</param>
 /// <param name="MissingFiles">The missing files, relative to the folder.</param>
 /// <param name="Message">What to do about them; empty when nothing is missing.</param>
 /// <param name="SpeakerSeparationAvailable">Whether speaker separation can run.</param>
-public sealed record ModelStatus(string ModelsRoot, IReadOnlyList<string> MissingFiles, string Message, bool SpeakerSeparationAvailable)
+public sealed record ModelStatus(string ModelsRoot, IReadOnlyList<string> RequiredFiles, IReadOnlyList<string> MissingFiles, string Message, bool SpeakerSeparationAvailable)
 {
     /// <summary>True when every required file is present.</summary>
     public bool Ready => MissingFiles.Count == 0;

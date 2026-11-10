@@ -127,8 +127,15 @@ public sealed class TranscriptionService : IDisposable
         string message = missing.Count == 0
             ? ""
             : $"the models folder {ModelsRoot} lacks {string.Join(", ", missing)}; fetch them with: node build/fetch-models.mjs --set all --into {ModelsRoot} (or point {ModelCatalog.ModelsDirectoryVariable} at a folder that holds them)";
-        return new ModelStatus(ModelsRoot, missing, message, _seams.SeparationAvailable(ModelsRoot));
+        return new ModelStatus(ModelsRoot, LoadedModels.RequiredFiles(), missing, message, _seams.SeparationAvailable(ModelsRoot));
     }
+
+    /// <summary>Compares every required file with its size and SHA-256 in the models lock; slow on the large files.</summary>
+    /// <param name="lockPath">The lock to read; null to look beside the models, beside the executable, then in the repository.</param>
+    /// <returns>One sentence per problem; empty when every file matches.</returns>
+    /// <exception cref="FileNotFoundException">No lock was found.</exception>
+    public IReadOnlyList<string> Verify(string? lockPath = null) =>
+        ModelVerification.Verify(ModelsRoot, LoadedModels.RequiredFiles(), lockPath ?? ModelVerification.FindLock(ModelsRoot));
 
     /// <summary>Transcribes one recording and writes its transcript files.</summary>
     /// <param name="request">What to transcribe and where to write.</param>
