@@ -89,7 +89,11 @@ describe("run", { skip: !tarWorks && "needs tar and xz on PATH" }, () => {
     hits = 0;
     assert.deepEqual(await run(options(into), quiet), []);
     assert.deepEqual(readdirSync(join(into, "linux-x64")).sort(), ["LICENSE.txt", "ffmpeg"]);
-    assert.ok((statSync(join(into, "linux-x64", "ffmpeg")).mode & 0o111) !== 0, "the binary must be executable");
+    // Windows has no executable bit (Node reports one for .exe, .bat and .cmd names alone), so the
+    // mode is checked where the bit exists.
+    if (process.platform !== "win32") {
+      assert.ok((statSync(join(into, "linux-x64", "ffmpeg")).mode & 0o111) !== 0, "the binary must be executable");
+    }
     assert.equal(hits, 1);
 
     const lines = [];
