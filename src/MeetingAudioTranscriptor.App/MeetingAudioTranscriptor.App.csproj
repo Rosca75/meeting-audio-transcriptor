@@ -14,6 +14,9 @@
     <ProjectReference Include="..\MeetingAudioTranscriptor.Media\MeetingAudioTranscriptor.Media.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- The service's seams (the opener, the model loader) are internal; the App suite and the
+         Pipeline suite's models tier drive the real service through them with a fake recogniser. -->
     <InternalsVisibleTo Include="MeetingAudioTranscriptor.App.Tests" />
+    <InternalsVisibleTo Include="MeetingAudioTranscriptor.Pipeline.Tests" />
   </ItemGroup>
 </Project>
