@@ -33,21 +33,29 @@ the gates are checked in order before each merge to `main`.
 
 ## Agents in flight (worktrees under `.claude/worktrees/`)
 
-- Phase 1 spike report (sonnet): `docs/build/phase1-candidates.md`.
 - Diarisation (opus): `Engine/Diarisation`, `docs/build/diarisation-measurements.md`.
 - Granite recogniser and graph patch (opus): `Engine/Recognition/Granite`,
   `build/onnx-patch.mjs`, `docs/build/granite-measurements.md`.
-- Pipeline, App service, CLI with benchmark command (opus); part B wires the
-  recogniser after it lands (the agent is resumed by message).
-- Frontend page and App bridge (sonnet): `frontend/`, `App/Bridge`.
-- Desktop hosts (opus): `Shell/`; its placeholder commit under `App/Bridge`
-  and `frontend/` is dropped at merge in favour of the real ones.
+- Pipeline agent finished part A (merged); its worktree
+  `agent-a479be833778bec32` is kept so it can be resumed for part B (wire the
+  recogniser, end-to-end checks, first benchmark files).
 
 ## Merged so far
 
 Scaffold, writers and schema, cleaning and scoring, WAV reader and resampler
 and FFT, ONNX Runtime runner and fetch tools and locks, media decoders, VAD and
-chunker. Unit tier: 718 tests passing before the agents above.
+chunker, pipeline and App service and CLI (part A, fake recogniser), page and
+bridge, both desktop hosts (Linux window runs the real page under xvfb), CI and
+release workflows, publish and release scripts, NOTICE, CHANGELOG, RELEASING.
+Unit tier 1138 passing; page tests 84; tool tests 22. `main` equals the work
+branch at 3e7e426.
+
+## CI
+
+GitHub Actions results CAN be read from this session (GitHub MCP
+`actions_list`, `get_job_logs`). Pushing to `main` triggers `ci.yml`, whose
+Windows legs are the only execution of Windows code available: read them and
+fix what fails.
 
 ## Environment (probed 2026-11-10)
 
@@ -97,12 +105,16 @@ See `docs/decisions/`.
 
 ## Next steps
 
-1. Merge agents as they report; resolve `.slnx` conflicts by keeping all lines.
-2. Write decision records 0002 to 0009 (recogniser, threading, benchmark
-   calibration, diarisation, hosts, packaging, dependencies, audio decoding).
-3. Wire: recogniser into `RecognizerFactory`, diarisation into the separator
-   seam, `TranscriptionService` into the bridge's `ITranscriber`, hosts to the
-   real bridge and page.
-4. Quiet-machine benchmarks under the AVX2 mask: clips, 10 min, 30 min, 2 h.
-5. Phase 6: CI and release workflows, publish script, NOTICE, RELEASING.md.
-6. Phase 7: acceptance, hardening, README, WINDOWS-VERIFICATION.md, cleanup.
+1. Read the first CI run on `main` (run 42895303733) and fix failures.
+2. When the recogniser lands: merge, resume the pipeline agent for part B.
+3. When diarisation lands: merge, write decision 0005, wire it into the
+   separator seam; wire `TranscriptionService` into the bridge's `ITranscriber`
+   (replace the stand-in in `Shell/ShellComposition`), fix the sentence in
+   `frontend/BRIDGE.md` about injected globals (the page defines them itself;
+   update the hash file).
+4. Flip Granite to the default set in `build/models.lock` (the recogniser agent
+   does it) and re-run the full publish.
+5. Quiet-machine benchmarks under the AVX2 mask: clips, 10 min, 30 min, 2 h;
+   write `docs/BENCHMARKS.md`.
+6. Phase 7: error handling checks, README, WINDOWS-VERIFICATION.md, charters
+   (nested CLAUDE.md files), cleanup of `bench/spikes` logs, final report.
