@@ -1,2 +1,6 @@
 acc-C: wall 26.6s audio 3383s RTFx 127.09 load 2.3s rss 1628MB in-run {'enc': 105.6} load1 0.86
 noise-C: wall 2.5s audio 240s RTFx 96.83 load 2.3s rss 1421MB in-run {'enc': 8.7} load1 1.94
+acc-A: wall 132.1s audio 3383s RTFx 25.62 load 2.8s rss 2237MB in-run {'mel': 4.6, 'enc': 500.0, 'dec': 17.6, 'dec_loop_total': 18.1} load1 1.71
+noise-A: wall 9.3s audio 240s RTFx 25.81 load 2.7s rss 1846MB in-run {'mel': 0.4, 'enc': 33.8, 'dec': 1.1, 'dec_loop_total': 1.1} load1 3.14
+acc-D: wall 141.6s audio 3383s RTFx 23.89 load 2.9s rss 2155MB in-run {'mel': 5.0, 'enc': 539.1, 'dec': 17.8, 'dec_loop_total': 18.4} load1 2.97
+noise-D: wall 10.3s audio 240s RTFx 23.25 load 2.8s rss 1848MB in-run {'mel': 0.4, 'enc': 35.0, 'dec': 0.6, 'dec_loop_total': 0.7} load1 4.55

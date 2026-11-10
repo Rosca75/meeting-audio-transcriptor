@@ -1,0 +1,50 @@
+{
+ "tag": "noise-D",
+ "cand": "D",
+ "set": "noise",
+ "workers": 4,
+ "intra": 1,
+ "chunk_max_s": 28.0,
+ "allow_spinning": true,
+ "load_s": 2.8037599589997626,
+ "warmup_s": 0.4841068370001267,
+ "peak_rss_mb": 1847.53515625,
+ "rss_after_load_mb": 1110.78515625,
+ "wall_s": 10.32146461900038,
+ "audio_s": 240,
+ "rtfx": 23.252513946343758,
+ "loadavg1_at_start": 4.55,
+ "cpu_busy_before": 0.024146544546211457,
+ "in_run_seconds": {
+  "mel": 0.42523572900017825,
+  "enc": 34.96335232000047,
+  "dec": 0.6327938919948792,
+  "dec_loop_total": 0.6521103190007125
+ },
+ "unk_count": 0,
+ "n_chunks": 12,
+ "errors": [],
+ "files": {
+  "noise-office-60s": {
+   "text": "",
+   "audio_s": 60,
+   "chunks": 3
+  },
+  "noise-pink-60s": {
+   "text": "",
+   "audio_s": 60,
+   "chunks": 3
+  },
+  "noise-white-60s": {
+   "text": "",
+   "audio_s": 60,
+   "chunks": 3
+  },
+  "silence-60s": {
+   "text": "",
+   "audio_s": 60,
+   "chunks": 3
+  }
+ },
+ "date": "2026-11-10 18:37:47"
+}
