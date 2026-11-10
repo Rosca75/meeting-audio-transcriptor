@@ -1,0 +1,954 @@
+{
+  "comment": "The sources the speech test set is built from, pinned by address, size and hash, and the recipes of every clip. Only bench/testset/fetch-testset.mjs reads this file. The sections are: sources (what is downloaded), datasets (licence and attribution of each), noise (the synthetic and recorded noise), plan (the settings --plan chooses recipes from), defaultLong (the long files every build makes), clips and long (the recipes --plan wrote: utterance id, silence in seconds before it, its duration in seconds). A change to any pinned address, hash or recipe changes the test set, so it is reviewed like a change to a benchmark result.",
+  "version": 1,
+  "sources": [
+    {
+      "id": "librispeech-test-clean",
+      "dataset": "librispeech",
+      "role": "audio",
+      "lang": "en",
+      "url": "https://www.openslr.org/resources/12/test-clean.tar.gz",
+      "file": "librispeech/test-clean.tar.gz",
+      "bytes": 346663984,
+      "sha256": "39fde525e59672dc6d1551919b1478f724438a95aa55f874b576be21967e6c23"
+    },
+    {
+      "id": "ami-annotations",
+      "dataset": "ami",
+      "role": "annotations",
+      "lang": "en",
+      "url": "https://groups.inf.ed.ac.uk/ami/AMICorpusAnnotations/ami_public_manual_1.6.2.zip",
+      "file": "ami/ami_public_manual_1.6.2.zip",
+      "bytes": 22887865,
+      "sha256": "b56e5babb2496b8795deeeda7e71178d7fbc9963f94276cf2a3f4b56ebbc9f9d"
+    },
+    {
+      "id": "ami-ES2004a-mix",
+      "dataset": "ami",
+      "role": "audio",
+      "lang": "en",
+      "url": "https://groups.inf.ed.ac.uk/ami/AMICorpusMirror/amicorpus/ES2004a/audio/ES2004a.Mix-Headset.wav",
+      "file": "ami/ES2004a.Mix-Headset.wav",
+      "bytes": 33579394,
+      "sha256": "3e2560b19bee6952c7c7ce041b0f1ea8a7ea9468044c4eea79d2a2c67e24ab0f"
+    },
+    {
+      "id": "ami-IS1009a-mix",
+      "dataset": "ami",
+      "role": "audio",
+      "lang": "en",
+      "url": "https://groups.inf.ed.ac.uk/ami/AMICorpusMirror/amicorpus/IS1009a/audio/IS1009a.Mix-Headset.wav",
+      "file": "ami/IS1009a.Mix-Headset.wav",
+      "bytes": 26844093,
+      "sha256": "6eb5a0ede0d9e72794f976ce7bea5b78133eae969f99b4c5418b43c2468d25b1"
+    },
+    {
+      "id": "ami-ES2004a-array1-01",
+      "dataset": "ami",
+      "role": "audio",
+      "lang": "en",
+      "url": "https://groups.inf.ed.ac.uk/ami/AMICorpusMirror/amicorpus/ES2004a/audio/ES2004a.Array1-01.wav",
+      "file": "ami/ES2004a.Array1-01.wav",
+      "bytes": 33579394,
+      "sha256": "6936edac5d0904fc5c4ab175546c5cc5366601fdc1b1e5183a6ea2c10f05d150"
+    },
+    {
+      "id": "mls-fr-transcripts",
+      "dataset": "mls",
+      "role": "transcripts",
+      "lang": "fr",
+      "url": "https://huggingface.co/datasets/facebook/multilingual_librispeech/resolve/2e83e61823b4c47dcbcb1980bb88601274127609/data/mls_french/test/transcripts.txt",
+      "file": "mls-fr/transcripts.txt",
+      "bytes": 589736,
+      "sha256": "add5004d89f1a916ca018b2afa3b211adfe122eeeb67cf5d5d4350e2c2834744"
+    },
+    {
+      "id": "mls-fr-1406_1028",
+      "dataset": "mls",
+      "role": "audio",
+      "lang": "fr",
+      "speaker": "1406",
+      "url": "https://huggingface.co/datasets/facebook/multilingual_librispeech/resolve/2e83e61823b4c47dcbcb1980bb88601274127609/data/mls_french/test/audio/1406_1028_000.tar.gz",
+      "file": "mls-fr/1406_1028.tar.gz",
+      "bytes": 14805498,
+      "sha256": "522821c3b935cc4c79196bfadf10cffd9a0c0df3b0961dc754ebe7c2dffc09fa"
+    },
+    {
+      "id": "mls-fr-2154_2576",
+      "dataset": "mls",
+      "role": "audio",
+      "lang": "fr",
+      "speaker": "2154",
+      "url": "https://huggingface.co/datasets/facebook/multilingual_librispeech/resolve/2e83e61823b4c47dcbcb1980bb88601274127609/data/mls_french/test/audio/2154_2576_000.tar.gz",
+      "file": "mls-fr/2154_2576.tar.gz",
+      "bytes": 14043194,
+      "sha256": "c716cfff8db96013f2c8b3c26c433fab1e41a833509c2224b518b2d822c836f9"
+    },
+    {
+      "id": "mls-fr-296_1028",
+      "dataset": "mls",
+      "role": "audio",
+      "lang": "fr",
+      "speaker": "296",
+      "url": "https://huggingface.co/datasets/facebook/multilingual_librispeech/resolve/2e83e61823b4c47dcbcb1980bb88601274127609/data/mls_french/test/audio/296_1028_000.tar.gz",
+      "file": "mls-fr/296_1028.tar.gz",
+      "bytes": 14730361,
+      "sha256": "44ec6f670e405a74c6852bfde5861fafb479ebdf9116ff07be932f7a7dbe3586"
+    },
+    {
+      "id": "mls-fr-5207_3078",
+      "dataset": "mls",
+      "role": "audio",
+      "lang": "fr",
+      "speaker": "5207",
+      "url": "https://huggingface.co/datasets/facebook/multilingual_librispeech/resolve/2e83e61823b4c47dcbcb1980bb88601274127609/data/mls_french/test/audio/5207_3078_000.tar.gz",
+      "file": "mls-fr/5207_3078.tar.gz",
+      "bytes": 18347901,
+      "sha256": "c5bbfc73ad2376672fe7a8532724d77e64aebd0beee8ddacaecb837b51769819"
+    },
+    {
+      "id": "mls-fr-4482_3103",
+      "dataset": "mls",
+      "role": "audio",
+      "lang": "fr",
+      "speaker": "4482",
+      "url": "https://huggingface.co/datasets/facebook/multilingual_librispeech/resolve/2e83e61823b4c47dcbcb1980bb88601274127609/data/mls_french/test/audio/4482_3103_000.tar.gz",
+      "file": "mls-fr/4482_3103.tar.gz",
+      "bytes": 21732533,
+      "sha256": "14d4a003018f7ac513eaeb929b564a6b4b14dbd2b1ebcc4a5b95eb853f133033"
+    },
+    {
+      "id": "mls-de-transcripts",
+      "dataset": "mls",
+      "role": "transcripts",
+      "lang": "de",
+      "url": "https://huggingface.co/datasets/facebook/multilingual_librispeech/resolve/2e83e61823b4c47dcbcb1980bb88601274127609/data/mls_german/test/transcripts.txt",
+      "file": "mls-de/transcripts.txt",
+      "bytes": 813045,
+      "sha256": "767437e5873ab8403a7b89ee1e44443964c3688234d4145b6542471e7f58c628"
+    },
+    {
+      "id": "mls-de-1844_931",
+      "dataset": "mls",
+      "role": "audio",
+      "lang": "de",
+      "speaker": "1844",
+      "url": "https://huggingface.co/datasets/facebook/multilingual_librispeech/resolve/2e83e61823b4c47dcbcb1980bb88601274127609/data/mls_german/test/audio/1844_931_000.tar.gz",
+      "file": "mls-de/1844_931.tar.gz",
+      "bytes": 14832251,
+      "sha256": "96a538d3fcf307a3d702bd445e227b2e7c6bc4d103554d2a264c8f2c90e8af37"
+    },
+    {
+      "id": "mls-de-3040_2130",
+      "dataset": "mls",
+      "role": "audio",
+      "lang": "de",
+      "speaker": "3040",
+      "url": "https://huggingface.co/datasets/facebook/multilingual_librispeech/resolve/2e83e61823b4c47dcbcb1980bb88601274127609/data/mls_german/test/audio/3040_2130_000.tar.gz",
+      "file": "mls-de/3040_2130.tar.gz",
+      "bytes": 16197303,
+      "sha256": "f39f3c5914ad59108b0f9c774a77a45b690176ab0bcde7c5ff676fcecdc879fe"
+    },
+    {
+      "id": "mls-de-4705_6814",
+      "dataset": "mls",
+      "role": "audio",
+      "lang": "de",
+      "speaker": "4705",
+      "url": "https://huggingface.co/datasets/facebook/multilingual_librispeech/resolve/2e83e61823b4c47dcbcb1980bb88601274127609/data/mls_german/test/audio/4705_6814_000.tar.gz",
+      "file": "mls-de/4705_6814.tar.gz",
+      "bytes": 17028048,
+      "sha256": "ae3a6d550779e5b3b53bddaf322aebe9e0b742abe7195b1102c18d5c9732b228"
+    },
+    {
+      "id": "mls-de-7456_6660",
+      "dataset": "mls",
+      "role": "audio",
+      "lang": "de",
+      "speaker": "7456",
+      "url": "https://huggingface.co/datasets/facebook/multilingual_librispeech/resolve/2e83e61823b4c47dcbcb1980bb88601274127609/data/mls_german/test/audio/7456_6660_000.tar.gz",
+      "file": "mls-de/7456_6660.tar.gz",
+      "bytes": 18606333,
+      "sha256": "80d239108c812ec64f1d7be3f122b5d8f721da349733d4f30635a06a8d41a38e"
+    },
+    {
+      "id": "mls-de-1054_869",
+      "dataset": "mls",
+      "role": "audio",
+      "lang": "de",
+      "speaker": "1054",
+      "url": "https://huggingface.co/datasets/facebook/multilingual_librispeech/resolve/2e83e61823b4c47dcbcb1980bb88601274127609/data/mls_german/test/audio/1054_869_000.tar.gz",
+      "file": "mls-de/1054_869.tar.gz",
+      "bytes": 10298063,
+      "sha256": "2518e7ac3ad51da1a854faa901f037a5060f02f3291fc1ff26a34b91975f183a"
+    },
+    {
+      "id": "mls-de-7624_6902",
+      "dataset": "mls",
+      "role": "audio",
+      "lang": "de",
+      "speaker": "7624",
+      "url": "https://huggingface.co/datasets/facebook/multilingual_librispeech/resolve/2e83e61823b4c47dcbcb1980bb88601274127609/data/mls_german/test/audio/7624_6902_000.tar.gz",
+      "file": "mls-de/7624_6902.tar.gz",
+      "bytes": 19456882,
+      "sha256": "58bed70eee402f8e160528caf40a3e5113806128216b43df0aa887b95b960822"
+    },
+    {
+      "id": "demand-office",
+      "dataset": "demand",
+      "role": "noise",
+      "url": "https://zenodo.org/records/1227121/files/OOFFICE_16k.zip",
+      "file": "demand/OOFFICE_16k.zip",
+      "bytes": 88995191,
+      "sha256": "7570c952f621990d0d71b8398107d9a78066254f883a5569abec9c233ffda358"
+    }
+  ],
+  "datasets": {
+    "librispeech": {
+      "name": "LibriSpeech test-clean",
+      "licence": "CC BY 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "LibriSpeech: an ASR corpus based on public domain audio books. Vassil Panayotov, Guoguo Chen, Daniel Povey, Sanjeev Khudanpur. ICASSP 2015. https://www.openslr.org/12 (CC BY 4.0). Audio segments, concatenated with silence, trimmed to the clips of this test set."
+    },
+    "mls": {
+      "name": "Multilingual LibriSpeech (MLS) test",
+      "licence": "CC BY 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "MLS: A Large-Scale Multilingual Dataset for Speech Research. Vineel Pratap, Qiantong Xu, Anuroop Sriram, Gabriel Synnaeve, Ronan Collobert. Interspeech 2020. https://www.openslr.org/94 and https://huggingface.co/datasets/facebook/multilingual_librispeech (CC BY 4.0). Audio from LibriVox public-domain recordings, concatenated with silence into the clips of this test set."
+    },
+    "ami": {
+      "name": "AMI Meeting Corpus",
+      "licence": "CC BY 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "The AMI Meeting Corpus. Jean Carletta et al., 2005 (https://groups.inf.ed.ac.uk/ami/corpus/, CC BY 4.0). Excerpts cut from the headset-mix and distant-microphone recordings, with reference text and RTTM derived from the word-level manual annotations."
+    },
+    "demand": {
+      "name": "DEMAND (Diverse Environments Multi-channel Acoustic Noise Database)",
+      "licence": "CC BY 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "DEMAND: a collection of multi-channel recordings of acoustic noise in diverse environments. Joachim Thiemann, Nobutaka Ito, Emmanuel Vincent. https://doi.org/10.5281/zenodo.1227121 (CC BY 4.0). The first 60 s of channel 1 of OOFFICE, 16 kHz."
+    },
+    "synthetic": {
+      "name": "Synthetic signals generated by ffmpeg",
+      "licence": "none (generated by this repository's script, no third-party material)",
+      "attribution": "Generated"
+    }
+  },
+  "noise": {
+    "seconds": 60,
+    "seed": 20261110,
+    "levelDbfs": -40,
+    "whiteAmplitude": 0.0173,
+    "pinkAmplitude": 0.051,
+    "recorded": {
+      "source": "demand-office",
+      "entry": "OOFFICE/ch01.wav"
+    }
+  },
+  "defaultLong": [
+    {
+      "lang": "en",
+      "minutes": 30
+    }
+  ],
+  "plan": {
+    "seed": 20261110,
+    "gapMin": 0.3,
+    "gapMax": 1.5,
+    "turn": [
+      2,
+      6
+    ],
+    "longSeconds": 600,
+    "languages": {
+      "en": {
+        "single": [
+          {
+            "id": "en-single-01",
+            "speaker": "1089",
+            "seconds": 90
+          },
+          {
+            "id": "en-single-02",
+            "speaker": "237",
+            "seconds": 90
+          }
+        ],
+        "multi": [
+          {
+            "id": "en-multi-01",
+            "speakers": [
+              "61",
+              "4446",
+              "8555"
+            ],
+            "seconds": 90,
+            "turn": [
+              1,
+              3
+            ]
+          }
+        ],
+        "long": {
+          "speakers": [
+            "1221",
+            "2094",
+            "3575",
+            "4507",
+            "5105",
+            "6829"
+          ]
+        }
+      },
+      "fr": {
+        "single": [
+          {
+            "id": "fr-single-01",
+            "speaker": "1406",
+            "seconds": 90
+          },
+          {
+            "id": "fr-single-02",
+            "speaker": "5207",
+            "seconds": 90
+          }
+        ],
+        "multi": [
+          {
+            "id": "fr-multi-01",
+            "speakers": [
+              "2154",
+              "296"
+            ],
+            "seconds": 90,
+            "turn": [
+              1,
+              3
+            ]
+          },
+          {
+            "id": "fr-multi-02",
+            "speakers": [
+              "4482",
+              "1406",
+              "5207"
+            ],
+            "seconds": 100,
+            "turn": [
+              1,
+              2
+            ]
+          },
+          {
+            "id": "fr-multi-03",
+            "speakers": [
+              "2154",
+              "296",
+              "4482",
+              "5207"
+            ],
+            "seconds": 100,
+            "turn": [
+              1,
+              2
+            ]
+          }
+        ],
+        "long": {
+          "speakers": [
+            "1406",
+            "2154",
+            "296",
+            "5207",
+            "4482"
+          ]
+        }
+      },
+      "de": {
+        "single": [
+          {
+            "id": "de-single-01",
+            "speaker": "7456",
+            "seconds": 90
+          },
+          {
+            "id": "de-single-02",
+            "speaker": "4705",
+            "seconds": 90
+          }
+        ],
+        "multi": [
+          {
+            "id": "de-multi-01",
+            "speakers": [
+              "1844",
+              "3040"
+            ],
+            "seconds": 90,
+            "turn": [
+              1,
+              3
+            ]
+          },
+          {
+            "id": "de-multi-02",
+            "speakers": [
+              "1054",
+              "7624",
+              "3040"
+            ],
+            "seconds": 100,
+            "turn": [
+              1,
+              2
+            ]
+          },
+          {
+            "id": "de-multi-03",
+            "speakers": [
+              "1844",
+              "4705",
+              "7456",
+              "7624"
+            ],
+            "seconds": 100,
+            "turn": [
+              1,
+              2
+            ]
+          }
+        ],
+        "long": {
+          "speakers": [
+            "1844",
+            "3040",
+            "4705",
+            "7456",
+            "1054",
+            "7624"
+          ]
+        }
+      }
+    },
+    "ami": [
+      {
+        "id": "en-ami-01",
+        "meeting": "ES2004a",
+        "audio": "ami-ES2004a-mix",
+        "channel": "Mix-Headset",
+        "approxStart": 300,
+        "seconds": 90
+      },
+      {
+        "id": "en-ami-02",
+        "meeting": "IS1009a",
+        "audio": "ami-IS1009a-mix",
+        "channel": "Mix-Headset",
+        "approxStart": 450,
+        "seconds": 60
+      },
+      {
+        "id": "en-ami-sdm-01",
+        "meeting": "ES2004a",
+        "audio": "ami-ES2004a-array1-01",
+        "channel": "Array1-01",
+        "approxStart": 800,
+        "seconds": 90
+      }
+    ]
+  },
+  "clips": [
+    {
+      "id": "en-single-01",
+      "lang": "en",
+      "kind": "single",
+      "dataset": "librispeech",
+      "speakers": [
+        "1089"
+      ],
+      "items": [
+        ["1089-134686-0000", 0, 10.435],
+        ["1089-134686-0001", 0.871, 3.275],
+        ["1089-134686-0002", 0.825, 6.625],
+        ["1089-134686-0003", 1.228, 2.68],
+        ["1089-134686-0004", 0.652, 5.215],
+        ["1089-134686-0005", 0.717, 9.635],
+        ["1089-134686-0006", 0.402, 10.555],
+        ["1089-134686-0007", 0.492, 4.275],
+        ["1089-134686-0008", 0.356, 6.73],
+        ["1089-134686-0009", 1.401, 10.575],
+        ["1089-134686-0010", 0.808, 4.405],
+        ["1089-134686-0011", 0.463, 12.445]
+      ]
+    },
+    {
+      "id": "en-single-02",
+      "lang": "en",
+      "kind": "single",
+      "dataset": "librispeech",
+      "speakers": [
+        "237"
+      ],
+      "items": [
+        ["237-126133-0000", 0, 13.29],
+        ["237-126133-0001", 1.008, 11.965],
+        ["237-126133-0002", 0.789, 8.92],
+        ["237-126133-0003", 1.109, 6.56],
+        ["237-126133-0004", 1.226, 3.295],
+        ["237-126133-0005", 0.819, 6.51],
+        ["237-126133-0006", 0.566, 6.15],
+        ["237-126133-0007", 0.535, 8.68],
+        ["237-126133-0008", 0.905, 3.865],
+        ["237-126133-0009", 0.976, 3.97],
+        ["237-126133-0010", 1.214, 6.24],
+        ["237-126133-0011", 0.334, 6.71]
+      ]
+    },
+    {
+      "id": "en-multi-01",
+      "lang": "en",
+      "kind": "multi",
+      "dataset": "librispeech",
+      "speakers": [
+        "61",
+        "4446",
+        "8555"
+      ],
+      "items": [
+        ["61-70968-0000", 0, 4.905],
+        ["61-70968-0001", 0.491, 3.61],
+        ["4446-2271-0000", 0.407, 3.495],
+        ["8555-284447-0000", 0.621, 9.605],
+        ["8555-284447-0001", 0.482, 8.61],
+        ["61-70968-0002", 0.992, 2.97],
+        ["61-70968-0003", 1.381, 4.315],
+        ["61-70968-0004", 1.008, 3.885],
+        ["4446-2271-0001", 1.376, 6.35],
+        ["4446-2271-0002", 1.022, 2.385],
+        ["4446-2271-0003", 0.608, 3.7],
+        ["8555-284447-0002", 0.619, 8.025],
+        ["61-70968-0005", 0.584, 5.07],
+        ["61-70968-0006", 0.367, 2.935],
+        ["4446-2271-0004", 0.333, 12.01]
+      ]
+    },
+    {
+      "id": "fr-single-01",
+      "lang": "fr",
+      "kind": "single",
+      "dataset": "mls",
+      "speakers": [
+        "1406"
+      ],
+      "items": [
+        ["1406_1028_000000", 0, 16.49],
+        ["1406_1028_000001", 0.858, 19.3],
+        ["1406_1028_000002", 0.963, 12.66],
+        ["1406_1028_000003", 0.413, 10.67],
+        ["1406_1028_000004", 0.53, 18.083],
+        ["1406_1028_000005", 0.621, 13.59]
+      ]
+    },
+    {
+      "id": "fr-single-02",
+      "lang": "fr",
+      "kind": "single",
+      "dataset": "mls",
+      "speakers": [
+        "5207"
+      ],
+      "items": [
+        ["5207_3078_000000", 0, 17.26],
+        ["5207_3078_000001", 0.679, 17.13],
+        ["5207_3078_000002", 1.055, 11.3],
+        ["5207_3078_000003", 0.51, 18.14],
+        ["5207_3078_000004", 0.874, 18.55],
+        ["5207_3078_000005", 0.817, 12.99]
+      ]
+    },
+    {
+      "id": "fr-multi-01",
+      "lang": "fr",
+      "kind": "multi",
+      "dataset": "mls",
+      "speakers": [
+        "2154",
+        "296"
+      ],
+      "items": [
+        ["2154_2576_000000", 0, 17.85],
+        ["2154_2576_000001", 1.375, 11.07],
+        ["296_1028_000000", 0.424, 11.27],
+        ["296_1028_000001", 1.087, 11.42],
+        ["2154_2576_000002", 0.818, 17.12],
+        ["296_1028_000002", 0.999, 16.78]
+      ]
+    },
+    {
+      "id": "fr-multi-02",
+      "lang": "fr",
+      "kind": "multi",
+      "dataset": "mls",
+      "speakers": [
+        "4482",
+        "1406",
+        "5207"
+      ],
+      "items": [
+        ["4482_3103_000000", 0, 16.76],
+        ["4482_3103_000001", 0.352, 15.35],
+        ["1406_1028_000006", 1.138, 17.05],
+        ["5207_3078_000006", 1.169, 10.33],
+        ["4482_3103_000002", 0.323, 18.46],
+        ["1406_1028_000007", 1.129, 16.23],
+        ["1406_1028_000008", 0.386, 16.85]
+      ]
+    },
+    {
+      "id": "fr-multi-03",
+      "lang": "fr",
+      "kind": "multi",
+      "dataset": "mls",
+      "speakers": [
+        "2154",
+        "296",
+        "4482",
+        "5207"
+      ],
+      "items": [
+        ["2154_2576_000003", 0, 15.5],
+        ["2154_2576_000004", 1.162, 10.97],
+        ["296_1028_000003", 0.753, 18.26],
+        ["4482_3103_000003", 0.678, 14.49],
+        ["4482_3103_000004", 0.389, 17.09],
+        ["5207_3078_000007", 0.775, 19.42],
+        ["5207_3078_000008", 0.392, 15.33]
+      ]
+    },
+    {
+      "id": "de-single-01",
+      "lang": "de",
+      "kind": "single",
+      "dataset": "mls",
+      "speakers": [
+        "7456"
+      ],
+      "items": [
+        ["7456_6660_000000", 0, 18.23],
+        ["7456_6660_000001", 0.585, 10.95],
+        ["7456_6660_000002", 0.464, 14.98],
+        ["7456_6660_000003", 1.047, 13.88],
+        ["7456_6660_000004", 0.909, 11.83],
+        ["7456_6660_000005", 0.331, 16.5],
+        ["7456_6660_000006", 1.05, 10.5]
+      ]
+    },
+    {
+      "id": "de-single-02",
+      "lang": "de",
+      "kind": "single",
+      "dataset": "mls",
+      "speakers": [
+        "4705"
+      ],
+      "items": [
+        ["4705_6814_000000", 0, 10.58],
+        ["4705_6814_000001", 0.62, 12.7],
+        ["4705_6814_000002", 0.701, 17.54],
+        ["4705_6814_000003", 0.896, 12.56],
+        ["4705_6814_000004", 0.475, 12.04],
+        ["4705_6814_000005", 1.159, 12.53],
+        ["4705_6814_000006", 1.163, 10.95]
+      ]
+    },
+    {
+      "id": "de-multi-01",
+      "lang": "de",
+      "kind": "multi",
+      "dataset": "mls",
+      "speakers": [
+        "1844",
+        "3040"
+      ],
+      "items": [
+        ["1844_931_000000", 0, 10.47],
+        ["3040_2130_000000", 1.413, 16.65],
+        ["1844_931_000001", 0.798, 18.06],
+        ["3040_2130_000001", 1.218, 14.87],
+        ["1844_931_000002", 0.953, 13.59],
+        ["3040_2130_000002", 0.699, 12.01]
+      ]
+    },
+    {
+      "id": "de-multi-02",
+      "lang": "de",
+      "kind": "multi",
+      "dataset": "mls",
+      "speakers": [
+        "1054",
+        "7624",
+        "3040"
+      ],
+      "items": [
+        ["1054_869_000000", 0, 11.36],
+        ["7624_6902_000000", 0.413, 13.78],
+        ["3040_2130_000003", 0.533, 19.45],
+        ["3040_2130_000004", 0.796, 10.99],
+        ["1054_869_000001", 1.066, 11.65],
+        ["7624_6902_000001", 1.355, 18.3],
+        ["3040_2130_000005", 0.868, 13.33]
+      ]
+    },
+    {
+      "id": "de-multi-03",
+      "lang": "de",
+      "kind": "multi",
+      "dataset": "mls",
+      "speakers": [
+        "1844",
+        "4705",
+        "7456",
+        "7624"
+      ],
+      "items": [
+        ["1844_931_000003", 0, 16.21],
+        ["4705_6814_000007", 1.449, 18.27],
+        ["7456_6660_000007", 1.164, 16.97],
+        ["7456_6660_000008", 1.462, 10.39],
+        ["7624_6902_000002", 0.517, 17.99],
+        ["7624_6902_000003", 0.814, 15.02]
+      ]
+    },
+    {
+      "id": "en-ami-01",
+      "lang": "en",
+      "kind": "ami",
+      "dataset": "ami",
+      "meeting": "ES2004a",
+      "audio": "ami-ES2004a-mix",
+      "channel": "Mix-Headset",
+      "start": 301.2,
+      "end": 392.865,
+      "speakers": [
+        "ami-FEE013",
+        "ami-FEE016",
+        "ami-MEE014",
+        "ami-MEO015"
+      ]
+    },
+    {
+      "id": "en-ami-02",
+      "lang": "en",
+      "kind": "ami",
+      "dataset": "ami",
+      "meeting": "IS1009a",
+      "audio": "ami-IS1009a-mix",
+      "channel": "Mix-Headset",
+      "start": 496.46,
+      "end": 565.83,
+      "speakers": [
+        "ami-FIE088",
+        "ami-FIO084",
+        "ami-FIO087",
+        "ami-FIO089"
+      ]
+    },
+    {
+      "id": "en-ami-sdm-01",
+      "lang": "en",
+      "kind": "ami",
+      "dataset": "ami",
+      "meeting": "ES2004a",
+      "audio": "ami-ES2004a-array1-01",
+      "channel": "Array1-01",
+      "start": 812.19,
+      "end": 913.02,
+      "speakers": [
+        "ami-FEE013",
+        "ami-FEE016",
+        "ami-MEE014",
+        "ami-MEO015"
+      ]
+    }
+  ],
+  "long": {
+    "en": {
+      "dataset": "librispeech",
+      "speakers": [
+        "1221",
+        "2094",
+        "3575",
+        "4507",
+        "5105",
+        "6829"
+      ],
+      "items": [
+        ["6829-68769-0000", 0, 11.695],
+        ["6829-68769-0001", 1.467, 9.315],
+        ["6829-68769-0002", 1.363, 3.075],
+        ["6829-68769-0003", 1.09, 4.215],
+        ["6829-68769-0004", 0.623, 7.145],
+        ["5105-28233-0000", 0.563, 4.51],
+        ["5105-28233-0001", 0.831, 4.49],
+        ["5105-28233-0002", 1.43, 8.285],
+        ["5105-28233-0003", 1.066, 14.81],
+        ["6829-68769-0005", 1.086, 6.72],
+        ["6829-68769-0006", 0.79, 7.195],
+        ["6829-68769-0007", 0.414, 3.865],
+        ["6829-68769-0008", 0.419, 4.74],
+        ["4507-16021-0000", 0.989, 2.59],
+        ["4507-16021-0001", 1.396, 11.32],
+        ["4507-16021-0002", 1.475, 3.185],
+        ["4507-16021-0003", 0.827, 4.895],
+        ["4507-16021-0004", 0.85, 2.135],
+        ["2094-142345-0000", 0.793, 22.57],
+        ["2094-142345-0001", 0.69, 8.03],
+        ["2094-142345-0002", 1.024, 15.52],
+        ["2094-142345-0003", 0.887, 14.675],
+        ["2094-142345-0004", 0.661, 2.64],
+        ["1221-135766-0000", 0.574, 12.435],
+        ["1221-135766-0001", 0.599, 16.715],
+        ["1221-135766-0002", 1.388, 4.825],
+        ["1221-135766-0003", 0.889, 13.72],
+        ["1221-135766-0004", 0.929, 7.44],
+        ["1221-135766-0005", 1.191, 16.645],
+        ["3575-170457-0000", 0.647, 8.23],
+        ["3575-170457-0001", 1.357, 2.99],
+        ["3575-170457-0002", 0.872, 2.11],
+        ["3575-170457-0003", 1.438, 7.595],
+        ["2094-142345-0005", 0.596, 9.09],
+        ["2094-142345-0006", 0.826, 13.82],
+        ["5105-28233-0004", 0.963, 4.735],
+        ["5105-28233-0005", 1.09, 11.39],
+        ["5105-28233-0006", 0.487, 5.505],
+        ["1221-135766-0006", 0.82, 11.415],
+        ["1221-135766-0007", 0.528, 8.795],
+        ["1221-135766-0008", 0.971, 10.78],
+        ["1221-135766-0009", 1.192, 10.19],
+        ["1221-135766-0010", 1.412, 15.05],
+        ["4507-16021-0005", 0.834, 4.21],
+        ["4507-16021-0006", 1.358, 2.11],
+        ["5105-28233-0007", 0.351, 26.14],
+        ["5105-28233-0008", 0.82, 10.73],
+        ["5105-28233-0009", 0.923, 14.595],
+        ["5105-28233-0010", 1.091, 13.595],
+        ["5105-28240-0000", 1.492, 5.455],
+        ["5105-28240-0001", 1.371, 16.065],
+        ["1221-135766-0011", 0.47, 21.345],
+        ["1221-135766-0012", 0.841, 16.22],
+        ["5105-28240-0002", 0.838, 4.01],
+        ["5105-28240-0003", 0.423, 5.515],
+        ["5105-28240-0004", 0.54, 6.015],
+        ["5105-28240-0005", 1.093, 7.4],
+        ["5105-28240-0006", 0.399, 13.88],
+        ["3575-170457-0004", 1.289, 3.105],
+        ["3575-170457-0005", 1.201, 7.34]
+      ]
+    },
+    "fr": {
+      "dataset": "mls",
+      "speakers": [
+        "1406",
+        "2154",
+        "296",
+        "5207",
+        "4482"
+      ],
+      "items": [
+        ["1406_1028_000009", 0, 16.06],
+        ["1406_1028_000010", 0.813, 12.78],
+        ["1406_1028_000011", 0.745, 15.84],
+        ["1406_1028_000012", 0.314, 14.73],
+        ["2154_2576_000005", 0.323, 17.58],
+        ["2154_2576_000006", 1.312, 17.39],
+        ["2154_2576_000007", 0.32, 16.39],
+        ["1406_1028_000013", 1.32, 10.27],
+        ["1406_1028_000014", 1.234, 11.1],
+        ["1406_1028_000015", 1.357, 13.35],
+        ["296_1028_000004", 0.629, 14.69],
+        ["296_1028_000005", 0.478, 10.53],
+        ["296_1028_000006", 0.405, 10.6],
+        ["296_1028_000007", 1.27, 13.19],
+        ["296_1028_000008", 1.275, 10.46],
+        ["4482_3103_000005", 0.694, 16.22],
+        ["4482_3103_000006", 0.487, 17.2],
+        ["4482_3103_000007", 0.355, 12.88],
+        ["2154_2576_000008", 0.314, 17.39],
+        ["2154_2576_000009", 0.81, 13.37],
+        ["1406_1028_000016", 0.428, 11.8],
+        ["1406_1028_000017", 0.743, 14.46],
+        ["1406_1028_000018", 1.316, 19.75],
+        ["1406_1028_000019", 0.632, 10],
+        ["2154_2576_000010", 1.233, 17.03],
+        ["2154_2576_000011", 1.431, 15.66],
+        ["2154_2576_000012", 0.422, 11.66],
+        ["2154_2576_000013", 0.449, 14.89],
+        ["296_1028_000009", 0.798, 17.31],
+        ["296_1028_000010", 0.802, 15.09],
+        ["296_1028_000011", 0.974, 16.86],
+        ["1406_1028_000020", 0.423, 10.11],
+        ["1406_1028_000021", 1.437, 14.87],
+        ["1406_1028_000022", 1.441, 11.5],
+        ["1406_1028_000023", 0.387, 19.26],
+        ["2154_2576_000014", 1.339, 19.83],
+        ["2154_2576_000015", 1.421, 15.74],
+        ["2154_2576_000016", 0.331, 15.29],
+        ["296_1028_000012", 0.674, 14.49],
+        ["296_1028_000013", 0.927, 16.17]
+      ]
+    },
+    "de": {
+      "dataset": "mls",
+      "speakers": [
+        "1844",
+        "3040",
+        "4705",
+        "7456",
+        "1054",
+        "7624"
+      ],
+      "items": [
+        ["7624_6902_000004", 0, 13.05],
+        ["7624_6902_000005", 0.714, 18.18],
+        ["7624_6902_000006", 1.277, 18.17],
+        ["7624_6902_000007", 0.456, 18.38],
+        ["7624_6902_000008", 0.746, 13.54],
+        ["1844_931_000004", 1.023, 16.11],
+        ["1844_931_000005", 0.978, 14.31],
+        ["1844_931_000006", 1.457, 17.36],
+        ["1844_931_000007", 0.305, 15.68],
+        ["1844_931_000008", 0.461, 16.94],
+        ["1844_931_000009", 1.407, 11.92],
+        ["4705_6814_000008", 1.099, 11.09],
+        ["4705_6814_000009", 0.594, 10.77],
+        ["4705_6814_000010", 0.899, 16.39],
+        ["4705_6814_000011", 1.108, 12.2],
+        ["4705_6814_000012", 0.631, 10.89],
+        ["7456_6660_000009", 0.443, 16.72],
+        ["7456_6660_000010", 1.009, 11.1],
+        ["7456_6660_000011", 0.314, 13.06],
+        ["7456_6660_000012", 1.031, 15.06],
+        ["3040_2130_000006", 0.814, 16.35],
+        ["3040_2130_000007", 1.433, 14.61],
+        ["3040_2130_000008", 0.541, 11.75],
+        ["1844_931_000010", 1.225, 11.98],
+        ["1844_931_000011", 0.706, 10.28],
+        ["1844_931_000012", 0.946, 14.74],
+        ["1844_931_000013", 0.743, 15.38],
+        ["1844_931_000014", 0.884, 19.12],
+        ["1844_931_000015", 1.225, 10.97],
+        ["3040_2130_000009", 1.252, 16.84],
+        ["3040_2130_000010", 1.295, 10.01],
+        ["3040_2130_000011", 1.091, 12.56],
+        ["3040_2130_000012", 0.518, 14.15],
+        ["3040_2130_000013", 1.271, 12.69],
+        ["4705_6814_000013", 0.85, 10.2],
+        ["4705_6814_000014", 1.303, 19.3],
+        ["7624_6902_000009", 1.375, 15.02],
+        ["7624_6902_000010", 0.424, 18.41],
+        ["7624_6902_000011", 1.076, 15.18],
+        ["4705_6814_000015", 1.289, 17.29]
+      ]
+    }
+  }
+}
