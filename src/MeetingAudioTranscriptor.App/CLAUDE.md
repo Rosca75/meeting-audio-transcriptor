@@ -26,6 +26,8 @@ The App composes the engine for both front ends: the transcription service (`Tra
 
 **Every file is written to a temporary in the destination folder and moved into place only when all are complete.** A failure or a cancellation deletes every temporary and leaves the old files as they were, so there is never a partial transcript and a running run never destroys the previous good one. The temporary is in the same folder so the move is a rename.
 
+**The set is replaced as one or not at all.** Before anything moves, every existing transcript is opened for exclusive writing and closed again; the previous versions are then renamed aside to `.meeting.vtt.<random>.mat-bak`, the new files renamed in, and the backups deleted only once the whole set is in place. A failure while replacing removes the new files already placed, renames the backups back and ends as `OutputNotWritable` naming the file (`TranscriptFileBusyException`), because a folder holding some new and some old files is a transcript that contradicts itself. A backup that cannot be renamed back is kept, because it is the user's previous transcript. `IOutputFileSystem` is the seam a test fails on cue.
+
 **A temporary's name is new and random, `.meeting.vtt.<random>.mat-tmp`, and it is created only where no file exists.** A fixed name such as `meeting.vtt.tmp` could be a user's own file, which the run would overwrite and then delete.
 
 **Names follow the recording.** `meeting.m4a` gives `meeting.vtt`, `.json`, `.txt` and, for the text formats chosen with raw files on, `meeting.raw.vtt` and `meeting.raw.txt`; the JSON holds both texts and has no raw variant.

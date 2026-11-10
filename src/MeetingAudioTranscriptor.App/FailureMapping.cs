@@ -48,6 +48,8 @@ internal static class FailureMapping
                 return (TranscriptionOutcomeKind.InputUnsupported, $"'{inputPath}' could not be read: {format.Message}");
             case ModelLoadException model:
                 return (TranscriptionOutcomeKind.ModelsMissing, model.Message);
+            case TranscriptFileBusyException busy:
+                return (TranscriptionOutcomeKind.OutputNotWritable, busy.Message);
             case IOException io when IsDiskFull(io):
                 return (TranscriptionOutcomeKind.DiskFull, $"the disk holding {outputFolder} is full; free some space or choose another output folder, then run the transcription again");
             case UnauthorizedAccessException or IOException or System.Security.SecurityException when phase == RunPhase.Output:
