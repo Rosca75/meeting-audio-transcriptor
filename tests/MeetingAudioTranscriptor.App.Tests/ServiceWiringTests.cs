@@ -21,6 +21,25 @@ public sealed class ServiceWiringTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
+    [Theory]
+    [InlineData("1", true)]
+    [InlineData("0", false)]
+    [InlineData("true", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void FfmpegIsPreferredExactlyWhenTheVariableIsOne(string? value, bool expected)
+    {
+        string? asked = null;
+        MeetingAudioTranscriptor.Media.AudioFileOpenerOptions options = ServiceSeams.OpenerOptions(name =>
+        {
+            asked = name;
+            return value;
+        });
+
+        Assert.True(asked == "MAT_PREFER_FFMPEG", $"got variable {asked}, wanted MAT_PREFER_FFMPEG");
+        Assert.True(options.PreferFfmpeg == expected, $"got PreferFfmpeg {options.PreferFfmpeg} for '{value}', wanted {expected}");
+    }
+
     [Fact]
     public void TheFactoriesNameFilesTheLockShipsInTheDefaultSet()
     {

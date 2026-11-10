@@ -70,6 +70,11 @@ internal static class ConsoleText
         text.Append("Audio:      ").AppendLine(Duration(outcome.AudioSeconds));
         text.Append("Processing: ").AppendLine(Duration(outcome.ProcessingSeconds));
         text.Append("Speed:      ").AppendLine(Speed(outcome.AudioSeconds, outcome.ProcessingSeconds));
+        if (!string.IsNullOrEmpty(outcome.DecoderName))
+        {
+            text.Append("Decoder:    ").AppendLine(outcome.DecoderName);
+        }
+
         text.Append("Speakers:   ").AppendLine(outcome.SpeakerCount > 0
             ? outcome.SpeakerCount.ToString(CultureInfo.InvariantCulture)
             : speakersRequested ? "not separated (no speaker model is installed)" : "not separated");
