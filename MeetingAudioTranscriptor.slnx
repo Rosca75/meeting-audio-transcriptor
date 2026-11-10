@@ -15,5 +15,6 @@
     <Project Path="tests/MeetingAudioTranscriptor.App.Tests/MeetingAudioTranscriptor.App.Tests.csproj" />
     <Project Path="tests/MeetingAudioTranscriptor.Inference.Tests/MeetingAudioTranscriptor.Inference.Tests.csproj" />
     <Project Path="tests/MeetingAudioTranscriptor.Guards.Tests/MeetingAudioTranscriptor.Guards.Tests.csproj" />
+    <Project Path="tests/MeetingAudioTranscriptor.Pipeline.Tests/MeetingAudioTranscriptor.Pipeline.Tests.csproj" />
   </Folder>
 </Solution>
