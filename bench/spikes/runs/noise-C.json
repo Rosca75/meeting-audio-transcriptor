@@ -1,0 +1,47 @@
+{
+ "tag": "noise-C",
+ "cand": "C",
+ "set": "noise",
+ "workers": 4,
+ "intra": 1,
+ "chunk_max_s": 28.0,
+ "allow_spinning": true,
+ "load_s": 2.3070220330000666,
+ "warmup_s": 0.18807387000015297,
+ "peak_rss_mb": 1421.05078125,
+ "rss_after_load_mb": 1323.4921875,
+ "wall_s": 2.4786514440002065,
+ "audio_s": 240,
+ "rtfx": 96.82684533194092,
+ "loadavg1_at_start": 1.94,
+ "cpu_busy_before": 0.016680567139282787,
+ "in_run_seconds": {
+  "enc": 8.662611573999584
+ },
+ "unk_count": null,
+ "n_chunks": 12,
+ "errors": [],
+ "files": {
+  "noise-office-60s": {
+   "text": "",
+   "audio_s": 60,
+   "chunks": 3
+  },
+  "noise-pink-60s": {
+   "text": "",
+   "audio_s": 60,
+   "chunks": 3
+  },
+  "noise-white-60s": {
+   "text": "",
+   "audio_s": 60,
+   "chunks": 3
+  },
+  "silence-60s": {
+   "text": "Et. Et. .",
+   "audio_s": 60,
+   "chunks": 3
+  }
+ },
+ "date": "2026-11-10 18:32:09"
+}

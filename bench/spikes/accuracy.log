@@ -1,0 +1,2 @@
+acc-C: wall 26.6s audio 3383s RTFx 127.09 load 2.3s rss 1628MB in-run {'enc': 105.6} load1 0.86
+noise-C: wall 2.5s audio 240s RTFx 96.83 load 2.3s rss 1421MB in-run {'enc': 8.7} load1 1.94
