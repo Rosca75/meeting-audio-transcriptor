@@ -3,3 +3,11 @@ sp-C-1x4-c28-r1: wall 16.0s audio 604s RTFx 37.73 load 2.1s rss 1370MB in-run {'
 sp-C-1x4-c28-r2: wall 7.2s audio 604s RTFx 83.72 load 2.2s rss 1370MB in-run {'enc': 7.2} load1 3.06
 sp-C-4x1-c28-r1: wall 4.8s audio 604s RTFx 126.28 load 2.0s rss 1456MB in-run {'enc': 18.1} load1 3.21
 sp-C-4x1-c28-r2: wall 6.4s audio 604s RTFx 94.46 load 2.0s rss 1469MB in-run {'enc': 24.8} load1 3.11
+sp-C-2x2-c28-r1: wall 7.3s audio 604s RTFx 82.62 load 2.2s rss 1418MB in-run {'enc': 14.5} load1 3.49
+sp-C-2x2-c28-r2: wall 6.9s audio 604s RTFx 87.80 load 2.4s rss 1425MB in-run {'enc': 13.7} load1 3.14
+BEST C 4x1 {'1x4': 60.72867557550819, '4x1': 110.36843646234908, '2x2': 85.20573393881043}
+sp-C-4x1-c28-nospin-r1: wall 5.2s audio 604s RTFx 116.70 load 2.1s rss 1436MB in-run {'enc': 19.9} load1 3.28
+sp-C-4x1-c28-nospin-r2: wall 5.2s audio 604s RTFx 116.29 load 2.1s rss 1461MB in-run {'enc': 19.6} load1 3.24
+sp-C-4x1-c10-r1: wall 5.9s audio 604s RTFx 101.53 load 2.2s rss 1367MB in-run {'enc': 23.3} load1 3.14
+sp-C-4x1-c10-r2: wall 6.0s audio 604s RTFx 100.31 load 2.2s rss 1397MB in-run {'enc': 23.5} load1 2.88
+sp-C-4x1-c20-r1: wall 5.5s audio 604s RTFx 109.96 load 2.0s rss 1403MB in-run {'enc': 21.6} load1 2.82
