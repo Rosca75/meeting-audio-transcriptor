@@ -6,44 +6,42 @@
  "intra": 4,
  "chunk_max_s": 28.0,
  "allow_spinning": true,
- "load_s": 0.011894562000179576,
- "warmup_s": 10.700766163000026,
- "peak_rss_mb": 4062.09375,
- "rss_after_load_mb": 73.41796875,
- "wall_s": 0.001911026000016136,
+ "load_s": 0.01637561999996251,
+ "warmup_s": 10.5048487199997,
+ "peak_rss_mb": 4997.9765625,
+ "rss_after_load_mb": 73.234375,
+ "wall_s": 45.56300176600007,
  "audio_s": 240,
- "rtfx": 125586.98834969985,
- "loadavg1_at_start": 3.69,
- "cpu_busy_before": 0.022499999999999964,
- "in_run_seconds": {},
+ "rtfx": 5.267431703305648,
+ "loadavg1_at_start": 1.81,
+ "cpu_busy_before": 0.03239202657807305,
+ "in_run_seconds": {
+  "all": 45.55825134199995
+ },
  "unk_count": null,
  "n_chunks": 12,
- "errors": [
-  "TypeError(\"__init__(): incompatible constructor arguments. The following argument types are supported:\\n    1. sherpa_onnx.lib._sherpa_onnx.OfflineWhisperModelConfig(encoder: str, decoder: str, language: str, task: str, tail_paddings: typing.SupportsInt = -1, enable_token_timestamps: bool = False, enable_segment_timestamps: bool = False)\\n\\nInvoked with: kwargs: encoder='/home/user/model-cache/whisper-turbo-sherpa-int8/turbo-encoder.int8.onnx', decoder='/home/user/model-cache/whisper-turbo-sherpa-int8/turbo-decoder.int8.onnx', language=None, task='transcribe', tail_paddings=-1, enable_token_timestamps=False, enable_segment_timestamps=False\")",
-  "TypeError(\"__init__(): incompatible constructor arguments. The following argument types are supported:\\n    1. sherpa_onnx.lib._sherpa_onnx.OfflineWhisperModelConfig(encoder: str, decoder: str, language: str, task: str, tail_paddings: typing.SupportsInt = -1, enable_token_timestamps: bool = False, enable_segment_timestamps: bool = False)\\n\\nInvoked with: kwargs: encoder='/home/user/model-cache/whisper-turbo-sherpa-int8/turbo-encoder.int8.onnx', decoder='/home/user/model-cache/whisper-turbo-sherpa-int8/turbo-decoder.int8.onnx', language=None, task='transcribe', tail_paddings=-1, enable_token_timestamps=False, enable_segment_timestamps=False\")",
-  "TypeError(\"__init__(): incompatible constructor arguments. The following argument types are supported:\\n    1. sherpa_onnx.lib._sherpa_onnx.OfflineWhisperModelConfig(encoder: str, decoder: str, language: str, task: str, tail_paddings: typing.SupportsInt = -1, enable_token_timestamps: bool = False, enable_segment_timestamps: bool = False)\\n\\nInvoked with: kwargs: encoder='/home/user/model-cache/whisper-turbo-sherpa-int8/turbo-encoder.int8.onnx', decoder='/home/user/model-cache/whisper-turbo-sherpa-int8/turbo-decoder.int8.onnx', language=None, task='transcribe', tail_paddings=-1, enable_token_timestamps=False, enable_segment_timestamps=False\")"
- ],
+ "errors": [],
  "files": {
   "noise-office-60s": {
-   "text": "",
+   "text": "so so so",
    "audio_s": 60,
    "chunks": 3
   },
   "noise-pink-60s": {
-   "text": "",
+   "text": "Thank you. Thank you. so",
    "audio_s": 60,
    "chunks": 3
   },
   "noise-white-60s": {
-   "text": "",
+   "text": "so so so",
    "audio_s": 60,
    "chunks": 3
   },
   "silence-60s": {
-   "text": "",
+   "text": "you you you",
    "audio_s": 60,
    "chunks": 3
   }
  },
- "date": "2026-11-10 18:41:07"
+ "date": "2026-11-10 19:03:54"
 }

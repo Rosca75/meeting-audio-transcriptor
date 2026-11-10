@@ -1,0 +1,5 @@
+noise-E: wall 45.6s audio 240s RTFx 5.27 load 0.0s rss 4998MB in-run {'all': 45.6} load1 1.81
+sp-C-1x4-c28-r1: wall 16.0s audio 604s RTFx 37.73 load 2.1s rss 1370MB in-run {'enc': 16.0} load1 3.8
+sp-C-1x4-c28-r2: wall 7.2s audio 604s RTFx 83.72 load 2.2s rss 1370MB in-run {'enc': 7.2} load1 3.06
+sp-C-4x1-c28-r1: wall 4.8s audio 604s RTFx 126.28 load 2.0s rss 1456MB in-run {'enc': 18.1} load1 3.21
+sp-C-4x1-c28-r2: wall 6.4s audio 604s RTFx 94.46 load 2.0s rss 1469MB in-run {'enc': 24.8} load1 3.11

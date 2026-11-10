@@ -1,0 +1,40 @@
+ir_version 8 opsets [('ai.onnx', 17)]
+n_nodes 3850 inputs ['waveforms'] outputs ['token_ids']
+op counts (top 25) [('Constant', 1147), ('Mul', 490), ('Cast', 271), ('Add', 200), ('Unsqueeze', 190), ('Reshape', 183), ('Concat', 182), ('Transpose', 165), ('MatMulInteger', 163), ('DynamicQuantizeLinear', 131), ('Shape', 89), ('Gather', 89), ('LayerNormalization', 80), ('Sigmoid', 64), ('MatMul', 50), ('Slice', 43), ('ConstantOfShape', 34), ('Sub', 34), ('Mod', 32), ('Where', 32), ('Div', 23), ('Pad', 18), ('Conv', 17), ('Softmax', 17), ('Equal', 16)]
+MatMulInteger 163
+ConvInteger 0
+DynamicQuantizeLinear 131
+QLinearMatMul 0
+MatMul 50
+DequantizeLinear 0
+QuantizeLinear 0
+LAST 6 NODES
+  Mul /model/encoder/layers.15/Mul_1 in ['/model/encoder/layers.15/feed_forward2/linear2/Add_output_0', '/model/encoder/layers.15/Constant_1_output_0'] out ['/model/encoder/layers.15/Mul_1_output_0'] []
+  Add /model/encoder/layers.15/Add_3 in ['/model/encoder/layers.15/Add_2_output_0', '/model/encoder/layers.15/Mul_1_output_0'] out ['/model/encoder/layers.15/Add_3_output_0'] []
+  LayerNormalization /model/encoder/layers.15/norm_out/LayerNormalization in ['/model/encoder/layers.15/Add_3_output_0', 'model.encoder.layers.15.norm_out.weight', 'model.encoder.layers.15.norm_out.bias'] out ['/model/encoder/layers.15/norm_out/LayerNormalization_output_0'] [('axis', -1), ('epsilon', '')]
+  MatMul /model/ctc_head/MatMul in ['/model/encoder/layers.15/norm_out/LayerNormalization_output_0', 'onnx::MatMul_5305'] out ['/model/ctc_head/MatMul_output_0'] []
+  Add /model/ctc_head/Add in ['model.encoder.out.bias', '/model/ctc_head/MatMul_output_0'] out ['/model/ctc_head/Add_output_0'] []
+  ArgMax /ArgMax in ['/model/ctc_head/Add_output_0'] out ['token_ids'] [('axis', -1), ('keepdims', 0), ('select_last_index', 0)]
+ArgMax /ArgMax input /model/ctc_head/Add_output_0 attrs [('axis', -1), ('keepdims', 0), ('select_last_index', 0)]
+producer of ArgMax input: Add /model/ctc_head/Add ['model.encoder.out.bias', '/model/ctc_head/MatMul_output_0']
+producer chain
+  ('Add', '/model/ctc_head/Add', ['model.encoder.out.bias', '/model/ctc_head/MatMul_output_0'], ['/model/ctc_head/Add_output_0'])
+  ('MatMul', '/model/ctc_head/MatMul', ['/model/encoder/layers.15/norm_out/LayerNormalization_output_0', 'onnx::MatMul_5305'], ['/model/ctc_head/MatMul_output_0'])
+  ('LayerNormalization', '/model/encoder/layers.15/norm_out/LayerNormalization', ['/model/encoder/layers.15/Add_3_output_0', 'model.encoder.layers.15.norm_out.weight', 'model.encoder.layers.15.norm_out.bias'], ['/model/encoder/layers.15/norm_out/LayerNormalization_output_0'])
+  ('Add', '/model/encoder/layers.15/Add_3', ['/model/encoder/layers.15/Add_2_output_0', '/model/encoder/layers.15/Mul_1_output_0'], ['/model/encoder/layers.15/Add_3_output_0'])
+saved /tmp/granite-with-scores.onnx
+en read speech 28s token_ids (350,) score tensor (350, 16384) float32
+  logsumexp over vocab: mean 12.444 min 7.940 max 20.428 (0 means already log-softmax)
+  argmax==scores.argmax: True | max-softmax all frames mean 0.975 | emitted-token frames n=107 mean 0.939 p10 0.700 min 0.471 | blank frames mean 0.991
+AMI headset 28s token_ids (350,) score tensor (350, 16384) float32
+  logsumexp over vocab: mean 11.215 min 8.075 max 17.763 (0 means already log-softmax)
+  argmax==scores.argmax: True | max-softmax all frames mean 0.975 | emitted-token frames n=64 mean 0.950 p10 0.802 min 0.491 | blank frames mean 0.981
+AMI distant mic 28s token_ids (350,) score tensor (350, 16384) float32
+  logsumexp over vocab: mean 10.259 min 7.082 max 18.677 (0 means already log-softmax)
+  argmax==scores.argmax: True | max-softmax all frames mean 0.968 | emitted-token frames n=69 mean 0.959 p10 0.930 min 0.457 | blank frames mean 0.971
+office noise 28s token_ids (350,) score tensor (350, 16384) float32
+  logsumexp over vocab: mean 10.596 min 8.132 max 15.584 (0 means already log-softmax)
+  argmax==scores.argmax: True | max-softmax all frames mean 0.999 | emitted-token frames n=1 mean 0.991 p10 0.991 min 0.991 | blank frames mean 0.999
+silence 28s token_ids (350,) score tensor (350, 16384) float32
+  logsumexp over vocab: mean 8.559 min 6.664 max 10.237 (0 means already log-softmax)
+  argmax==scores.argmax: True | max-softmax all frames mean 0.984 | emitted-token frames n=1 mean 0.839 p10 0.839 min 0.839 | blank frames mean 0.985

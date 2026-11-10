@@ -12,7 +12,7 @@ internal static class RepositoryFiles
     /// <summary>The folder names no guard reads: build output, fetched data and caches.</summary>
     private static readonly string[] SkippedFolders =
     [
-        "bin", "obj", ".git", "node_modules", "models", "spike-venv", "artifacts", "publish",
+        "bin", "obj", ".git", ".claude", "node_modules", "models", "spike-venv", "artifacts", "publish",
     ];
 
     /// <summary>The repository root: the nearest folder above the test's output holding the solution file.</summary>

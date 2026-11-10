@@ -38,17 +38,17 @@ A failing guard names a real inconsistency: fix the inconsistency and leave the 
 ## 5. Commands
 
 ```
-dotnet test --filter "Tier!=deep&Tier!=integration&Tier!=models"   # the unit tier
-dotnet test --filter "Tier=integration"                            # integration
-dotnet test --filter "Tier=models"                                 # real models
-dotnet test --filter "Tier=deep"                                   # benchmarks
-dotnet test --project tests/MeetingAudioTranscriptor.Guards.Tests  # the guards alone
-dotnet test --filter "Category=writers"                            # one category
+dotnet test --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models"   # the unit tier
+dotnet test --filter-trait "Tier=integration" --ignore-exit-code 8   # integration
+dotnet test --filter-trait "Tier=models" --ignore-exit-code 8        # real models
+dotnet test -c Release --filter-trait "Tier=deep" --ignore-exit-code 8   # benchmarks, on a quiet machine
+dotnet test --project tests/MeetingAudioTranscriptor.Guards.Tests    # the guards alone
+dotnet test --filter-trait "Category=writers" --ignore-exit-code 8   # one category
 ```
 
 ```
 node build/fetch-models.mjs --into models                          # fetch the default models (add --set all for the candidates)
-MAT_MODELS_DIR=<dir> dotnet test --filter "Tier=models"            # the models tier over a models folder elsewhere
+MAT_MODELS_DIR=<dir> dotnet test --filter-trait "Tier=models" --ignore-exit-code 8   # the models tier over a models folder elsewhere
 node --test build/*.test.mjs                                       # the fetch tools, against a loopback server
 ```
 
