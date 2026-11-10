@@ -13,5 +13,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MeetingAudioTranscriptor.Engine\MeetingAudioTranscriptor.Engine.csproj" />
     <ProjectReference Include="..\..\src\MeetingAudioTranscriptor.Inference\MeetingAudioTranscriptor.Inference.csproj" />
+    <ProjectReference Include="..\..\src\MeetingAudioTranscriptor.App\MeetingAudioTranscriptor.App.csproj" />
   </ItemGroup>
 </Project>
