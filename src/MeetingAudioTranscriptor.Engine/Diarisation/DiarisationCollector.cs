@@ -3,6 +3,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using MeetingAudioTranscriptor.Engine.Pipeline;
+using MeetingAudioTranscriptor.Engine.Recognition;
 
 namespace MeetingAudioTranscriptor.Engine.Diarisation;
 
@@ -10,6 +12,13 @@ namespace MeetingAudioTranscriptor.Engine.Diarisation;
 /// <param name="Timeline">The speaker turns, the speaking times and the word assignment.</param>
 /// <param name="WindowCount">How many embedding windows the clustering read.</param>
 public sealed record DiarisationResult(SpeakerTimeline Timeline, int WindowCount);
+
+/// <summary>The speaker of every word, as speaker separation finally gives it.</summary>
+/// <param name="SpeakerOfWord">One speaker per word, numbered 0, 1, 2 ... in the order speakers first speak a word.</param>
+/// <param name="SpeakingSeconds">The speaking time of each speaker, by that number.</param>
+/// <param name="Timeline">The timeline the words were assigned through; its speaker numbers are its own.</param>
+/// <param name="WindowCount">How many embedding windows the clustering read.</param>
+public sealed record DiarisationAssignment(IReadOnlyList<int> SpeakerOfWord, IReadOnlyList<double> SpeakingSeconds, SpeakerTimeline Timeline, int WindowCount);
 
 /// <summary>Collects speaker windows from the recognition workers and clusters them at the end.</summary>
 /// <remarks>
@@ -128,6 +137,71 @@ public sealed class DiarisationCollector
     {
         DiarisationOptions settings = options ?? _options;
         settings.Validate();
+        (SpeakerWindow[] windows, (long Start, long End)[] regions, float[][] embeddings) = Snapshot();
+        int[] labels = SpeakerClusterer.Cluster(embeddings, settings, cancellation, WindowSeconds(windows));
+        SpeakerTimeline timeline = SpeakerTimeline.Build(windows, labels, regions, _sampleRate, settings.MinimumTurnSeconds, settings.StrongTurnSeconds);
+        return new DiarisationResult(timeline, windows.Length);
+    }
+
+    /// <summary>Clusters every window collected, builds the timeline and gives every word its speaker.</summary>
+    /// <param name="words">The recognised words of the recording in time order, times in seconds from its start.</param>
+    /// <param name="options">The settings for this pass, the hint included; null uses the collector's own.</param>
+    /// <param name="cancellation">Stops the clustering.</param>
+    /// <returns>One speaker per word, numbered by first word, and each speaker's speaking time.</returns>
+    public DiarisationAssignment Assign(IReadOnlyList<RecognizedWord> words, DiarisationOptions? options, CancellationToken cancellation)
+    {
+        ArgumentNullException.ThrowIfNull(words);
+        DiarisationOptions settings = options ?? _options;
+        settings.Validate();
+        (SpeakerWindow[] windows, (long Start, long End)[] regions, float[][] embeddings) = Snapshot();
+        int[] clusters = SpeakerClusterer.Cluster(embeddings, settings, cancellation, WindowSeconds(windows));
+        cancellation.ThrowIfCancellationRequested();
+        (_, SpeakerTimeline timeline, int[] speakers) = SpeakerFloor.Apply(windows, clusters, regions, _sampleRate, settings, words);
+        SpeakerAssignment numbered = Renumber(speakers, timeline.SpeakingSeconds());
+        return new DiarisationAssignment(numbered.SpeakerOfWord, numbered.SpeakingSeconds, timeline, windows.Length);
+    }
+
+    /// <summary>
+    /// Numbers the speakers 0, 1, 2 ... in the order they first speak a word, and keeps the speaking
+    /// time of each speaker who has a word. The timeline gives -1 to every word only when it holds no
+    /// turn at all, and those words then make up one speaker.
+    /// </summary>
+    internal static SpeakerAssignment Renumber(IReadOnlyList<int> timelineSpeakers, IReadOnlyList<double> timelineSeconds)
+    {
+        Dictionary<int, int> numberOf = [];
+        int[] speakers = new int[timelineSpeakers.Count];
+        List<double> seconds = [];
+        for (int i = 0; i < speakers.Length; i++)
+        {
+            int original = Math.Max(timelineSpeakers[i], -1);
+            if (!numberOf.TryGetValue(original, out int number))
+            {
+                number = numberOf.Count;
+                numberOf[original] = number;
+                seconds.Add(original >= 0 && original < timelineSeconds.Count ? timelineSeconds[original] : 0);
+            }
+
+            speakers[i] = number;
+        }
+
+        return new SpeakerAssignment(speakers, seconds);
+    }
+
+    // The length of each window in seconds.
+    private double[] WindowSeconds(SpeakerWindow[] windows)
+    {
+        double[] seconds = new double[windows.Length];
+        for (int i = 0; i < windows.Length; i++)
+        {
+            seconds[i] = (windows[i].EndSample - windows[i].StartSample) / (double)_sampleRate;
+        }
+
+        return seconds;
+    }
+
+    // The windows in time order, the regions and the embeddings, copied under the lock.
+    private (SpeakerWindow[] Windows, (long Start, long End)[] Regions, float[][] Embeddings) Snapshot()
+    {
         SpeakerWindow[] windows;
         (long Start, long End)[] regions;
         lock (_lock)
@@ -144,8 +218,6 @@ public sealed class DiarisationCollector
             embeddings[i] = windows[i].Embedding;
         }
 
-        int[] labels = SpeakerClusterer.Cluster(embeddings, settings, cancellation);
-        SpeakerTimeline timeline = SpeakerTimeline.Build(windows, labels, regions, _sampleRate, settings.MinimumTurnSeconds, settings.StrongTurnSeconds);
-        return new DiarisationResult(timeline, windows.Length);
+        return (windows, regions, embeddings);
     }
 }

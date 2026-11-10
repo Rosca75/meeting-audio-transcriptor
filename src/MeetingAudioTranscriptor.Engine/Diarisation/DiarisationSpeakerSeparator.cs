@@ -18,7 +18,8 @@ namespace MeetingAudioTranscriptor.Engine.Diarisation;
 /// thread count.
 /// </para>
 /// <para>
-/// The words are assigned through the timeline, then renumbered in the order their speakers first
+/// The words are assigned through the timeline, a speaker below the speaker floor is folded into the
+/// nearest voice (<see cref="SpeakerFloor"/>), and the speakers are renumbered in the order they first
 /// speak a word: the timeline numbers speakers by their first turn, and a turn may hold no word
 /// (a cough, a backchannel the recogniser skipped), so only the words' own order guarantees that the
 /// transcript's first speaker is Speaker 1 and that no speaker is listed without a word. When no
@@ -64,36 +65,8 @@ public sealed class DiarisationSpeakerSeparator : ISpeakerSeparator
             throw new InvalidOperationException("the speaker separator of a run was finished twice; create one separator per recording");
         }
 
-        DiarisationResult result = _collector.Finish(_options with { SpeakerCountHint = speakerCountHint ?? _options.SpeakerCountHint }, cancellation);
-        Timeline = result.Timeline;
-        int[] timelineSpeakers = result.Timeline.AssignWords(words);
-        double[] timelineSeconds = result.Timeline.SpeakingSeconds();
-        return Renumber(timelineSpeakers, timelineSeconds);
-    }
-
-    /// <summary>
-    /// Numbers the speakers 0, 1, 2 ... in the order they first speak a word, and keeps the speaking
-    /// time of each speaker who has a word. The timeline gives -1 to every word only when it holds no
-    /// turn at all, and those words then make up one speaker.
-    /// </summary>
-    internal static SpeakerAssignment Renumber(IReadOnlyList<int> timelineSpeakers, IReadOnlyList<double> timelineSeconds)
-    {
-        Dictionary<int, int> numberOf = [];
-        int[] speakers = new int[timelineSpeakers.Count];
-        List<double> seconds = [];
-        for (int i = 0; i < speakers.Length; i++)
-        {
-            int original = Math.Max(timelineSpeakers[i], -1);
-            if (!numberOf.TryGetValue(original, out int number))
-            {
-                number = numberOf.Count;
-                numberOf[original] = number;
-                seconds.Add(original >= 0 && original < timelineSeconds.Count ? timelineSeconds[original] : 0);
-            }
-
-            speakers[i] = number;
-        }
-
-        return new SpeakerAssignment(speakers, seconds);
+        DiarisationAssignment assignment = _collector.Assign(words, _options with { SpeakerCountHint = speakerCountHint ?? _options.SpeakerCountHint }, cancellation);
+        Timeline = assignment.Timeline;
+        return new SpeakerAssignment(assignment.SpeakerOfWord, assignment.SpeakingSeconds);
     }
 }

@@ -29,9 +29,12 @@ namespace MeetingAudioTranscriptor.Engine.Diarisation;
 /// Memory stays at one M by M matrix (16 MB for M = 2000) whatever the recording's length.
 /// </para>
 /// <para>
-/// <b>The rules after the cut.</b> A cluster smaller than the minimum size is folded into the large
-/// cluster it is closest to, because a few seconds of a voice print is more often a cough, a laugh
-/// or two people at once than a speaker. More clusters than the cap are merged closest pair first.
+/// <b>The rules after the cut.</b> A cluster holding less speech than the minimum size is folded
+/// into the large cluster it is closest to, because a few seconds of a voice print is more often a
+/// cough, a laugh or two people at once than a speaker. A full window counts for one hop of speech
+/// and a shorter one for its own length: voice activity cuts real speech into many short regions,
+/// each embedded as one short window whose voice print is unsteady, and counted as a full hop a few
+/// of them would pass for a speaker. More clusters than the cap are merged closest pair first.
 /// With a speaker count K, the threshold cut is taken first. When it holds more than K clusters,
 /// the smallest is folded into the one most similar to it until K remain, because a surplus
 /// cluster is usually a part of one voice (a cough, a change of microphone) while two real speakers
@@ -48,7 +51,8 @@ internal static class SpeakerClusterer
     /// <param name="embeddings">Unit-length embeddings in time order.</param>
     /// <param name="options">The linkage, the threshold, the hint and the size rules.</param>
     /// <param name="cancellation">Stops between blocks and between passes.</param>
-    public static int[] Cluster(IReadOnlyList<float[]> embeddings, DiarisationOptions options, CancellationToken cancellation)
+    /// <param name="windowSeconds">The length of each window in seconds; null when every window is a full one.</param>
+    public static int[] Cluster(IReadOnlyList<float[]> embeddings, DiarisationOptions options, CancellationToken cancellation, IReadOnlyList<double>? windowSeconds = null)
     {
         ArgumentNullException.ThrowIfNull(embeddings);
         ArgumentNullException.ThrowIfNull(options);
@@ -65,7 +69,20 @@ internal static class SpeakerClusterer
         }
 
         int dimension = embeddings[0].Length;
-        int minimumSize = (int)Math.Ceiling(options.MinimumSpeakerSeconds / options.HopSeconds);
+        if (windowSeconds is not null && windowSeconds.Count != n)
+        {
+            throw new ArgumentException($"there are {n} embeddings and {windowSeconds.Count} window lengths; pass one length per window", nameof(windowSeconds));
+        }
+
+        // The speech a window stands for: one hop for a full window (windows overlap by the rest), its
+        // own length for a short one, so a cluster of short windows is not counted as long speech.
+        // With a speaker count every window counts one hop: the count is the user's, the sizes only
+        // order the folds, and on the meeting clips that order attributes better.
+        double[] speechOfWindow = new double[n];
+        for (int i = 0; i < n; i++)
+        {
+            speechOfWindow[i] = options.SpeakerCountHint is null ? Math.Min(options.HopSeconds, windowSeconds?[i] ?? options.HopSeconds) : options.HopSeconds;
+        }
 
         // Stage one: windows become units, one per window, or one per block cluster when the recording is long.
         int[] unitOfWindow;
@@ -91,8 +108,14 @@ internal static class SpeakerClusterer
         // Stage two: the dendrogram of the units and the cut the options ask for.
         int units = unitSums.Count;
         int[] counts = unitCounts.ToArray();
+        double[] speech = new double[units];
+        for (int i = 0; i < n; i++)
+        {
+            speech[unitOfWindow[i]] += speechOfWindow[i];
+        }
+
         Merge[] merges = Dendrogram(unitSums, counts, options.Linkage, cancellation);
-        int[] unitLabels = ChooseCut(merges, units, counts, unitSums, options, minimumSize);
+        int[] unitLabels = ChooseCut(merges, units, counts, speech, unitSums, options);
 
         int[] labels = new int[n];
         for (int i = 0; i < n; i++)
@@ -262,9 +285,10 @@ internal static class SpeakerClusterer
     }
 
     // Applies the threshold or the speaker count to the dendrogram and folds small clusters in.
-    private static int[] ChooseCut(Merge[] merges, int units, int[] counts, IReadOnlyList<float[]> sums, DiarisationOptions options, int minimumSize)
+    private static int[] ChooseCut(Merge[] merges, int units, int[] counts, double[] speech, IReadOnlyList<float[]> sums, DiarisationOptions options)
     {
-        int[] byThreshold = FoldSmall(Cut(merges, units, MergesWithin(merges, options.Threshold)), counts, sums, minimumSize);
+        double minimumSize = options.MinimumSpeakerSeconds;
+        int[] byThreshold = FoldSmall(Cut(merges, units, MergesWithin(merges, options.Threshold)), counts, speech, sums, minimumSize);
         if (options.SpeakerCountHint is int hint)
         {
             int wanted = Math.Min(hint, units);
@@ -276,16 +300,16 @@ internal static class SpeakerClusterer
 
             if (found > wanted)
             {
-                return MergeSmallest(byThreshold, counts, sums, wanted);
+                return MergeSmallest(byThreshold, counts, speech, sums, wanted);
             }
 
             for (int clusters = wanted; clusters <= units; clusters++)
             {
                 int[] labels = Cut(merges, units, units - clusters);
-                int large = LargeClusterCount(labels, counts, minimumSize);
+                int large = LargeClusterCount(labels, speech, minimumSize);
                 if (large == wanted)
                 {
-                    return FoldSmall(labels, counts, sums, minimumSize);
+                    return FoldSmall(labels, counts, speech, sums, minimumSize);
                 }
 
                 if (large > wanted)
@@ -302,12 +326,13 @@ internal static class SpeakerClusterer
 
     // Folds the smallest cluster into the one of highest average similarity until the wanted count
     // remains; ties go to the lower cluster number.
-    private static int[] MergeSmallest(int[] labels, int[] counts, IReadOnlyList<float[]> sums, int wanted)
+    private static int[] MergeSmallest(int[] labels, int[] counts, double[] speech, IReadOnlyList<float[]> sums, int wanted)
     {
         int[] current = labels;
         while (true)
         {
             int[] sizes = ClusterSizes(current, counts);
+            double[] seconds = ClusterSpeech(current, speech);
             int clusters = sizes.Length;
             if (clusters <= wanted)
             {
@@ -317,7 +342,7 @@ internal static class SpeakerClusterer
             int smallest = 0;
             for (int c = 1; c < clusters; c++)
             {
-                if (sizes[c] < sizes[smallest])
+                if (seconds[c] < seconds[smallest])
                 {
                     smallest = c;
                 }
@@ -351,11 +376,11 @@ internal static class SpeakerClusterer
         }
     }
 
-    private static int LargeClusterCount(int[] labels, int[] counts, int minimumSize)
+    private static int LargeClusterCount(int[] labels, double[] speech, double minimumSize)
     {
-        int[] sizes = ClusterSizes(labels, counts);
+        double[] sizes = ClusterSpeech(labels, speech);
         int large = 0;
-        foreach (int s in sizes)
+        foreach (double s in sizes)
         {
             if (s >= minimumSize)
             {
@@ -383,20 +408,39 @@ internal static class SpeakerClusterer
         return sizes;
     }
 
-    // Moves every unit of a cluster below the minimum size to the large cluster with the highest
-    // average similarity; when no cluster is large, the biggest one is treated as large.
-    private static int[] FoldSmall(int[] labels, int[] counts, IReadOnlyList<float[]> sums, int minimumSize)
+    // The seconds of speech each cluster stands for.
+    private static double[] ClusterSpeech(int[] labels, double[] speech)
+    {
+        int clusters = 0;
+        foreach (int label in labels)
+        {
+            clusters = Math.Max(clusters, label + 1);
+        }
+
+        double[] seconds = new double[clusters];
+        for (int i = 0; i < labels.Length; i++)
+        {
+            seconds[labels[i]] += speech[i];
+        }
+
+        return seconds;
+    }
+
+    // Moves every unit of a cluster holding less speech than the minimum to the large cluster with the
+    // highest average similarity; when no cluster is large, the biggest one is treated as large.
+    private static int[] FoldSmall(int[] labels, int[] counts, double[] speech, IReadOnlyList<float[]> sums, double minimumSize)
     {
         int[] sizes = ClusterSizes(labels, counts);
+        double[] seconds = ClusterSpeech(labels, speech);
         int clusters = sizes.Length;
         bool[] large = new bool[clusters];
         int biggest = 0;
         bool any = false;
         for (int c = 0; c < clusters; c++)
         {
-            large[c] = sizes[c] >= minimumSize;
+            large[c] = seconds[c] >= minimumSize;
             any |= large[c];
-            if (sizes[c] > sizes[biggest])
+            if (seconds[c] > seconds[biggest])
             {
                 biggest = c;
             }
