@@ -1,6 +1,7 @@
 bin/
 obj/
 publish/
+out/
 artifacts/
 *.user
 .vs/

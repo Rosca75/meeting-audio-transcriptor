@@ -89,4 +89,7 @@ with a hint of K the transcript names K speakers whenever the clusterer finds K.
   already embedded, under 0.1 s on a two-hour meeting.
 - On a slower laptop a 3.0 s hop cuts the cost by a quarter at similar
   accuracy; the option exists in `DiarisationOptions`.
+- At most 10 speakers are told apart (`MaxSpeakers` in `DiarisationOptions`, the
+  same bound as the hint): a meeting with more voices has the nearest clusters
+  merged until 10 remain.
 - The embedding model was trained on VoxCeleb; its licence note is in `NOTICE`.

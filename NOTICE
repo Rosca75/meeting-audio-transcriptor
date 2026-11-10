@@ -132,7 +132,9 @@ The WebView2 runtime itself is not part of this package; it is the system's Ever
 ----------------------------------------------------------------------------------------------
 6. .NET runtime and libraries
 ----------------------------------------------------------------------------------------------
-Name:       .NET (the self-contained runtime and base class library both executables share)
+Name:       .NET (the self-contained runtime and base class library both executables share, and
+            the System.Numerics.Tensors package ONNX Runtime depends on, built from the same
+            repository)
 Version:    10.0 (the servicing release of the SDK that built the package)
 Licence:    MIT (section 9)
 Copyright:  Copyright (c) .NET Foundation and Contributors

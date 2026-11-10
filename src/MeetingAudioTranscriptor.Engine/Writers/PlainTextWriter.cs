@@ -117,9 +117,11 @@ public static class PlainTextWriter
     private static string Header(TranscriptDocument document)
     {
         TranscriptMetadata metadata = document.Metadata;
+        // A run that separated speakers but heard no speech has none, which is not the same as a run told
+        // not to separate them.
         string speakers = document.Speakers.Count > 0
             ? document.Speakers.Count.ToString(CultureInfo.InvariantCulture)
-            : "not separated";
+            : metadata.Settings.SpeakerSeparation ? "none" : "not separated";
 
         return string.Join(
             "\n",

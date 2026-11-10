@@ -32,6 +32,14 @@ public sealed class PlainTextWriterTests
     }
 
     [Fact]
+    public void HeaderSaysNoneWhenSeparationFoundNoSpeaker()
+    {
+        string txt = Txt(Document([]) with { Speakers = [] });
+
+        Assert.Contains("Speakers: none", txt);
+    }
+
+    [Fact]
     public void ConsecutiveSegmentsOfOneSpeakerMergeIntoOneTurn()
     {
         string txt = Txt(Document(
