@@ -124,7 +124,7 @@ public sealed class ConsoleOutputTests
             Assert.True(text.Contains(part, StringComparison.Ordinal), $"got summary:\n{text}\nwanted it to contain '{part}'");
         }
 
-        Assert.True(!text.Contains('—', StringComparison.Ordinal), "the summary must not carry an em dash");
+        Assert.True(!text.Contains('\u2014', StringComparison.Ordinal), "the summary must not carry an em dash");
     }
 
     [Theory]
