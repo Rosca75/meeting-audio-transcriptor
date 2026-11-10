@@ -17,7 +17,7 @@ A test whose dependency is missing skips by name (`Assert.SkipUnless(condition, 
 
 ## 2. Categories
 
-Every test class carries a `Category` trait, so a run can be scoped to one concern. The vocabulary: `config`, `audio`, `transcript`, `writers`, `errors`.
+Every test class carries a `Category` trait, so a run can be scoped to one concern. The vocabulary: `config`, `audio`, `transcript`, `writers`, `errors`, `desktop`.
 
 ## 3. Guards
 
@@ -53,7 +53,22 @@ meeting-audio-transcriptor-cli benchmark --set clips --threads 1          # also
 meeting-audio-transcriptor-cli benchmark --long-file <path> --language en  # time a recording outside the test set
 ```
 
-## 6. Commands
+## 6. Desktop window
+
+`MeetingAudioTranscriptor.Shell.Tests` holds the shell suite; it references the shell as built for the machine it runs on. The unit tier covers what both hosts share: the embedded page (lookup, media types, the 404 for everything else, path traversal, which files are embedded), the response headers, the JavaScript literal escaping, the data folder on each platform, the drop message and the `file://` decoding, the page message router and the threading of the window services, with fakes.
+
+The integration tier drives the real Linux window under `xvfb-run`, with `MAT_UI_DEMO=1` and an automation script, and skips by name on another system, without `xvfb-run`, without WebKitGTK 4.1 or without a built shell. The hook is the host's own and is off unless its variables are set: `MAT_UI_AUTOMATION` names a script the host evaluates in the page once it has loaded, `MAT_UI_EXIT_AFTER_MS` closes the window after that delay, and while either is set the page may post `{"automation":{"log":"..."}}` (printed to standard output), `{"automation":{"echo":"..."}}` (posted back through the host's event path), `{"automation":{"dropUris":["file:///..."]}}` (fed to the native drop handler) and `{"automation":{"exit":<code>}}`. The tests prove that the page loads from the `app` scheme, that `app.info` answers through the page's own transport, that a string of quotes, backslashes, line separators and non-ASCII letters survives the trip to the page, that a dropped `file://` URI reaches the bridge as a path and the page shows the file, that a demo run started from the page's Start button ends with `run:finished`, that a missing file, a markdown file and every address off the origin are refused, that inline script and connections are refused by the policy, that a navigation to another site is cancelled by the host, and that without a display the window exits with code 2. A real drag and drop is not simulated: the test feeds URIs to the same handler the toolkit's drop reaches.
+
+`MAT_SHELL_PATH` points the integration tier at another build of the shell, such as a trimmed self-contained publish:
+
+```
+dotnet publish src/MeetingAudioTranscriptor.Shell -c Release -r linux-x64 --self-contained -p:PublishTrimmed=true -o out/linux
+MAT_SHELL_PATH=$PWD/out/linux/meeting-audio-transcriptor dotnet test --project tests/MeetingAudioTranscriptor.Shell.Tests --filter-trait "Tier=integration"
+```
+
+Without a GPU render node the Linux host draws in software (it sets `WEBKIT_DISABLE_COMPOSITING_MODE=1` and `WEBKIT_DISABLE_DMABUF_RENDERER=1`), which is what makes the window draw under xvfb; `MAT_WEBKIT_SOFTWARE=1` forces that path and `MAT_WEBKIT_SOFTWARE=0` forbids it. The Windows host cannot run here: it is compiled with `dotnet build src/MeetingAudioTranscriptor.Shell -r win-x64 -warnaserror` and checked by hand.
+
+## 7. Commands
 
 ```
 dotnet test --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models" --ignore-exit-code 8   # the unit tier
