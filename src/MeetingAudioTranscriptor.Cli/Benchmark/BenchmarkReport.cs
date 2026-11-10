@@ -30,12 +30,14 @@ internal sealed class BenchmarkReport
     private readonly MachineFacts _machine;
     private readonly int _threads;
     private readonly bool _speakers;
+    private readonly bool _hinted;
     private readonly int _repeat;
     private readonly string _data;
     private readonly IReadOnlyList<FileResult> _files;
 
-    public BenchmarkReport(DateTimeOffset started, MachineFacts machine, int threads, bool speakers, int repeat, string data, IReadOnlyList<FileResult> files)
+    public BenchmarkReport(DateTimeOffset started, MachineFacts machine, int threads, bool speakers, int repeat, string data, IReadOnlyList<FileResult> files, bool hinted = false)
     {
+        _hinted = hinted;
         _started = started;
         _machine = machine;
         _threads = threads;
@@ -85,6 +87,16 @@ internal sealed class BenchmarkReport
             line.Append(CultureInfo.InvariantCulture, $"  WER raw {raw.Wer * 100:0.0}% cleaned {cleaned.Wer * 100:0.0}%");
         }
 
+        if (file.SpeakerScore is SpeakerMetrics speakers)
+        {
+            line.Append(CultureInfo.InvariantCulture, $"  speakers {speakers.EstimatedSpeakers}/{speakers.ReferenceSpeakers} DER {speakers.Excluded.ErrorRate:0.000}/{speakers.Included.ErrorRate:0.000} attribution {speakers.Attribution:0.000}");
+        }
+
+        if (file.HintedSpeakers is SpeakerMetrics hinted)
+        {
+            line.Append(CultureInfo.InvariantCulture, $"  hinted {hinted.EstimatedSpeakers}/{hinted.ReferenceSpeakers} DER {hinted.Excluded.ErrorRate:0.000} attribution {hinted.Attribution:0.000}");
+        }
+
         if (file.Entry.Type == "noise")
         {
             line.Append(CultureInfo.InvariantCulture, $"  {file.Words} word(s)");
@@ -109,6 +121,24 @@ internal sealed class BenchmarkReport
             text.Append(CultureInfo.InvariantCulture, $"{group.Group,-10} {group.Files,5} {group.AudioSeconds,8:0.0} {group.WallSeconds,8:0.0} {group.Throughput,7:0.0}");
             text.Append(CultureInfo.InvariantCulture, $"  {Percent(group.RawWer?.Wer),7}  {Percent(group.CleanedWer?.Wer),9}  {Fraction(group.Retention?.Fraction),9}  {Percent(group.RemovedFraction),7}");
             text.AppendLine(group.Group == "noise" ? string.Create(CultureInfo.InvariantCulture, $"  {group.Words,11}") : "");
+        }
+
+        List<GroupResult> withSpeakers = Groups().Where(group => group.Speakers is not null).ToList();
+        if (withSpeakers.Count > 0)
+        {
+            text.AppendLine();
+            text.AppendLine("speakers   files  DER excl  DER incl  confusion  attribution  count exact  count error" + (_hinted ? "  | hinted: DER excl  attribution  count exact" : ""));
+            foreach (GroupResult group in withSpeakers)
+            {
+                SpeakerGroupMetrics speakers = group.Speakers!;
+                text.Append(CultureInfo.InvariantCulture, $"{group.Group,-10} {speakers.Files,5} {speakers.ErrorRateExcluded,9:0.000} {speakers.ErrorRateIncluded,9:0.000} {speakers.ConfusionExcluded,10:0.000} {speakers.Attribution,12:0.000} {speakers.ExactCounts,7}/{speakers.Files,-4} {speakers.MeanAbsoluteCountError,11:0.00}");
+                if (group.HintedSpeakers is SpeakerGroupMetrics hinted)
+                {
+                    text.Append(CultureInfo.InvariantCulture, $"  | {hinted.ErrorRateExcluded,15:0.000} {hinted.Attribution,12:0.000} {hinted.ExactCounts,7}/{hinted.Files}");
+                }
+
+                text.AppendLine();
+            }
         }
 
         text.AppendLine();
@@ -161,6 +191,8 @@ internal sealed class BenchmarkReport
         json.WriteStartObject("settings");
         json.WriteNumber("threads", _threads);
         json.WriteBoolean("speakerSeparation", _speakers);
+        json.WriteBoolean("speakersHintFromReference", _hinted);
+        json.WriteNumber("diarisationCollarSeconds", SpeakerMetrics.CollarSeconds);
         json.WriteNumber("repeat", _repeat);
         json.WriteEndObject();
 
@@ -180,6 +212,8 @@ internal sealed class BenchmarkReport
             json.WriteNumber("words", group.Words);
             json.WriteNumber("wordsRemoved", group.WordsRemoved);
             json.WriteNumber("removedFraction", Round(group.RemovedFraction, 4));
+            WriteSpeakerGroup(json, "speakers", group.Speakers);
+            WriteSpeakerGroup(json, "speakersHinted", group.HintedSpeakers);
             json.WriteEndObject();
         }
 
@@ -203,7 +237,6 @@ internal sealed class BenchmarkReport
 
         json.WriteNumber("peakWorkingSetBytes", _files.Count > 0 ? _files.Max(file => file.PeakWorkingSetBytes) : 0);
 
-        // Extension point: speaker metrics (DER, speaker count error) per group join here once speaker separation runs.
         json.WriteStartArray("files");
         foreach (FileResult file in _files)
         {
@@ -255,6 +288,8 @@ internal sealed class BenchmarkReport
         WriteWer(json, "werRaw", file.RawWer);
         WriteWer(json, "werCleaned", file.CleanedWer);
         WriteRetention(json, "retention", file.Retention);
+        WriteSpeakerFile(json, "speakerScore", file.SpeakerScore);
+        WriteSpeakerFile(json, "speakerScoreHinted", file.HintedSpeakers);
 
         json.WriteStartObject("stageSeconds");
         json.WriteNumber("modelLoad", Seconds(file.ModelLoadSeconds));
@@ -288,6 +323,47 @@ internal sealed class BenchmarkReport
         json.WriteNumber("deletions", wer.Deletions);
         json.WriteNumber("insertions", wer.Insertions);
         json.WriteNumber("referenceWords", wer.ReferenceLength);
+        json.WriteEndObject();
+    }
+
+    private static void WriteSpeakerFile(Utf8JsonWriter json, string name, SpeakerMetrics? metrics)
+    {
+        if (metrics is null)
+        {
+            json.WriteNull(name);
+            return;
+        }
+
+        json.WriteStartObject(name);
+        json.WriteNumber("referenceSpeakers", metrics.ReferenceSpeakers);
+        json.WriteNumber("estimatedSpeakers", metrics.EstimatedSpeakers);
+        json.WriteNumber("derOverlapExcluded", Round(metrics.Excluded.ErrorRate, 4));
+        json.WriteNumber("derOverlapIncluded", Round(metrics.Included.ErrorRate, 4));
+        json.WriteNumber("confusionOverlapExcluded", Round(metrics.Excluded.ReferenceSeconds > 0 ? metrics.Excluded.ConfusionSeconds / metrics.Excluded.ReferenceSeconds : 0, 4));
+        json.WriteNumber("attributionAccuracy", Round(metrics.Attribution, 4));
+        json.WriteNumber("referenceSeconds", Seconds(metrics.Included.ReferenceSeconds));
+        json.WriteNumber("missedSeconds", Seconds(metrics.Included.MissedSeconds));
+        json.WriteNumber("falseAlarmSeconds", Seconds(metrics.Included.FalseAlarmSeconds));
+        json.WriteNumber("confusionSeconds", Seconds(metrics.Included.ConfusionSeconds));
+        json.WriteEndObject();
+    }
+
+    private static void WriteSpeakerGroup(Utf8JsonWriter json, string name, SpeakerGroupMetrics? metrics)
+    {
+        if (metrics is null)
+        {
+            json.WriteNull(name);
+            return;
+        }
+
+        json.WriteStartObject(name);
+        json.WriteNumber("files", metrics.Files);
+        json.WriteNumber("derOverlapExcluded", Round(metrics.ErrorRateExcluded, 4));
+        json.WriteNumber("derOverlapIncluded", Round(metrics.ErrorRateIncluded, 4));
+        json.WriteNumber("confusionOverlapExcluded", Round(metrics.ConfusionExcluded, 4));
+        json.WriteNumber("attributionAccuracy", Round(metrics.Attribution, 4));
+        json.WriteNumber("speakerCountExact", metrics.ExactCounts);
+        json.WriteNumber("speakerCountMeanAbsoluteError", Round(metrics.MeanAbsoluteCountError, 3));
         json.WriteEndObject();
     }
 

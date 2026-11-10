@@ -85,6 +85,14 @@ public sealed class TranscriptionService : IDisposable
     private bool _running;
     private bool _disposed;
 
+    /// <summary>What is missing for speaker separation and the command that fetches it.</summary>
+    private string SeparationMissing =>
+        $"the speaker-embedding model {SpeakerSeparatorFactory.ModelFile} is not in {ModelsRoot}; "
+        + $"fetch it with node build/fetch-models.mjs --model {SpeakerSeparatorFactory.ModelName} --into {ModelsRoot} to label speakers";
+
+    /// <summary>The notice of a run that wanted speakers while the speaker-embedding model is not installed.</summary>
+    private string SeparationUnavailableNotice => "speakers were not told apart: " + SeparationMissing;
+
     /// <summary>Creates the service over a models folder.</summary>
     /// <param name="modelsRoot">The models folder; null for <see cref="ModelCatalog.ResolveRoot"/> (MAT_MODELS_DIR, beside the executable, or the repository's).</param>
     public TranscriptionService(string? modelsRoot = null)
@@ -127,7 +135,12 @@ public sealed class TranscriptionService : IDisposable
         string message = missing.Count == 0
             ? ""
             : $"the models folder {ModelsRoot} lacks {string.Join(", ", missing)}; fetch them with: node build/fetch-models.mjs --set all --into {ModelsRoot} (or point {ModelCatalog.ModelsDirectoryVariable} at a folder that holds them)";
-        return new ModelStatus(ModelsRoot, LoadedModels.RequiredFiles(), missing, message, _seams.SeparationAvailable(ModelsRoot));
+        bool separation = _seams.SeparationAvailable(ModelsRoot);
+        return new ModelStatus(ModelsRoot, LoadedModels.RequiredFiles(), missing, message, separation)
+        {
+            SpeakerSeparationFiles = SpeakerSeparatorFactory.RequiredFiles,
+            SpeakerSeparationMessage = separation ? "" : SeparationMissing,
+        };
     }
 
     /// <summary>Compares every required file with its size and SHA-256 in the models lock; slow on the large files.</summary>
@@ -258,15 +271,31 @@ public sealed class TranscriptionService : IDisposable
             cancellation.ThrowIfCancellationRequested();
             overall.Report(TranscriptionStage.LoadingModels, 0, 0);
             long loading = time.GetTimestamp();
-            LoadedModels models = Models();
-            loadSeconds = time.GetElapsedTime(loading).TotalSeconds;
+            LoadedModels models = Models(out bool loadedNow);
+
+            // Only a run that loaded the models reports a load time; a later run reuses them and reports 0.
+            loadSeconds = loadedNow ? time.GetElapsedTime(loading).TotalSeconds : 0;
             cancellation.ThrowIfCancellationRequested();
 
             phase = RunPhase.Input;
             (source, decoder) = _seams.OpenAudio(inputPath);
 
             phase = RunPhase.Pipeline;
-            bool separation = (request.SpeakerSeparation ?? true) && models.Separators is not null;
+            // Speaker separation is on unless switched off; without its model the run goes on without speakers and says so.
+            bool separationWanted = request.SpeakerSeparation ?? true;
+            bool separation = separationWanted && models.Separators is not null;
+            List<string> notices = [];
+            if (separationWanted && !separation)
+            {
+                notices.Add(SeparationUnavailableNotice);
+            }
+
+            List<TranscriptModel> usedModels = [.. models.Models];
+            if (separation && !usedModels.Any(model => model.Role == LoadedModels.SpeakerEmbeddingRole))
+            {
+                usedModels.Add(new TranscriptModel { Role = LoadedModels.SpeakerEmbeddingRole, Name = SpeakerSeparatorFactory.ModelName });
+            }
+
             PipelineOptions options = new() { Threads = request.Threads ?? PipelineOptions.DefaultThreads };
             options = _seams.Options?.Invoke(options) ?? options;
             TranscriptionPipeline pipeline = new(models.Vad, models.Recognizer, separation ? models.Separators : null, options, time);
@@ -275,7 +304,7 @@ public sealed class TranscriptionService : IDisposable
                 Language = CleaningLanguages.Parse(request.Language),
                 SourceFileName = Path.GetFileName(inputPath),
                 ApplicationVersion = AppVersion.Current,
-                Models = models.Models,
+                Models = usedModels,
                 Settings = new TranscriptSettings
                 {
                     SpeakerSeparation = separation,
@@ -308,6 +337,7 @@ public sealed class TranscriptionService : IDisposable
                     : $"the transcript of '{Path.GetFileName(inputPath)}' was written to {outputFolder}",
                 OutputFiles = files.Select(file => file.Path).ToArray(),
                 WriteSeconds = writeSeconds,
+                Notices = notices,
             };
         }
         catch (Exception error) when (error is not OutOfMemoryException)
@@ -328,12 +358,14 @@ public sealed class TranscriptionService : IDisposable
     }
 
     /// <summary>Returns the loaded models, loading them on the first call.</summary>
-    private LoadedModels Models()
+    /// <param name="loadedNow">True when this call loaded them.</param>
+    private LoadedModels Models(out bool loadedNow)
     {
         // Loading happens under the lock: a run is the only caller, and a second run is refused at its start.
         lock (_lock)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
+            loadedNow = _models is null;
             _models ??= _seams.LoadModels(ModelsRoot);
             return _models;
         }

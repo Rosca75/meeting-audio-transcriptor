@@ -69,6 +69,9 @@ internal sealed record BenchmarkArguments
 
     public bool NoSpeakers { get; init; }
 
+    /// <summary>Also runs every file that has reference turns with their speaker count as the hint, reported as a second variant.</summary>
+    public bool SpeakersHintFromReference { get; init; }
+
     public int Repeat { get; init; } = 1;
 
     public string? Out { get; init; }
@@ -250,6 +253,9 @@ internal static class CommandLine
                 case "--no-speakers":
                     parsed = parsed with { NoSpeakers = Flag(name, value) };
                     break;
+                case "--speakers-hint-from-reference":
+                    parsed = parsed with { SpeakersHintFromReference = Flag(name, value) };
+                    break;
                 case "--repeat":
                     parsed = parsed with { Repeat = Count(name, Value(name, value, "<n>"), 1, 100) };
                     break;
@@ -263,13 +269,18 @@ internal static class CommandLine
                     parsed = parsed with { Models = Value(name, value, "<dir>") };
                     break;
                 default:
-                    throw Unknown(name, "benchmark", "--data, --set, --long-file, --language, --threads, --no-speakers, --repeat, --out, --label, --models");
+                    throw Unknown(name, "benchmark", "--data, --set, --long-file, --language, --threads, --no-speakers, --speakers-hint-from-reference, --repeat, --out, --label, --models");
             }
         }
 
         if (pendingFile is not null)
         {
             throw new UsageException($"--long-file {pendingFile} needs its language right after it: --long-file <path> --language en|fr|de");
+        }
+
+        if (parsed.NoSpeakers && parsed.SpeakersHintFromReference)
+        {
+            throw new UsageException("--speakers-hint-from-reference runs speaker separation with a hint, which --no-speakers switches off; pass one of the two");
         }
 
         if (sets.Count == 0 && extras.Count == 0)
@@ -391,7 +402,7 @@ internal static class CommandLine
     private sealed class Tokens
     {
         /// <summary>The options that take no value; every other option takes the next argument.</summary>
-        private static readonly HashSet<string> Switches = new(StringComparer.Ordinal) { "--no-speakers", "--raw", "--quiet", "--verify" };
+        private static readonly HashSet<string> Switches = new(StringComparer.Ordinal) { "--no-speakers", "--raw", "--quiet", "--verify", "--speakers-hint-from-reference" };
 
         public List<(string Name, string? Value)> Options { get; } = [];
 
