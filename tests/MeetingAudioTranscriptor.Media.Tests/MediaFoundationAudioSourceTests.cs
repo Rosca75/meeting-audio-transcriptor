@@ -69,8 +69,12 @@ public sealed class MediaFoundationAudioSourceTests : IClassFixture<MediaFixture
 
         double seconds = samples.Length / (double)source.SampleRate;
         double expectedSeconds = expected.Length / (double)reference.SampleRate;
+        // ffmpeg drops the encoder's priming frame the container names (1,024 samples of AAC) and
+        // Media Foundation keeps it, so the two may differ by that frame plus 50 ms: 23 ms of it at
+        // 44.1 kHz, 64 ms at 16 kHz, measured on the Windows runner.
+        double tolerance = 0.05 + (1024.0 / source.SampleRate);
         Assert.True(source.SampleRate == reference.SampleRate, $"got {source.SampleRate} Hz, wanted ffmpeg's {reference.SampleRate}");
-        Assert.True(Math.Abs(seconds - expectedSeconds) < 0.05, $"got {seconds:0.000} s, wanted ffmpeg's {expectedSeconds:0.000} s within 50 ms");
+        Assert.True(Math.Abs(seconds - expectedSeconds) < tolerance, $"got {seconds:0.000} s, wanted ffmpeg's {expectedSeconds:0.000} s within {tolerance * 1000:0} ms");
         Assert.True(Math.Abs(MediaFixtures.Rms(samples) - MediaFixtures.Rms(expected)) < 0.01, $"got an RMS of {MediaFixtures.Rms(samples):0.0000}, wanted ffmpeg's {MediaFixtures.Rms(expected):0.0000}");
         Assert.True(Math.Abs(MediaFixtures.ZeroCrossingHz(samples, source.SampleRate) - MediaFixtures.ToneHz) < 5, "got another frequency than the tone's, wanted 440 Hz");
     }

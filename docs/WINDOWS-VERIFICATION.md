@@ -1,6 +1,17 @@
 # Windows verification
 
-The checklist the owner runs on a Windows 10 or 11 x64 laptop. Windows code could not be executed while the application was built: the Windows window host and the Media Foundation decoder were compiled, the decoder was exercised under Wine, and the CI Windows legs run the unit and integration tiers. Everything below is what remains unproven. Work in order; each item says what to do, what is expected and what to report when it differs. Report the item number, the exact message and the output of `meeting-audio-transcriptor-cli.exe --version`.
+The checklist the owner runs on a Windows 10 or 11 x64 laptop.
+
+**What CI already proves on Windows** (`windows-latest`, every run of `.github/workflows/ci.yml` and every release build):
+
+- `end-to-end (windows-latest)` builds the speech test set on Windows (its WAV, reference and RTTM files are byte-identical to Linux's, which `testset-parity` checks) and runs the models tier over it with the real models: every clip within its word error rate floor in English, French and German, the speaker separation accuracy floors, the four noise files giving no words, and `en-10min.m4a` and `.mp4` decoded by Media Foundation and read within 2 % of the words of the WAV.
+- The same job runs the command line on `en-10min.m4a`: the `Decoder:` line must read `media-foundation`, and a second run with `MAT_PREFER_FFMPEG=1` decodes through ffmpeg; the two transcripts must agree within 2 % of their words (they differ by 3 words of 1,457). It then runs `benchmark --set clips --threads 4` and keeps the result as the artefact `benchmark-Windows`.
+- `integration (windows-latest)` runs the Media Foundation tests against generated files, a 16 kHz mono `.m4a` among them, compared with ffmpeg's decode.
+- `release.yml`'s `build (win-x64)` publishes the package with the models and transcribes a clip from inside the staged folder, with no `MAT_MODELS_DIR` or `MAT_FFMPEG` set, through the bundled ffmpeg and through Media Foundation, so the shipped layout (models and ffmpeg beside the executable) works.
+
+What CI cannot prove: the window (the web view host, drag and drop, the dialogs, SmartScreen), real recordings from a phone or a meeting tool, and speed on the target laptop: the hosted runner reports no VNNI and reads at about 13 to 15 times real time with 4 threads. The checklist below covers those first; the decoding items repeat on real recordings what CI proves on the test set.
+
+Everything below is what remains for a person. Work in order; each item says what to do, what is expected and what to report when it differs. Report the item number, the exact message and the output of `meeting-audio-transcriptor-cli.exe --version`.
 
 Use a real meeting recording of about 30 minutes in each language you speak (`.m4a` and `.mp4` as your phone or meeting tool writes them) and a short `.wav`. In PowerShell, `$d = "C:\path\to\package"` shortens the commands.
 
