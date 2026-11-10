@@ -146,15 +146,16 @@ Namespaces follow folders. The reference graph is
 | Granite Speech 5.0 470M TurboCTC | Apache-2.0 | the recogniser, int8, with an appended score output |
 | Silero VAD | MIT | voice activity |
 | WeSpeaker CAM++ LM | Apache-2.0 code, CC-BY-4.0 weights | speaker embeddings |
-| pyannote segmentation 3.0 | MIT | listed in the lock as an optional default; no code reads it |
+| pyannote segmentation 3.0 | MIT | a candidate in the lock that no code reads; no package carries it |
 | ffmpeg | LGPL-3.0-or-later | the bundled decoder, built without GPL and non-free options |
 
 `build/models.lock` and `build/ffmpeg.lock` are the source of truth for every
 model's and ffmpeg build's revision, address, size and hash, and `Directory.Packages.props`
 for every package version; this table names what is shipped and under which licence,
-and a revision written here would rot. The Parakeet model in the lock is a
-candidate that only benchmarks read and no package carries. `NOTICE` credits every
-shipped component, and a guard holds it to the locks.
+and a revision written here would rot. A model of the lock with `"set": "candidate"` (Parakeet, and pyannote
+segmentation 3.0 as a possible later addition) is read by benchmarks alone and no package
+carries it. `NOTICE` credits every shipped component and no candidate, and a guard holds
+it to the locks both ways.
 
 Everything else is the base class library.
 
