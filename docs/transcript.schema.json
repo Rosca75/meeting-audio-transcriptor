@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://meeting-audio-transcriptor.invalid/schemas/transcript.schema.json",
+  "title": "Meeting transcript",
+  "description": "The JSON transcript written by meeting-audio-transcriptor. Times are seconds from the start of the recording.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "metadata", "speakers", "segments"],
+  "properties": {
+    "schemaVersion": { "type": "string", "description": "The version of this shape." },
+    "metadata": { "$ref": "#/$defs/metadata" },
+    "speakers": { "type": "array", "items": { "$ref": "#/$defs/speaker" } },
+    "segments": { "type": "array", "items": { "$ref": "#/$defs/segment" } }
+  },
+  "$defs": {
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["application", "applicationVersion", "sourceFile", "durationSeconds", "speechSeconds", "language", "createdUtc", "processingSeconds", "models", "settings"],
+      "properties": {
+        "application": { "type": "string" },
+        "applicationVersion": { "type": "string" },
+        "sourceFile": { "type": "string" },
+        "durationSeconds": { "type": "number", "minimum": 0 },
+        "speechSeconds": { "type": "number", "minimum": 0 },
+        "language": { "enum": ["en", "fr", "de"] },
+        "createdUtc": { "type": "string" },
+        "processingSeconds": { "type": "number", "minimum": 0 },
+        "models": { "type": "array", "items": { "$ref": "#/$defs/model" } },
+        "settings": { "$ref": "#/$defs/settings" }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "name"],
+      "properties": {
+        "role": { "type": "string" },
+        "name": { "type": "string" }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["speakerSeparation", "threads", "formats", "rawFiles"],
+      "properties": {
+        "speakerSeparation": { "type": "boolean" },
+        "speakerCountHint": { "type": "integer", "minimum": 1 },
+        "threads": { "type": "integer", "minimum": 1 },
+        "formats": { "type": "array", "items": { "enum": ["vtt", "json", "txt"] } },
+        "rawFiles": { "type": "boolean" }
+      }
+    },
+    "speaker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "speakingSeconds"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "speakingSeconds": { "type": "number", "minimum": 0 }
+      }
+    },
+    "segment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "start", "end", "text", "rawText", "confidence"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 1 },
+        "start": { "type": "number", "minimum": 0 },
+        "end": { "type": "number", "minimum": 0 },
+        "speaker": { "type": "string" },
+        "text": { "type": "string" },
+        "rawText": { "type": "string" },
+        "removed": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "words": { "type": "array", "items": { "$ref": "#/$defs/word" } }
+      }
+    },
+    "word": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "start", "end", "confidence"],
+      "properties": {
+        "text": { "type": "string" },
+        "start": { "type": "number", "minimum": 0 },
+        "end": { "type": "number", "minimum": 0 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "removed": { "type": "boolean" }
+      }
+    }
+  }
+}
