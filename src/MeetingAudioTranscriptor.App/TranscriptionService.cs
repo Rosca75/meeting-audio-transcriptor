@@ -269,6 +269,13 @@ public sealed class TranscriptionService : IDisposable
                 return Failed(TranscriptionOutcomeKind.OutputNotWritable, $"{blocked.Path} is a folder, so the transcript cannot be written there; rename that folder or choose another output folder", started, null, null);
             }
 
+            // The recording is opened (its container sniffed and its decoder started) before the models
+            // load, so a missing, damaged or unsupported file is reported at once, not after seconds of
+            // loading; missing models are reported only for a recording that opened.
+            phase = RunPhase.Input;
+            (source, decoder) = _seams.OpenAudio(inputPath);
+            cancellation.ThrowIfCancellationRequested();
+
             phase = RunPhase.Models;
             ModelStatus status = Check();
             if (!status.Ready)
@@ -284,9 +291,6 @@ public sealed class TranscriptionService : IDisposable
             // Only a run that loaded the models reports a load time; a later run reuses them and reports 0.
             loadSeconds = loadedNow ? time.GetElapsedTime(loading).TotalSeconds : 0;
             cancellation.ThrowIfCancellationRequested();
-
-            phase = RunPhase.Input;
-            (source, decoder) = _seams.OpenAudio(inputPath);
 
             phase = RunPhase.Pipeline;
             // Speaker separation is on unless switched off; without its model the run goes on without speakers and says so.

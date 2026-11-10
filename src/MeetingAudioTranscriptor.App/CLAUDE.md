@@ -18,6 +18,8 @@ The App composes the engine for both front ends: the transcription service (`Tra
 
 **`FailureMapping` is the one place an exception becomes an outcome kind.** The kinds are `Succeeded`, `NoSpeech`, `InputNotFound`, `InputUnreadable`, `InputUnsupported`, `InputCorrupt`, `ModelsMissing`, `OutputNotWritable`, `DiskFull`, `Cancelled`, `AlreadyRunning` and `Unexpected`; the Cli maps them to exit codes in `ExitCodes.Of`. A failure caused by a cancellation (a decoder killed mid-read) is a cancellation.
 
+**The recording is opened before the models load.** The opener sniffs the container and starts the decoder first, so a missing, damaged or unsupported file is reported at once rather than after seconds of loading; missing models are reported only for a recording that opened.
+
 **The output is checked before the long run.** The folder is created and probed with a throwaway file, an existing folder in a transcript's place is refused and, under `OverwritePolicy.Refuse`, so is an existing file, because a two-hour run must not fail at its last step.
 
 **Progress is one overall fraction that never decreases.** The pipeline takes 98 percent of the bar and writing the rest; one lock holds the highest value reported, because two threads report and a bar that moves back looks broken.

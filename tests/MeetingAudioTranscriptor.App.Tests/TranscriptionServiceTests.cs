@@ -180,6 +180,42 @@ public sealed class TranscriptionServiceTests
     }
 
     [Fact]
+    public async Task ABadRecordingIsReportedBeforeAnyModelLoads()
+    {
+        using TempFolder folder = new();
+        File.WriteAllText(folder.File("notes.docx"), "this is not audio at all");
+        string damaged = folder.File("damaged.m4a");
+        File.WriteAllText(damaged, "x");
+        StrongBox<int> loads = new();
+        int opened = 0;
+        using TranscriptionService service = ServiceKit.Service(new FakeRecognizer(), loads, open: path =>
+        {
+            opened++;
+            return path == damaged
+                ? throw new AudioDecodeException(AudioDecodeFailure.CorruptOrUnsupportedData, $"'{path}' is damaged")
+                : ServiceSeams.Default.OpenAudio(path);
+        });
+
+        TranscriptionOutcome unsupported = await service.RunAsync(Request(folder.File("notes.docx")), null, Token);
+        TranscriptionOutcome corrupt = await service.RunAsync(Request(damaged), null, Token);
+
+        Assert.True(unsupported.Kind == TranscriptionOutcomeKind.InputUnsupported && corrupt.Kind == TranscriptionOutcomeKind.InputCorrupt, $"got {unsupported.Kind} and {corrupt.Kind}");
+        Assert.True(opened == 2 && loads.Value == 0, $"opened {opened} times and loaded the models {loads.Value} times, wanted no load for a bad recording");
+    }
+
+    [Fact]
+    public async Task ABadRecordingTakesPrecedenceOverMissingModels()
+    {
+        using TempFolder folder = new();
+        File.WriteAllText(folder.File("notes.docx"), "this is not audio at all");
+        using TranscriptionService service = ServiceKit.Service(new FakeRecognizer(), missing: ["silero-vad/silero_vad.onnx"]);
+
+        TranscriptionOutcome outcome = await service.RunAsync(Request(folder.File("notes.docx")), null, Token);
+
+        Assert.True(outcome.Kind == TranscriptionOutcomeKind.InputUnsupported, $"got {outcome.Kind}: {outcome.Message}");
+    }
+
+    [Fact]
     public async Task AModelThatFailsToLoadIsModelsMissingAndIsRetriedNextRun()
     {
         using TempFolder folder = new();
