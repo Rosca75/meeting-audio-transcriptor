@@ -16,7 +16,7 @@ node bench/testset/fetch-testset.mjs --long 120 --long-lang en   # extra long fi
 Needs Node 22 or later and `ffmpeg` (6 or later) on PATH; no package is installed.
 Behind a proxy, start Node with `NODE_USE_ENV_PROXY=1` (and `NODE_EXTRA_CA_CERTS`
 when the proxy re-signs TLS). Options: `--cache <dir>` (default `bench/.cache/`,
-about 0.6 GB, git-ignored), `--out <dir>` (default `bench/data/`, git-ignored),
+about 0.7 GB, git-ignored), `--out <dir>` (default `bench/data/`, git-ignored),
 `--offline`, `--force`, and the maintainer steps `--pin` (fill the size and hash
 of a new source in the lock) and `--plan` (re-choose the recipes, see below).
 
@@ -28,7 +28,7 @@ Files:
 | `testset.lock` | every source pinned by address, size and SHA-256; the licence and attribution of each dataset; the noise settings; the recipe of every clip and long file |
 | `../data/manifest.json` | written by the build: per file its id, language, path, duration, speaker count, dataset, licence, reference and RTTM paths, bytes and SHA-256 |
 
-A cold run (nothing cached, about 0.6 GB downloaded) takes a few minutes; with a
+A cold run (nothing cached, about 0.7 GB downloaded) takes about 2 to 5 minutes depending on the network; with a
 warm cache the full build takes about 45 s on 4 cores; an up-to-date data
 folder is verified in under a second.
 

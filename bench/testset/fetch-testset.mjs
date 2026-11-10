@@ -213,7 +213,8 @@ function cachePathOf(cacheDir, source) {
 async function download(source, destination) {
   let response;
   try {
-    response = await fetch(source.url, { redirect: "follow" });
+    // Zenodo refuses the runtime's default user agent with a 403, so the tool names itself.
+    response = await fetch(source.url, { redirect: "follow", headers: { "user-agent": "fetch-testset/1 (speech test set builder)" } });
   } catch (error) {
     throw new Error(
       `cannot reach ${source.url} (${error.cause?.message ?? error.message}); ` +
