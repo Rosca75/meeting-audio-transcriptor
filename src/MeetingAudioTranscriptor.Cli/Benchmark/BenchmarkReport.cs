@@ -186,6 +186,9 @@ internal sealed class BenchmarkReport
             json.WriteString("cpuIdMask", _machine.CpuIdMask);
         }
 
+        json.WriteBoolean("processorReportsVnni", _machine.ProcessorReportsVnni);
+        json.WriteBoolean("exactQuantizedKernels", _machine.ExactQuantizedKernels);
+
         json.WriteEndObject();
 
         json.WriteStartObject("settings");

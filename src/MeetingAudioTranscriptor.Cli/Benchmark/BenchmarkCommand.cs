@@ -63,7 +63,7 @@ internal static class BenchmarkCommand
 
         MachineFacts machine = MachineFacts.Read();
         int threads = arguments.Threads ?? Engine.Pipeline.PipelineOptions.DefaultThreads;
-        output.WriteLine($"Benchmark of {entries.Count} file(s), {threads} thread(s), {arguments.Repeat} repeat(s) on {machine.CpuModel} ({machine.LogicalCores} logical cores{(machine.CpuIdMask is null ? "" : ", CPUIDMASK=" + machine.CpuIdMask)})");
+        output.WriteLine($"Benchmark of {entries.Count} file(s), {threads} thread(s), {arguments.Repeat} repeat(s) on {machine.Describe()}");
 
         string scratch = Path.Combine(Path.GetTempPath(), "mat-benchmark-" + Guid.NewGuid().ToString("N"));
         List<FileResult> results = [];
