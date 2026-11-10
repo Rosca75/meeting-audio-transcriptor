@@ -4,8 +4,50 @@ Working file of the autonomous build. Re-read after any context reset.
 
 ## Phase
 
-Phase 0 gate met (digest, state file, charter on `main`).
-Phase 1, research and harness: in progress.
+Phases 0 done. Phase 1 (research, harness, spikes) nearly done: the spike agent
+is finishing its report. Phases 2 to 5 are being worked in parallel by agents;
+the gates are checked in order before each merge to `main`.
+
+## Key findings so far
+
+- Recogniser choice: IBM Granite Speech 5.0 470M TurboCTC, int8 ONNX
+  (Apache-2.0, community export pinned by commit and SHA-256). Python spike
+  WER (%), en-read / en-ami / fr / de: Granite 1.58 / 36.6 / 3.79 / 8.45;
+  Parakeet v3 fp32 4.07 / 18.2 / 6.55 / 10.54; Parakeet Ultra int8
+  2.54 / 24.0 / 5.67 / 11.59; Whisper turbo 2.35 / 28.3 / 5.85 / 9.24;
+  Parakeet v3 int8 12.6 / 39.5 / 13.7 / 13.6 (drops speech).
+- Granite drops quiet or overlapped meeting speech unless the input level is
+  normalised: with a slow gain control AMI falls to about 26 %. Level
+  normalisation and a low-yield retry are being built into the recogniser.
+- Speed (recognition only, 4 workers x 1 intra-op thread, machine shared, so
+  lower bounds): no mask Granite about 60 to 120x, Parakeet int8 about 17 to
+  26x; with the AVX2 mask Granite 34x, Parakeet Ultra int8 17.6x, Parakeet fp32
+  11.6x.
+- This machine has AMX and AVX-512 VNNI. `bench/tools/cpuidmask` hides them
+  (`CPUIDMASK=avx2 LD_PRELOAD=/home/user/cpuidmask/libcpuidmask.so`); every
+  acceptance timing is taken under the `avx2` mask, on a quiet machine.
+- N workers sharing one model with one intra-op thread each beats one session
+  with N intra-op threads by about 2x.
+- VAD: Silero v6, 8 lanes per batch, about 16 to 19 core-seconds per 2 hours.
+- Media Foundation interop was executed under Wine and decoded WAV, M4A, MP4.
+
+## Agents in flight (worktrees under `.claude/worktrees/`)
+
+- Phase 1 spike report (sonnet): `docs/build/phase1-candidates.md`.
+- Diarisation (opus): `Engine/Diarisation`, `docs/build/diarisation-measurements.md`.
+- Granite recogniser and graph patch (opus): `Engine/Recognition/Granite`,
+  `build/onnx-patch.mjs`, `docs/build/granite-measurements.md`.
+- Pipeline, App service, CLI with benchmark command (opus); part B wires the
+  recogniser after it lands (the agent is resumed by message).
+- Frontend page and App bridge (sonnet): `frontend/`, `App/Bridge`.
+- Desktop hosts (opus): `Shell/`; its placeholder commit under `App/Bridge`
+  and `frontend/` is dropped at merge in favour of the real ones.
+
+## Merged so far
+
+Scaffold, writers and schema, cleaning and scoring, WAV reader and resampler
+and FFT, ONNX Runtime runner and fetch tools and locks, media decoders, VAD and
+chunker. Unit tier: 718 tests passing before the agents above.
 
 ## Environment (probed 2026-11-10)
 
@@ -55,9 +97,12 @@ See `docs/decisions/`.
 
 ## Next steps
 
-1. Phase 1 spike running: `docs/build/phase1-candidates.md`,
-   `bench/results/2026-11-10-phase1-candidates.json`.
-2. Running in worktrees: writers, cleaning and scoring, WAV reader and
-   resampler and FFT, ONNX Runtime runner and fetch tools.
-3. After the spike: decision records (recogniser, threading, diarisation,
-   hosts, packaging), then recogniser decoding, VAD and chunker, pipeline, CLI.
+1. Merge agents as they report; resolve `.slnx` conflicts by keeping all lines.
+2. Write decision records 0002 to 0009 (recogniser, threading, benchmark
+   calibration, diarisation, hosts, packaging, dependencies, audio decoding).
+3. Wire: recogniser into `RecognizerFactory`, diarisation into the separator
+   seam, `TranscriptionService` into the bridge's `ITranscriber`, hosts to the
+   real bridge and page.
+4. Quiet-machine benchmarks under the AVX2 mask: clips, 10 min, 30 min, 2 h.
+5. Phase 6: CI and release workflows, publish script, NOTICE, RELEASING.md.
+6. Phase 7: acceptance, hardening, README, WINDOWS-VERIFICATION.md, cleanup.
