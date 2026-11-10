@@ -36,11 +36,43 @@ linkage was clearly worse.
 Option 2 was not built: attribution on the meeting clips is above the 0.8 bar
 set for it, and the segmentation model would add its own cost.
 
+Through the full pipeline (the voice-activity detector's regions, the
+recogniser's words), the threshold cut alone names extra speakers of 2 to 6 s on
+the ten-minute and 30-minute files and of 42 s on the two-hour file. Voice
+activity cuts read speech into many regions under 2 s, each embedded as one short
+window with an unsteady voice print, and these windows form clusters of their
+own. Counting a window as its own length rather than a full hop in the minimum
+cluster size, and a floor on each final speaker's speaking time, make the count
+exact on the constructed clips and on the 10, 30 and 120-minute files, with no
+group's attribution lower (`docs/build/diarisation-measurements.md`, chapter
+"Through the full pipeline"):
+
+| Group | Count exact, threshold cut alone | Count exact, with both rules |
+|---|---|---|
+| Constructed multi-speaker clips (7) | 6 of 7 | 7 of 7 |
+| AMI meeting clips (3) | 0 of 3 (6, 3, 3 for 4) | 1 of 3 (4, 3, 3 for 4) |
+| 10, 30 and 120-minute files (5) | 1 of 5 | 5 of 5 |
+
+An absolute floor of 8 to 15 s merges a real speaker of a constructed clip who
+reads one sentence (10 s) and quiet AMI participants; a share alone does nothing
+on a short clip, and an absolute floor alone misses the two-hour file's 42 s.
+
 ## Decision
 
 Option 1, on by default, with a switch to turn it off and an optional
 speaker-count hint. With the hint the clusterer starts from the threshold cut
 and folds the smallest surplus cluster until the count matches.
+
+The clusterer folds a cluster holding less than 4 s of speech into its nearest
+large one; without the hint a window counts for one hop or for its own length
+when shorter, with the hint for one hop. Without the hint, after the words are assigned, a speaker whose speaking time is
+below the speaker floor, the larger of 4 s and 1.5 % of the recording's total
+speaking time, is folded into the speaker whose mean voice print is nearest,
+preferring one above the floor, and the timeline and the words are rebuilt; this
+repeats until every speaker is above the floor or one remains. A speaker is
+never dropped. Both values are options (`SpeakerFloorSeconds`,
+`SpeakerFloorShare` in `DiarisationOptions`), and the hint overrides the floor:
+with a hint of K the transcript names K speakers whenever the clusterer finds K.
 
 ## Consequences
 
@@ -48,6 +80,13 @@ and folds the smallest surplus cluster until the count matches.
   one voice at a time in any case.
 - Without the hint the speaker count can be off by one on real meetings; the
   hint fixes it, and the interface offers it.
+- A real participant who speaks less than the floor is merged into the voice
+  nearest theirs: about 90 s of a two-hour meeting, 7 s of a ten-minute one,
+  4 s of a short clip. Their words stay in the transcript under another
+  speaker's label. A user who knows the number of participants gives the hint,
+  which keeps every one of them.
+- The floor costs no model run: it rebuilds the timeline from the windows
+  already embedded, under 0.1 s on a two-hour meeting.
 - On a slower laptop a 3.0 s hop cuts the cost by a quarter at similar
   accuracy; the option exists in `DiarisationOptions`.
 - The embedding model was trained on VoxCeleb; its licence note is in `NOTICE`.
