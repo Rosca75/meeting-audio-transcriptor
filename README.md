@@ -163,7 +163,7 @@ Options are written `--name value` or `--name=value`; switches take no value.
 | `--models <dir>` | the models folder; default `MAT_MODELS_DIR`, else `models` beside the program |
 | `--quiet` | print nothing but errors |
 
-Progress goes to standard error and the summary to standard output. Ctrl+C cancels and leaves no partial file; a second Ctrl+C ends the process at once.
+Progress goes to standard error and the summary to standard output; the summary names the files, the speed, the speaker count, the words and the decoder that read the recording (`wav`, `media-foundation` or `ffmpeg (bundled) ...`). Ctrl+C cancels and leaves no partial file; a second Ctrl+C ends the process at once.
 
 ```
 meeting-audio-transcriptor-cli transcribe standup.m4a --language en
@@ -174,6 +174,17 @@ meeting-audio-transcriptor-cli transcribe sitzung.wav --language de --formats tx
 ### models
 
 `models` lists the files a transcription needs and whether each is installed; `--verify` also checks every file's size and SHA-256 against `models.lock`, which takes a while for the large model.
+
+### Environment variables
+
+| Variable | Meaning |
+|---|---|
+| `MAT_MODELS_DIR` | the models folder; default `models` beside the program |
+| `MAT_FFMPEG` | the ffmpeg executable to decode with; default the `ffmpeg` folder beside the program, then the PATH |
+| `MAT_PREFER_FFMPEG` | `1` makes Windows try the bundled ffmpeg before Media Foundation, to compare the two decoders |
+| `MAT_ORT_QUANT_PRECISION` | `0` or `1` forces the fast or the exact 8-bit kernels; by default the program uses the exact ones on a processor without VNNI (section 8) |
+| `MAT_BENCH_DATA` | the benchmark's test set folder; default `bench/data` |
+| `MAT_WEBKIT_SOFTWARE` | `1` forces software drawing in the Linux window, `0` forbids it; by default it is chosen from the machine |
 
 ### Exit codes
 
@@ -193,17 +204,26 @@ meeting-audio-transcriptor-cli transcribe sitzung.wav --language de --formats tx
 meeting-audio-transcriptor-cli benchmark --long-file <recording> --language en --threads 4
 ```
 
-This runs the real service on your recording, transcripts included, and prints the audio length, the wall time and the speed as a multiple of real time ("12.0x" means one hour of audio in five minutes), the peak memory and writes a result file under `bench/results/` (change it with `--out`). `--repeat <n>` runs each file n times and reports the median; `--long-file ... --language ...` may be repeated; `--set clips|long|containers|noise|all` runs the test set of section 12. Close other programs while measuring.
+This runs the real service on your recording, transcripts included, and prints the audio length, the wall time and the speed as a multiple of real time ("12.0x" means one hour of audio in five minutes), the peak memory and writes a result file under `bench/results/` (change it with `--out`; `--label` names it). The first line and the result file also record the processor, whether it reports VNNI and whether the exact 8-bit kernels are on. `--repeat <n>` runs each file n times and reports the median; `--long-file ... --language ...` may be repeated; `--set clips|long|containers|noise|all` runs the test set of section 12. Close other programs while measuring.
 
 ## 8. Performance
 
-The design target is a two-hour meeting transcribed in ten minutes or less on a 4-core laptop with AVX2 (12 times real time). The measured speed, memory and accuracy of the shipped build, and how they were measured, are in `docs/BENCHMARKS.md`. Speed depends mostly on the core count and on the processor's vector instructions; a machine below the requirements will be slower, and `--threads` and `--no-speakers` are the two levers (section 11).
+The design target is a two-hour meeting transcribed in ten minutes or less on a 4-core laptop with AVX2 (12 times real time), within 4 GB of memory. Measured on a 4-core machine with its processor features masked to AVX2 only, which stands for such a laptop (`docs/BENCHMARKS.md` gives the method, every table and the limits of the evidence), a two-hour recording takes:
+
+| Configuration | Two-hour recording | Times real time | Peak memory |
+|---|---|---|---|
+| AVX2 only, with speaker separation (the target machine) | 4.8 minutes | 25.0 | 2.18 GB |
+| AVX2 only, without speaker separation | 4.0 minutes | 29.8 | 1.93 GB |
+| AVX2 and AVX-VNNI | 2.8 minutes | 43.3 | 1.95 GB |
+| the processor as it is (AMX, AVX-512 VNNI) | 1.6 minutes | 75.5 | 1.98 GB |
+
+Speed is the same at 10, 30 and 120 minutes within one percent. Word error rate is 1.5 % for read English, 2.7 % for French and 8.3 % for German on the test set, and 24 % for real English meetings with overlapping speech, which is the weak case (`docs/BENCHMARKS.md`, chapters 3 and 6). On a processor without VNNI the program switches to exact 8-bit kernels by itself: they cost about a fifth of the speed and keep the German error at 8.8 % instead of 12.4 % (`docs/decisions/0010-exact-quantised-kernels.md`). Speed depends mostly on the core count and on the processor's vector instructions; a machine below the requirements will be slower, and `--threads` and `--no-speakers` are the two levers (section 11). Measure your own machine with the command of section 7.
 
 ## 9. System requirements
 
 - Windows 10 or 11 x64, or a 64-bit Linux with glibc (Ubuntu 22.04 or later, Debian 12, Fedora and equivalents).
 - An x64 processor with AVX2 (any laptop from about 2015 on), 4 cores or more.
-- 16 GB of memory recommended; see `docs/BENCHMARKS.md` for the measured peak.
+- 8 GB of memory recommended; the measured peak for a two-hour recording is 2.2 GB (`docs/BENCHMARKS.md`).
 - About 1 GB of disk for the extracted package.
 
 ## 10. Privacy
@@ -226,7 +246,7 @@ It writes no registry key. To uninstall, delete the extracted folder and that da
 | "no display could be opened" (Linux) | start the window from a desktop session |
 | "not a supported recording" | choose a `.wav`, `.m4a` or `.mp4` file, or convert the recording with a media player or ffmpeg |
 | "damaged" or "no audio stream" | the file is cut short or has no audio; play it in a media player, and export it again |
-| Windows N edition cannot decode `.m4a` | install the Media Feature Pack from Microsoft, or convert the file to `.wav` |
+| Windows N edition without the Media Feature Pack | the bundled ffmpeg decodes `.m4a` and `.mp4` instead; if the `ffmpeg` folder was removed, restore it, install the Media Feature Pack from Microsoft, or convert the file to `.wav` |
 | "models folder lacks ..." | run from the extracted package, or pass `--models <dir>` or set `MAT_MODELS_DIR`; from source see section 12 |
 | Slow on an older or small machine | `--threads 2` if the machine is also busy, `--no-speakers` to skip speaker separation, and close other programs |
 | Quiet speakers missing | compare `.txt` with `.raw.txt`; if the words are in the raw file, cleaning removed them, and if not the recogniser did not hear them |
@@ -251,7 +271,7 @@ A source build finds its models in `models/` of the checkout (or `MAT_MODELS_DIR
 
 A recording goes through these stages, each a folder of `src/MeetingAudioTranscriptor.Engine/`:
 
-1. Decode: the engine's own reader for WAV, Media Foundation on Windows and a bundled LGPL ffmpeg elsewhere for `.m4a` and `.mp4`, to mono samples (`docs/decisions/0009-audio-decoding.md`).
+1. Decode: the engine's own reader for WAV, Media Foundation on Windows (the bundled LGPL ffmpeg is its fallback) and the bundled ffmpeg elsewhere for `.m4a` and `.mp4`, to mono samples (`docs/decisions/0009-audio-decoding.md`).
 2. Resample to 16 kHz and cut the audio at silences with Silero VAD, so silence and noise are never recognised.
 3. Recognise each chunk with IBM Granite Speech 5.0 470M TurboCTC (int8, ONNX Runtime, CPU), several chunks at once over one shared model (`docs/decisions/0002-recogniser.md`, `docs/decisions/0003-threading-model.md`).
 4. Tell speakers apart with WeSpeaker CAM++ voice embeddings and clustering (`docs/decisions/0005-speaker-separation.md`).
