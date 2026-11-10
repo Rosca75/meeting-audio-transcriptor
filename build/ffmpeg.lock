@@ -1,0 +1,53 @@
+{
+  "comment": "The ffmpeg builds the application ships, pinned by address, size and hash. Both are BtbN/FFmpeg-Builds monthly tags (kept for two years), LGPL variants: built without --enable-gpl and --enable-nonfree, so the binary is LGPL-3.0-or-later. `members` are the only archive entries the fetch tool extracts: the binary and the licence text. `binary` pins the extracted executable so a later run verifies it without the archive. Fetch with: node build/fetch-ffmpeg.mjs --rid linux-x64|win-x64 [--into <dir>].",
+  "builds": [
+    {
+      "rid": "linux-x64",
+      "version": "n8.1.3-27-g8dca1586f4",
+      "licence": "LGPL-3.0-or-later",
+      "source": "https://github.com/BtbN/FFmpeg-Builds (tag autobuild-2026-10-31-12-59); ffmpeg source https://git.ffmpeg.org/ffmpeg.git, commit 8dca1586f4",
+      "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-31-12-59/ffmpeg-n8.1.3-27-g8dca1586f4-linux64-lgpl-8.1.tar.xz",
+      "bytes": 135188284,
+      "sha256": "a64f3171e6ad1f7d358d28890a907ee478c331d1177ec696a93418f79ac3f1f3",
+      "archiveRoot": "ffmpeg-n8.1.3-27-g8dca1586f4-linux64-lgpl-8.1",
+      "binary": {
+        "member": "bin/ffmpeg",
+        "name": "ffmpeg",
+        "bytes": 140046536,
+        "sha256": "09225778e63bb602f377cc9038d4556b5bd18b78d8bd5994a842ad5e262f72e3"
+      },
+      "licenceFiles": [
+        {
+          "member": "LICENSE.txt",
+          "name": "LICENSE.txt",
+          "bytes": 7651,
+          "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768"
+        }
+      ]
+    },
+    {
+      "rid": "win-x64",
+      "version": "n8.1.3-27-g8dca1586f4",
+      "licence": "LGPL-3.0-or-later",
+      "source": "https://github.com/BtbN/FFmpeg-Builds (tag autobuild-2026-10-31-12-59); ffmpeg source https://git.ffmpeg.org/ffmpeg.git, commit 8dca1586f4",
+      "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-31-12-59/ffmpeg-n8.1.3-27-g8dca1586f4-win64-lgpl-8.1.zip",
+      "bytes": 167778744,
+      "sha256": "d4c2a42673917b4a97104a3e9f082729a9730796b98664e37c0b7eba6c6c613d",
+      "archiveRoot": "ffmpeg-n8.1.3-27-g8dca1586f4-win64-lgpl-8.1",
+      "binary": {
+        "member": "bin/ffmpeg.exe",
+        "name": "ffmpeg.exe",
+        "bytes": 131782656,
+        "sha256": "04d0c351e53dde1cc45ba437c28d20a0b382df2798999def5d4110e23d74e62c"
+      },
+      "licenceFiles": [
+        {
+          "member": "LICENSE.txt",
+          "name": "LICENSE.txt",
+          "bytes": 7651,
+          "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768"
+        }
+      ]
+    }
+  ]
+}

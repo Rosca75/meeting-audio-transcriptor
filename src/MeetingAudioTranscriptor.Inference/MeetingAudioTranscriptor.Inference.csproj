@@ -12,4 +12,9 @@
   <ItemGroup>
     <ProjectReference Include="..\MeetingAudioTranscriptor.Engine\MeetingAudioTranscriptor.Engine.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- The suite checks argument validation and error messages on types that are not part of the
+         cross-project surface, so they stay internal instead of being made public for a test. -->
+    <InternalsVisibleTo Include="MeetingAudioTranscriptor.Inference.Tests" />
+  </ItemGroup>
 </Project>
