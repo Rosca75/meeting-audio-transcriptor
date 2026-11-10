@@ -1,5 +1,0 @@
-/* A placeholder style sheet for the placeholder page. */
-body { font-family: sans-serif; margin: 24px; background: #fafafa; color: #222; }
-.drop { margin: 16px 0; padding: 32px; border: 2px dashed #888; text-align: center; }
-.drop.over { border-color: #2a6; background: #efe; }
-pre { background: #fff; border: 1px solid #ddd; padding: 8px; min-height: 120px; white-space: pre-wrap; }
