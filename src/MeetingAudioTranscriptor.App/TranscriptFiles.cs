@@ -12,19 +12,17 @@ namespace MeetingAudioTranscriptor.App;
 /// <param name="Format">Its format.</param>
 /// <param name="Variant">Cleaned or raw text.</param>
 /// <param name="Path">Where it ends up.</param>
-internal sealed record PlannedFile(TranscriptFormat Format, TranscriptVariant Variant, string Path)
-{
-    /// <summary>The temporary file it is written to first, in the same folder so the move is a rename.</summary>
-    public string TemporaryPath => Path + ".tmp";
-}
+internal sealed record PlannedFile(TranscriptFormat Format, TranscriptVariant Variant, string Path);
 
 /// <summary>Plans and writes the transcript files.</summary>
 /// <remarks>
 /// A file is named after the recording: <c>meeting.m4a</c> gives <c>meeting.vtt</c>,
 /// <c>meeting.json</c> and <c>meeting.txt</c>, and with raw files <c>meeting.raw.vtt</c> and
 /// <c>meeting.raw.txt</c> for the text formats chosen (the JSON holds both texts). Every file is
-/// written to <c>name.tmp</c> first, and the temporaries are moved into place only once all are
-/// complete, so a failure or a cancellation leaves the old files as they were and no partial file.
+/// written to a temporary of its own first, <c>.meeting.vtt.&lt;random&gt;.mat-tmp</c> in the same
+/// folder, created only where no file exists, so a user's file is never overwritten or deleted; the
+/// temporaries are moved into place only once all are complete, so a failure or a cancellation leaves
+/// the old files as they were and no partial file.
 /// </remarks>
 internal static class TranscriptFiles
 {
@@ -73,14 +71,16 @@ internal static class TranscriptFiles
     /// <param name="cancellation">Checked between files; once the moves start they finish.</param>
     public static void Write(IReadOnlyList<PlannedFile> files, TranscriptDocument document, Action<double>? onFile, CancellationToken cancellation)
     {
+        List<string> temporaries = [];
         try
         {
             for (int i = 0; i < files.Count; i++)
             {
                 cancellation.ThrowIfCancellationRequested();
                 PlannedFile file = files[i];
-                using (FileStream stream = new(file.TemporaryPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (FileStream stream = CreateUnique(file.Path, TemporarySuffix, out string temporary))
                 {
+                    temporaries.Add(temporary);
                     TranscriptWriters.Write(file.Format, file.Variant, document, stream);
                     stream.Flush(flushToDisk: true);
                 }
@@ -89,19 +89,49 @@ internal static class TranscriptFiles
             }
 
             cancellation.ThrowIfCancellationRequested();
-            foreach (PlannedFile file in files)
+            for (int i = 0; i < files.Count; i++)
             {
-                File.Move(file.TemporaryPath, file.Path, overwrite: true);
+                File.Move(temporaries[i], files[i].Path, overwrite: true);
             }
         }
         catch
         {
-            foreach (PlannedFile file in files)
+            foreach (string temporary in temporaries)
             {
-                TryDelete(file.TemporaryPath);
+                TryDelete(temporary);
             }
 
             throw;
+        }
+    }
+
+    /// <summary>The ending of a temporary file, which no transcript and no common program writes.</summary>
+    internal const string TemporarySuffix = ".mat-tmp";
+
+    /// <summary>How many random names are tried before a collision is reported.</summary>
+    private const int UniqueNameAttempts = 16;
+
+    /// <summary>
+    /// Creates a new file beside <paramref name="path"/> named <c>.&lt;file name&gt;.&lt;random&gt;&lt;suffix&gt;</c>,
+    /// only where no file exists (a collision draws another name), so an existing file is never touched.
+    /// </summary>
+    internal static FileStream CreateUnique(string path, string suffix, out string created)
+    {
+        string folder = Path.GetDirectoryName(path) ?? ".";
+        string name = Path.GetFileName(path);
+        for (int attempt = 0; ; attempt++)
+        {
+            string candidate = Path.Combine(folder, "." + name + "." + Guid.NewGuid().ToString("N")[..12] + suffix);
+            try
+            {
+                FileStream stream = new(candidate, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                created = candidate;
+                return stream;
+            }
+            catch (IOException) when (attempt < UniqueNameAttempts && File.Exists(candidate))
+            {
+                // Another file took this name first: draw another.
+            }
         }
     }
 

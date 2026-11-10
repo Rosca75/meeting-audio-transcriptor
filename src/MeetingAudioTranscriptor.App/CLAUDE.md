@@ -24,7 +24,9 @@ The App composes the engine for both front ends: the transcription service (`Tra
 
 ## 3. Atomic output
 
-**Every file is written to `name.tmp` in the destination folder and moved into place only when all are complete.** A failure or a cancellation deletes every temporary and leaves the old files as they were, so there is never a partial transcript and a running run never destroys the previous good one. The temporary is in the same folder so the move is a rename.
+**Every file is written to a temporary in the destination folder and moved into place only when all are complete.** A failure or a cancellation deletes every temporary and leaves the old files as they were, so there is never a partial transcript and a running run never destroys the previous good one. The temporary is in the same folder so the move is a rename.
+
+**A temporary's name is new and random, `.meeting.vtt.<random>.mat-tmp`, and it is created only where no file exists.** A fixed name such as `meeting.vtt.tmp` could be a user's own file, which the run would overwrite and then delete.
 
 **Names follow the recording.** `meeting.m4a` gives `meeting.vtt`, `.json`, `.txt` and, for the text formats chosen with raw files on, `meeting.raw.vtt` and `meeting.raw.txt`; the JSON holds both texts and has no raw variant.
 
