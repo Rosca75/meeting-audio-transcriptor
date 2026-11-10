@@ -6,7 +6,8 @@
 # dispatch) is a dry run: it builds both packages with the version typed in and keeps them as
 # workflow artefacts for 7 days, and creates no release. A tag is never moved or reused.
 #
-#   build     one leg per operating system: fetch models and ffmpeg (cached), unit tier, publish
+#   build     one leg per operating system: fetch models, ffmpeg and the test set sources (cached),
+#             build one speech clip, unit tier, publish with a smoke transcription of that clip
 #   publish   gathers both archives, writes SHA256SUMS.txt and creates the release (tag runs only)
 #   budgets   with record_budgets, merges the legs' measured sizes into one build/size-budgets.json
 name: release
@@ -80,6 +81,18 @@ jobs:
       - name: Fetch ffmpeg
         uses: ./.github/actions/fetch-ffmpeg
 
+      # The reduced test set gives the smoke test a real speech clip to transcribe from inside the
+      # staged package. The sources are cached on the lock and verified by the builder.
+      - name: Cache the test set sources
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: bench/.cache
+          key: testset-${{ runner.os }}-${{ hashFiles('bench/testset/testset.lock') }}
+
+      - name: Build the reduced test set
+        shell: bash
+        run: node bench/testset/fetch-testset.mjs --subset ci --cache bench/.cache --out bench/data
+
       - name: Restore
         shell: bash
         run: dotnet restore
@@ -94,8 +107,9 @@ jobs:
         run: dotnet test --no-build --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models" --ignore-exit-code 8
 
       # build/publish.ps1 verifies the models and ffmpeg against their locks, smoke-tests the staged
-      # folder, refuses an archive over the 2,000,000,000 bytes a release asset may hold, and checks
-      # the size budget (or records it).
+      # folder (a clip transcribed through the bundled ffmpeg, and on Windows through Media
+      # Foundation), refuses an archive over the 2,000,000,000 bytes a release asset may hold, and
+      # checks the size budget (or records it).
       - name: Publish the package
         shell: pwsh
         env:
@@ -103,7 +117,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.number }}
           RECORD_BUDGETS: ${{ inputs.record_budgets }}
         run: |
-          $arguments = @{ Rid = $env:RID; Version = $env:VERSION }
+          $arguments = @{ Rid = $env:RID; Version = $env:VERSION; SmokeClip = 'bench/data/clips/en/en-single-01.wav' }
           if ($env:RECORD_BUDGETS -eq 'true') { $arguments.RecordBudgets = $true }
           ./build/publish.ps1 @arguments
 

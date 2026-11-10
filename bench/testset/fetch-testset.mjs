@@ -9,8 +9,8 @@
 // and .mp4, and bench/data/manifest.json listing every file.
 //
 //   node bench/testset/fetch-testset.mjs [--cache <dir>] [--out <dir>]
-//        [--long <minutes>]... [--long-lang en,fr,de] [--offline] [--verify]
-//        [--force] [--pin] [--plan] [--lock <path>]
+//        [--long <minutes>]... [--long-lang en,fr,de] [--subset ci] [--ffmpeg <path>]
+//        [--offline] [--verify] [--force] [--pin] [--plan] [--lock <path>]
 //
 //   --cache      where sources are downloaded to; bench/.cache by default.
 //   --out        where the test set is written; bench/data by default.
@@ -18,6 +18,10 @@
 //                .rttm) by looping the ten-minute recipe; repeatable. 30 and
 //                120 are the sizes the benchmarks use.
 //   --long-lang  the languages --long builds; every language when absent.
+//   --subset     ci builds only what continuous integration reads: every clip,
+//                the noise files and en-10min with its .m4a and .mp4, and none of
+//                the other long files. Refused together with --long.
+//   --ffmpeg     the ffmpeg executable; MAT_FFMPEG when absent, else ffmpeg on PATH.
 //   --offline    download nothing: verify the cache against the lock, then build
 //                from it, and exit non-zero listing every missing or mismatched
 //                source.
@@ -42,8 +46,12 @@
 // milliseconds; the WAV container is written by this file rather than by a muxer
 // (a muxer's header can carry a version string); synthetic noise is ffmpeg's
 // generator with a fixed seed; the AAC and H.264 copies are encoded with
-// -bitexact and one thread. The only tool is ffmpeg on PATH. Node 22, no
-// dependency.
+// -bitexact and one thread. The only tool is ffmpeg (--ffmpeg, MAT_FFMPEG or the
+// PATH). Node 22, no dependency. The H.264 track of the .mp4 is encoded with
+// libx264 when the ffmpeg build has it and with libopenh264 otherwise, because the
+// pinned LGPL builds carry only the latter; either way it is a black picture the
+// transcriber never decodes. Text files are written with LF line endings on every
+// system, so a build on Windows writes the same bytes as one on Linux.
 //
 // Downloads go through the global fetch with no proxy setting of this tool's
 // own: a machine behind a proxy sets NODE_USE_ENV_PROXY=1 for the process, as it
@@ -78,9 +86,10 @@ const bytesPerSample = 2;
 export function parseArgs(argv) {
   const options = {
     cache: join(benchDir, ".cache"), out: join(benchDir, "data"), lock: defaultLockPath,
-    long: [], longLang: null, offline: false, verify: false, force: false, pin: false, plan: false,
+    long: [], longLang: null, subset: null, ffmpeg: process.env.MAT_FFMPEG || "ffmpeg",
+    offline: false, verify: false, force: false, pin: false, plan: false,
   };
-  const known = "--cache, --out, --long, --long-lang, --offline, --verify, --force, --pin, --plan, --lock, --help";
+  const known = "--cache, --out, --long, --long-lang, --subset, --ffmpeg, --offline, --verify, --force, --pin, --plan, --lock, --help";
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     const value = () => {
@@ -98,6 +107,13 @@ export function parseArgs(argv) {
         break;
       }
       case "--long-lang": options.longLang = value().split(",").map((s) => s.trim()).filter(Boolean); break;
+      case "--subset": {
+        const name = value();
+        if (!(name in subsets)) throw new Error(`--subset takes one of ${Object.keys(subsets).join(", ")}, not ${name}`);
+        options.subset = name;
+        break;
+      }
+      case "--ffmpeg": options.ffmpeg = value(); break;
       case "--offline": options.offline = true; break;
       case "--verify": options.verify = true; break;
       case "--force": options.force = true; break;
@@ -107,8 +123,18 @@ export function parseArgs(argv) {
       default: throw new Error(`unknown argument ${arg}; the known ones are ${known}`);
     }
   }
+  if (options.subset && options.long.length) throw new Error("--subset builds a fixed reduced set, so it takes no --long; run without --subset for the long files");
   return options;
 }
+
+/**
+ * The named reduced builds: which languages get their ten-minute file. Every
+ * subset keeps every clip and the noise files, because the models tier's word
+ * error rate floors and noise checks read them, and the containers, because
+ * they are the decoders' evidence; the long files of other languages and the
+ * default extra lengths are what a subset leaves out.
+ */
+export const subsets = { ci: { longLanguages: ["en"] } };
 
 // ---------------------------------------------------------------------------
 // Small helpers
@@ -393,15 +419,34 @@ export function openZip(path) {
 
 const exactFlags = ["-hide_banner", "-v", "error", "-nostdin", "-bitexact", "-fflags", "+bitexact"];
 
-function requireFfmpeg() {
-  const probe = spawnSync("ffmpeg", ["-version"], { encoding: "utf8" });
+/** The ffmpeg executable every call runs: --ffmpeg, else MAT_FFMPEG, else ffmpeg on PATH. */
+let ffmpegCommand = "ffmpeg";
+
+function requireFfmpeg(command) {
+  ffmpegCommand = command;
+  const probe = spawnSync(ffmpegCommand, ["-version"], { encoding: "utf8" });
   if (probe.error || probe.status !== 0) {
-    throw new Error("ffmpeg was not found on PATH; install ffmpeg 6 or later (apt install ffmpeg, brew install ffmpeg or winget install ffmpeg) and run again");
+    throw new Error(`ffmpeg was not found as ${ffmpegCommand}; install ffmpeg 6 or later (apt install ffmpeg, brew install ffmpeg or winget install ffmpeg), or name one with --ffmpeg or MAT_FFMPEG, and run again`);
   }
 }
 
+/**
+ * The H.264 encoder of the .mp4 copy: libx264 when the build has it, else
+ * libopenh264, which the LGPL builds carry instead, with the options that keep
+ * each one single-threaded and small. A build with neither is refused by name.
+ */
+export function videoEncoderArgs(encoderList) {
+  if (/^\s*V\S*\s+libx264\s/m.test(encoderList)) {
+    return ["-c:v", "libx264", "-preset", "medium", "-crf", "40", "-x264-params", "threads=1:sliced-threads=0"];
+  }
+  if (/^\s*V\S*\s+libopenh264\s/m.test(encoderList)) {
+    return ["-c:v", "libopenh264", "-b:v", "16k"];
+  }
+  throw new Error("this ffmpeg has neither libx264 nor libopenh264, so the .mp4 copy cannot carry its H.264 track; use the pinned build (node build/fetch-ffmpeg.mjs) or one with either encoder");
+}
+
 function runFfmpeg(args, input) {
-  const result = spawnSync("ffmpeg", [...exactFlags, ...args], { input, maxBuffer: 2 ** 31 - 1 });
+  const result = spawnSync(ffmpegCommand, [...exactFlags, ...args], { input, maxBuffer: 2 ** 31 - 1 });
   if (result.status !== 0) {
     throw new Error(`ffmpeg ${args.join(" ")} failed: ${result.stderr?.toString().trim() || result.error?.message}; the source file may be damaged, so delete it from the cache and run again`);
   }
@@ -734,10 +779,11 @@ function buildContainers(out, wavPath, stem, seconds) {
   const audio = ["-map_metadata", "-1", "-c:a", "aac", "-b:a", "64k", "-flags:a", "+bitexact", "-fflags", "+bitexact"];
   runFfmpeg(["-y", "-i", wavPath, ...audio, "-f", "ipod", `${m4a}.part`]);
   renameSync(`${m4a}.part`, m4a);
+  const encoders = spawnSync(ffmpegCommand, ["-hide_banner", "-encoders"], { encoding: "utf8", maxBuffer: 2 ** 24 }).stdout ?? "";
   runFfmpeg([
     "-y", "-i", wavPath, "-f", "lavfi", "-i", `color=c=black:s=64x64:r=2:d=${Math.ceil(seconds) + 1}`,
-    "-map", "1:v", "-map", "0:a", ...audio, "-c:v", "libx264", "-preset", "medium", "-crf", "40", "-pix_fmt", "yuv420p",
-    "-threads", "1", "-x264-params", "threads=1:sliced-threads=0", "-flags:v", "+bitexact", "-shortest", "-movflags", "+faststart",
+    "-map", "1:v", "-map", "0:a", ...audio, ...videoEncoderArgs(encoders), "-pix_fmt", "yuv420p",
+    "-threads", "1", "-flags:v", "+bitexact", "-shortest", "-movflags", "+faststart",
     "-f", "mp4", `${mp4}.part`,
   ]);
   renameSync(`${mp4}.part`, mp4);
@@ -748,8 +794,8 @@ function durationOfWav(path) {
 }
 
 /** Everything the plan names, built from the cache. Returns the manifest entries. */
-async function build(lock, options, longRequests) {
-  requireFfmpeg();
+async function build(lock, options, longRequests, longLanguages) {
+  requireFfmpeg(options.ffmpeg);
   const { out, cache } = options;
   const entries = [];
 
@@ -760,12 +806,12 @@ async function build(lock, options, longRequests) {
   zips.ami = openZip(cachePathOf(cache, lock.sources.find((s) => s.id === "ami-annotations")));
 
   // Utterances per language, loaded once for every recipe that names them.
-  const languages = [...new Set([...lock.clips.filter((c) => c.items).map((c) => c.lang), ...Object.keys(lock.long)])];
+  const languages = [...new Set([...lock.clips.filter((c) => c.items).map((c) => c.lang), ...longLanguages])];
   const utterancesOf = new Map();
   for (const lang of languages) {
     const ids = new Set();
     for (const clip of lock.clips.filter((c) => c.lang === lang && c.items)) clip.items.forEach(([id]) => ids.add(id));
-    lock.long[lang]?.items.forEach(([id]) => ids.add(id));
+    if (longLanguages.includes(lang)) lock.long[lang]?.items.forEach(([id]) => ids.add(id));
     log(`decoding ${ids.size} utterances of ${lang}`);
     utterancesOf.set(lang, await loadUtterances(lock, cache, lang, { ids }));
   }
@@ -818,7 +864,7 @@ async function build(lock, options, longRequests) {
     log(`  ${lang}-${minutes}min: ${entries.at(-1).durationSeconds} s, ${items.length} utterances`);
     return stem;
   };
-  for (const lang of Object.keys(lock.long)) buildLong(lang, 10);
+  for (const lang of longLanguages) buildLong(lang, 10);
   for (const { lang, minutes } of longRequests) buildLong(lang, minutes);
 
   // Containers from the English ten-minute file.
@@ -892,10 +938,10 @@ function damagedEntries(out, manifest) {
 }
 
 /** The ids a run must find in the manifest to call itself a no-op. */
-function wantedIds(lock, longRequests) {
+function wantedIds(lock, longRequests, longLanguages) {
   return [
     ...lock.clips.map((c) => c.id),
-    ...Object.keys(lock.long).map((l) => `${l}-10min`),
+    ...longLanguages.map((l) => `${l}-10min`),
     "en-10min-m4a", "en-10min-mp4",
     "silence-60s", "noise-white-60s", "noise-pink-60s", "noise-office-60s",
     ...longRequests.map(({ lang, minutes }) => `${lang}-${minutes}min`),
@@ -923,7 +969,7 @@ function writeManifest(lock, lockSha, out, entries, previous) {
 // Main
 // ---------------------------------------------------------------------------
 
-const usage = () => readFileSync(fileURLToPath(import.meta.url), "utf8").split("\n").slice(0, 36).filter((l) => l.startsWith("//")).map((l) => l.slice(3)).join("\n");
+const usage = () => readFileSync(fileURLToPath(import.meta.url), "utf8").split("\n").slice(0, 40).filter((l) => l.startsWith("//")).map((l) => l.slice(3)).join("\n");
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
@@ -934,7 +980,9 @@ async function main() {
   if (typeof http.setGlobalProxyFromEnv === "function") http.setGlobalProxyFromEnv();
   const started = Date.now();
   const { lock, sha256: lockSha } = readLock(options.lock);
-  const defaultLong = lock.defaultLong ?? [];
+  // A subset builds the ten-minute files of its languages and no other length.
+  const longLanguages = options.subset ? subsets[options.subset].longLanguages : Object.keys(lock.long);
+  const defaultLong = options.subset ? [] : lock.defaultLong ?? [];
   const requested = [...defaultLong];
   for (const minutes of options.long) {
     for (const lang of options.longLang ?? Object.keys(lock.long)) {
@@ -959,7 +1007,7 @@ async function main() {
   }
 
   if (options.plan) {
-    requireFfmpeg();
+    requireFfmpeg(options.ffmpeg);
     log("sources:");
     for (const source of lock.sources) await ensureSource(source, options.cache, options);
     const planned = await planLock(lock, options.cache);
@@ -989,14 +1037,14 @@ async function main() {
   const previous = readManifest(options.out);
   if (!options.force && previous && previous.builderRevision === builderRevision && previous.lockSha256 === lockSha) {
     const have = new Set(previous.entries.map((e) => e.id));
-    if (wantedIds(lock, requested).every((id) => have.has(id)) && damagedEntries(options.out, previous).length === 0) {
+    if (wantedIds(lock, requested, longLanguages).every((id) => have.has(id)) && damagedEntries(options.out, previous).length === 0) {
       log(`up to date: ${previous.entries.length} files in ${options.out} verified against the manifest (${((Date.now() - started) / 1000).toFixed(1)} s)`);
       return 0;
     }
   }
 
   if (!lock.clips.length) throw new Error("the lock has no clip recipes; run with --plan first (a maintainer step), or restore testset.lock");
-  const entries = await build(lock, options, requested);
+  const entries = await build(lock, options, requested, longLanguages);
   const manifest = writeManifest(lock, lockSha, options.out, entries, previous && previous.lockSha256 === lockSha ? previous : null);
   const total = manifest.entries.filter((e) => e.type === "clip" || e.type === "long").reduce((sum, e) => sum + e.durationSeconds, 0);
   log(`built ${manifest.entries.length} files (${(total / 60).toFixed(1)} min of speech clips and long files) in ${options.out}, ${((Date.now() - started) / 1000).toFixed(0)} s`);

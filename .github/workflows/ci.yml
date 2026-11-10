@@ -5,12 +5,16 @@
 #   build-and-test  build, the unit tier (guards included), the page suite and the tool suites
 #   integration     the integration tier with the pinned ffmpeg; on Windows this runs the Media
 #                   Foundation tests against a real Windows, on Linux the window tests under xvfb
-#   models          the models tier over the real models, without the benchmark audio
+#   end-to-end      the reduced speech test set built on the runner, the models tier over it (word
+#                   error rate floors, containers, noise, speakers), a guard that the tier really
+#                   ran, the command line transcribing en-10min.m4a (on Windows through Media
+#                   Foundation and through ffmpeg, compared) and the clips benchmark
+#   testset-parity  the test set files of both systems compared byte for byte
 #   package         build/publish.ps1 without models, to prove the publish pipeline end to end
 #
-# Pushes to main and every pull request to main run it; a newer run of the same ref cancels the
-# older one. A feature branch is built when its pull request opens, so a push and its pull request
-# are not built twice.
+# Pushes to main, every pull request to main and a manual start run it; a newer run of the same
+# ref cancels the older one. A feature branch is built when its pull request opens, so a push and
+# its pull request are not built twice.
 name: ci
 
 on:
@@ -109,10 +113,10 @@ jobs:
         if: runner.os == 'Linux'
         run: xvfb-run -a dotnet test --no-build --filter-trait "Tier=integration" --ignore-exit-code 8
 
-  models:
-    name: models (${{ matrix.os }})
+  end-to-end:
+    name: end-to-end (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -120,6 +124,8 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      MAT_BENCH_DATA: ${{ github.workspace }}/bench/data
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -129,16 +135,111 @@ jobs:
       - name: Fetch the model files
         uses: ./.github/actions/fetch-models
 
+      - name: Fetch ffmpeg
+        uses: ./.github/actions/fetch-ffmpeg
+
+      # The builder verifies every cached source against the lock, so a damaged cache cannot pass.
+      - name: Cache the test set sources
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: bench/.cache
+          key: testset-${{ runner.os }}-${{ hashFiles('bench/testset/testset.lock') }}
+
+      # Every clip, the noise files and en-10min with its .m4a and .mp4, built with the pinned
+      # ffmpeg that MAT_FFMPEG names; the listing of every file's hash goes to the parity job.
+      - name: Build the reduced test set
+        run: |
+          node bench/testset/fetch-testset.mjs --subset ci --cache bench/.cache --out bench/data
+          mkdir -p artifacts/e2e
+          node bench/tools/ci-checks.mjs hashes bench/data > artifacts/e2e/testset-hashes.json
+
+      - name: Keep the test set hashes
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: testset-hashes-${{ runner.os }}
+          path: artifacts/e2e/testset-hashes.json
+          if-no-files-found: error
+
       - name: Restore
         run: dotnet restore
 
+      # Release, because the speed the command line reports below is the shipped build's.
       - name: Build
-        run: dotnet build --no-restore -warnaserror
+        run: dotnet build --no-restore -c Release -warnaserror
 
-      # The benchmark audio is not fetched here: the tests that need it skip by name, and the
-      # tests that run read the real models through MAT_MODELS_DIR.
-      - name: Models tier
-        run: dotnet test --no-build --filter-trait "Tier=models" --ignore-exit-code 8
+      - name: Models tier over the test set
+        run: dotnet test --no-build -c Release --filter-trait "Tier=models" --ignore-exit-code 8 --report-xunit-trx --results-directory artifacts/e2e/trx
+
+      # A missing file skips its test by name, so a green run proves nothing unless the tests ran:
+      # the Pipeline suite runs 57 models-tier tests over the test set (56 here, where the pinned
+      # export the graph comparison needs is not kept).
+      - name: Check that the models tier ran over the audio
+        run: node bench/tools/ci-checks.mjs tests artifacts/e2e/trx --suite MeetingAudioTranscriptor.Pipeline.Tests --min-run 50
+
+      # The command line as a user runs it. On Windows the default decoder for .m4a must be Media
+      # Foundation; a second run with MAT_PREFER_FFMPEG=1 decodes through ffmpeg, and the two
+      # transcripts must agree to within 2 % of their words.
+      - name: Transcribe en-10min.m4a with the command line
+        env:
+          RUNNER_KIND: ${{ runner.os }}
+        run: |
+          cli=src/MeetingAudioTranscriptor.Cli/bin/Release/net10.0/meeting-audio-transcriptor-cli.dll
+          transcribe() {
+            local into="artifacts/e2e/$1"
+            mkdir -p "$into"
+            dotnet "$cli" transcribe bench/data/long/en-10min.m4a --language en --formats vtt,json,txt --threads 4 --output "$into" > "$into/run.log" 2>&1 || { cat "$into/run.log"; exit 1; }
+            echo "--- $1: summary"
+            grep -E '^(Audio|Processing|Speed|Decoder|Speakers|Words):' "$into/run.log"
+            echo "--- $1: the first 15 lines of en-10min.txt"
+            head -n 15 "$into/en-10min.txt"
+          }
+          if [ "$RUNNER_KIND" = "Windows" ]; then
+            unset MAT_PREFER_FFMPEG
+            transcribe media-foundation
+            if ! grep -Eq '^Decoder: +media-foundation' artifacts/e2e/media-foundation/run.log; then
+              echo "::error::the Windows run did not decode en-10min.m4a through Media Foundation; read the Decoder line above"
+              exit 1
+            fi
+            MAT_PREFER_FFMPEG=1 transcribe ffmpeg
+            grep -Eq '^Decoder: +ffmpeg' artifacts/e2e/ffmpeg/run.log || { echo "::error::MAT_PREFER_FFMPEG=1 did not decode through ffmpeg"; exit 1; }
+            node bench/tools/ci-checks.mjs transcripts artifacts/e2e/media-foundation/en-10min.json artifacts/e2e/ffmpeg/en-10min.json --max-percent 2
+          else
+            transcribe ffmpeg
+          fi
+
+      - name: Benchmark the clips
+        env:
+          RUNNER_KIND: ${{ runner.os }}
+        run: |
+          label="ci-$(echo "$RUNNER_KIND" | tr '[:upper:]' '[:lower:]')"
+          dotnet src/MeetingAudioTranscriptor.Cli/bin/Release/net10.0/meeting-audio-transcriptor-cli.dll benchmark --set clips --threads 4 --label "$label" --data bench/data --out artifacts/e2e/benchmark
+
+      - name: Keep the benchmark result
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: benchmark-${{ runner.os }}
+          path: artifacts/e2e/benchmark/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+  testset-parity:
+    name: testset-parity
+    needs: end-to-end
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download both systems' hashes
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: hashes
+          pattern: testset-hashes-*
+
+      # The WAV files, references and RTTM must be the same bytes on both systems; only the
+      # encoded copies may differ, because their bytes depend on the ffmpeg build's encoders.
+      - name: Compare them
+        run: node bench/tools/ci-checks.mjs parity hashes/testset-hashes-Linux/testset-hashes.json hashes/testset-hashes-Windows/testset-hashes.json
 
   package:
     name: package (${{ matrix.rid }})

@@ -30,9 +30,13 @@ final `0.2.0` may follow it.
 `.github/workflows/release.yml` runs on the tag. For each of `win-x64` (Windows runner) and
 `linux-x64` (Ubuntu runner) it reads the version from the tag and validates it, restores the cached
 models and ffmpeg (or fetches them, verified against `build/models.lock` and `build/ffmpeg.lock`),
-builds, runs the unit tier and runs `build/publish.ps1`. That script publishes both executables
-into one self-contained folder, verifies the models and ffmpeg a second time, runs a smoke test of
-the staged folder, refuses an archive over 2,000,000,000 bytes (the limit of a release asset), checks the size
+builds the reduced speech test set (`node bench/testset/fetch-testset.mjs --subset ci`, its sources
+cached), runs the unit tier and runs `build/publish.ps1 -SmokeClip bench/data/clips/en/en-single-01.wav`.
+That script publishes both executables into one self-contained folder, verifies the models and
+ffmpeg a second time, runs a smoke test of the staged folder (`--version`, `models`, the bundled
+ffmpeg, and the clip encoded to `.m4a` and transcribed by the staged command line with the
+decoder variables cleared: through the bundled ffmpeg, and on Windows through Media Foundation as
+well, each run naming its decoder and recognising words), refuses an archive over 2,000,000,000 bytes (the limit of a release asset), checks the size
 against `build/size-budgets.json` and writes the archive. The `publish` job then gathers both
 archives, writes `SHA256SUMS.txt` and creates the GitHub release with generated notes.
 
@@ -51,12 +55,24 @@ the hash with the line in `SHA256SUMS.txt`. Then unpack, and run `meeting-audio-
 
 ## 5. Dry run from the workflow
 
-Open Actions, choose `release`, press Run workflow, and type a version such as `0.1.0-rc.1`. The
-workflow builds both packages exactly as for a tag and keeps them as the artefacts `release-win-x64`
-and `release-linux-x64` for 7 days; it creates no release and no tag. Tick `record_budgets` to also
-get an artefact `size-budgets` holding the measured sizes; commit that file as
-`build/size-budgets.json` in a pull request that shows the numbers moving. The first release has no
-budget, so the first run only prints a notice.
+Open Actions, choose `release`, press Run workflow, pick the branch and type a version such as
+`0.1.0-rc.1`. The workflow builds both packages exactly as for a tag, smoke test included, and
+keeps them as the artefacts `release-win-x64` and `release-linux-x64` for 7 days, with each leg's
+`sizes.json` as `sizes-<rid>`; the `publish` job writes the checksums and stops, so a dry run
+creates no release and no tag. A dry run on a branch other than `main` is how a change to the
+workflow, the publish script or the packaging is proven before it is merged.
+
+Tick `record_budgets` to measure instead of checking: each leg writes its own platform's numbers,
+and the `budgets` job merges them into the artefact `size-budgets`, one `build/size-budgets.json`
+of the form
+
+```
+{ "comment": "...", "budgets": { "linux-x64": { "archiveBytes": 0, "folderBytes": 0 }, "win-x64": { "archiveBytes": 0, "folderBytes": 0 } } }
+```
+
+Commit that file in a pull request that shows the numbers moving; from then on every package
+must stay within ten percent of its platform's two numbers. A platform without a budget only
+prints a notice.
 
 ## 6. When a model or ffmpeg address has gone away
 
