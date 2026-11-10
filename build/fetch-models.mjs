@@ -6,6 +6,7 @@
 //
 //   node build/fetch-models.mjs [--into <dir>] [--lock <file>] [--set default|all]
 //                               [--model <name>]... [--offline] [--cache <dir>]
+//                               [--keep-sources]
 //
 //   --into     the models folder; ./models when absent.
 //   --lock     another lock file, for a test that serves files of its own.
@@ -17,7 +18,21 @@
 //   --cache    a folder of files already downloaded; a file whose size and hash
 //              match the lock is copied from it instead of being fetched. It is
 //              searched as <cache>/<lock path>, <cache>/<file name> and
-//              <cache>/<model name>/<file name>.
+//              <cache>/<model name>/<file name>. A source downloaded to derive
+//              a file is kept there, so the next derivation downloads nothing.
+//   --keep-sources  also install every source of the selected models in the
+//              models folder; by default a source is not left there.
+//
+// A file may be derived rather than downloaded: its entry carries "derive":
+// {"from": <a source path>, "patch": <a patch of build/onnx-patch.mjs>} in
+// place of a url, and the model lists the pinned file it is made from under
+// "sources" (role "source"). The patch is byte-deterministic, so the derived
+// file is verified by size and SHA-256 like any other. A source sits beside the
+// files rather than among them because the application ships only the files: a
+// release folder holds the derived graph alone, and the catalog that reads the
+// "files" array never asks for the source. The source is taken, in order, from
+// the models folder, from the cache, or from its url (into the cache when one
+// is given, else into the models folder and deleted once the file is derived).
 //
 // Every file is verified by size and SHA-256, whether downloaded, copied or
 // already present. A download is streamed to <file>.part and renamed only after
@@ -34,13 +49,14 @@ import { copyFileSync, createReadStream, createWriteStream, existsSync, mkdirSyn
 import { dirname, join, resolve, basename } from "node:path";
 import { spawnSync } from "node:child_process";
 import { pipeline } from "node:stream/promises";
+import { derive } from "./onnx-patch.mjs";
 import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 
 /** The lock beside this tool, which is the lock unless a test hands in another. */
 export const defaultLockPath = join(dirname(fileURLToPath(import.meta.url)), "models.lock");
 
-/** The fields every file entry of the lock carries. */
+/** The fields every file entry of the lock carries; a derived file carries "derive" in place of "url". */
 export const entryFields = ["path", "url", "sha256", "bytes", "role"];
 
 /** A neutral client name: the tool is a plain downloader and says nothing about its user. */
@@ -74,11 +90,22 @@ export function readLock(path) {
     if (!Array.isArray(model.files) || model.files.length === 0) {
       throw new Error(`${path}: the model ${model.name} has no "files" array; every model lists its files`);
     }
-    for (const entry of model.files) {
+    if (model.sources !== undefined && !Array.isArray(model.sources)) {
+      throw new Error(`${path}: the "sources" of ${model.name} is not an array; list each source file as an entry`);
+    }
+    const sources = new Set((model.sources ?? []).map((source) => source.path));
+    for (const entry of [...model.files, ...(model.sources ?? [])]) {
+      const derived = entry.derive !== undefined;
       for (const field of entryFields) {
-        if (!(field in entry)) {
-          throw new Error(`${path}: a file of ${model.name} lacks "${field}"; every file has ${entryFields.join(", ")}`);
+        if (!(field in entry) && !(derived && field === "url")) {
+          throw new Error(`${path}: a file of ${model.name} lacks "${field}"; every file has ${entryFields.join(", ")} (a derived file has "derive" in place of "url")`);
         }
+      }
+      if (derived && (typeof entry.derive.from !== "string" || typeof entry.derive.patch !== "string" || !sources.has(entry.derive.from))) {
+        throw new Error(`${path}: ${entry.path} derives from "${entry.derive.from}" with patch "${entry.derive.patch}"; "from" must be the path of one of the model's sources and "patch" a patch name`);
+      }
+      if (derived && model.sources.some((source) => source.derive !== undefined)) {
+        throw new Error(`${path}: a source of ${model.name} is itself derived; a source is always downloaded`);
       }
       if (!/^[0-9a-f]{64}$/.test(entry.sha256) || !Number.isInteger(entry.bytes) || entry.bytes < 0) {
         throw new Error(`${path}: ${entry.path} has a malformed sha256 or bytes; write the lowercase hex hash and the integer size`);
@@ -222,59 +249,112 @@ export function selectModels(lock, { models = [], set = "default" }) {
   return lock.models.filter((model) => set === "all" || model.set === "default");
 }
 
+/** The absolute path of a lock entry inside a folder. */
+const placeOf = (folder, entry) => join(folder, ...entry.path.split("/"));
+
+/**
+ * Makes one entry right at its place in the models folder: already verified,
+ * copied from the cache, derived from its source, or downloaded. Returns
+ * {ok: true, line} or {ok: false, text} with an actionable sentence.
+ */
+async function obtain(model, entry, into, options) {
+  const target = placeOf(into, entry);
+  const present = await verify(target, entry);
+  if (present.ok) {
+    return { ok: true, line: `ok       ${entry.path} (${entry.bytes} bytes, already verified)` };
+  }
+  if (options.offline) {
+    return { ok: false, text: describeFailure(entry, present) };
+  }
+  if (present.reason !== "missing") {
+    rmSync(target, { force: true });
+  }
+  const cached = await findInCache(options.cache, model.name, entry);
+  if (cached) {
+    mkdirSync(dirname(target), { recursive: true });
+    const part = `${target}.part`;
+    copyFileSync(cached, part);
+    renameSync(part, target);
+    return { ok: true, line: `copied   ${entry.path} (${entry.bytes} bytes, from the cache)` };
+  }
+  if (entry.derive) {
+    return deriveEntry(model, entry, into, options);
+  }
+  try {
+    const result = await download(entry, target, options);
+    return result.ok ? { ok: true, line: `fetched  ${entry.path} (${entry.bytes} bytes)` } : { ok: false, text: describeFailure(entry, result) };
+  } catch (error) {
+    return { ok: false, text: `${entry.path}: ${error.message}` };
+  }
+}
+
+/**
+ * Derives one file from its source: the source is taken from the models folder,
+ * the cache, or its url, and a source downloaded into the models folder only for
+ * this derivation is deleted afterwards. The result must match the lock exactly.
+ */
+async function deriveEntry(model, entry, into, options) {
+  const { from, patch } = entry.derive;
+  const source = model.sources.find((candidate) => candidate.path === from);
+  const inFolder = placeOf(into, source);
+  let sourcePath = null;
+  let temporary = false;
+  if ((await verify(inFolder, source)).ok) {
+    sourcePath = inFolder;
+  } else {
+    sourcePath = await findInCache(options.cache, model.name, source);
+  }
+  if (!sourcePath) {
+    sourcePath = options.cache ? placeOf(resolve(options.cache), source) : inFolder;
+    temporary = !options.cache;
+    try {
+      const result = await download(source, sourcePath, options);
+      if (!result.ok) {
+        return { ok: false, text: describeFailure(source, result) };
+      }
+    } catch (error) {
+      return { ok: false, text: `${source.path} (the source of ${entry.path}): ${error.message}` };
+    }
+  }
+  const target = placeOf(into, entry);
+  try {
+    mkdirSync(dirname(target), { recursive: true });
+    const result = await derive(sourcePath, target, patch);
+    if (result.bytes !== entry.bytes || result.sha256 !== entry.sha256) {
+      rmSync(target, { force: true });
+      return {
+        ok: false,
+        text: `${entry.path} derived from ${source.path} with the patch ${patch} has ${result.bytes} bytes and sha256 ${result.sha256}, wanted ${entry.bytes} bytes and ${entry.sha256}; `
+          + "the patch or its source changed: fix build/onnx-patch.mjs, or write the new size and hash into the lock when the change is intended",
+      };
+    }
+    return { ok: true, line: `derived  ${entry.path} (${entry.bytes} bytes, ${patch} from ${source.path})` };
+  } catch (error) {
+    rmSync(target, { force: true });
+    return { ok: false, text: `${entry.path}: deriving it from ${source.path} with the patch ${patch} failed (${error.message})` };
+  } finally {
+    if (temporary) {
+      rmSync(sourcePath, { force: true });
+    }
+  }
+}
+
 /** Installs or verifies every selected model; returns the list of problems (empty on success). */
 export async function run(options, log = (line) => console.log(line)) {
   const lock = readLock(options.lock ?? defaultLockPath);
   const into = resolve(options.into ?? "models");
   const problems = [];
   for (const model of selectModels(lock, options)) {
-    for (const entry of model.files) {
-      const target = join(into, ...entry.path.split("/"));
-      const optional = model.optional === true;
-      const present = await verify(target, entry);
-      if (present.ok) {
-        log(`ok       ${entry.path} (${entry.bytes} bytes, already verified)`);
-        continue;
-      }
-      if (options.offline) {
-        const text = describeFailure(entry, present);
-        if (optional) {
-          log(`skipped  ${entry.path} (optional model ${model.name}: ${text})`);
-        } else {
-          problems.push(text);
-        }
-        continue;
-      }
-      if (present.reason !== "missing") {
-        rmSync(target, { force: true });
-      }
-      const cached = await findInCache(options.cache, model.name, entry);
-      if (cached) {
-        mkdirSync(dirname(target), { recursive: true });
-        const part = `${target}.part`;
-        copyFileSync(cached, part);
-        renameSync(part, target);
-        log(`copied   ${entry.path} (${entry.bytes} bytes, from the cache)`);
-        continue;
-      }
-      try {
-        const result = await download(entry, target, options);
-        if (result.ok) {
-          log(`fetched  ${entry.path} (${entry.bytes} bytes)`);
-        } else {
-          const text = describeFailure(entry, result);
-          if (optional) {
-            log(`skipped  ${entry.path} (optional model ${model.name}: ${text})`);
-          } else {
-            problems.push(text);
-          }
-        }
-      } catch (error) {
-        if (optional) {
-          log(`skipped  ${entry.path} (optional model ${model.name}: ${error.message})`);
-        } else {
-          problems.push(`${entry.path}: ${error.message}`);
-        }
+    // Kept sources come first, so a file derived from one reads the installed copy.
+    const entries = options.keepSources ? [...(model.sources ?? []), ...model.files] : model.files;
+    for (const entry of entries) {
+      const outcome = await obtain(model, entry, into, options);
+      if (outcome.ok) {
+        log(outcome.line);
+      } else if (model.optional === true) {
+        log(`skipped  ${entry.path} (optional model ${model.name}: ${outcome.text})`);
+      } else {
+        problems.push(outcome.text);
       }
     }
   }
@@ -283,8 +363,8 @@ export async function run(options, log = (line) => console.log(line)) {
 
 /** Reads the command line into options; an unknown flag is an error that names the usage. */
 export function parseArguments(argv) {
-  const options = { models: [], set: "default", offline: false };
-  const usage = "usage: node build/fetch-models.mjs [--into <dir>] [--lock <file>] [--set default|all] [--model <name>]... [--offline] [--cache <dir>]";
+  const options = { models: [], set: "default", offline: false, keepSources: false };
+  const usage = "usage: node build/fetch-models.mjs [--into <dir>] [--lock <file>] [--set default|all] [--model <name>]... [--offline] [--cache <dir>] [--keep-sources]";
   const value = (index, flag) => {
     if (index + 1 >= argv.length) {
       throw new Error(`${flag} needs a value; ${usage}`);
@@ -305,6 +385,7 @@ export function parseArguments(argv) {
         break;
       }
       case "--offline": options.offline = true; break;
+      case "--keep-sources": options.keepSources = true; break;
       default: throw new Error(`unknown argument ${argv[i]}; ${usage}`);
     }
   }
