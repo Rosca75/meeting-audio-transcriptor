@@ -59,26 +59,28 @@ time and is a reference for accuracy only.
 ## Decision
 
 C, Granite Speech 5.0 470M TurboCTC int8, with input-level normalisation in
-front of the model and a second look at speech regions that yield almost no
-words.
+front of the model.
 
 - It is the most accurate candidate on read speech in all three languages.
-- It is two to three times faster than the next candidate under the AVX2 mask,
+- It is about two to three times faster than the next candidate under the AVX2 mask,
   which is the margin that pays for voice activity detection, speaker
   separation and a laptop slower than this machine. Parakeet at 17x for
   recognition alone leaves no such margin.
 - English counted as one language (read and meetings together, micro-averaged)
-  comes to about 8.3 % with level normalisation against 8.0 % for the best
-  candidate (B), inside the one-point quality gate; French and German are the
-  best measured.
+  is inside the one-point quality gate, and French and German are the best
+  measured. In the engine, with voice-activity chunks and level normalisation
+  (`docs/BENCHMARKS.md`): English 7.90 % against 8.10 % for the best candidate
+  (B), French 2.69 % against 3.79 %, German 8.28 % against 8.45 %.
 
 ## Consequences
 
-- On meetings with quiet or overlapping speakers Granite remains about 2 points
-  behind Parakeet Ultra and 8 behind Parakeet v3 fp32 on the AMI clips. This is
-  the price of the speed margin, recorded under the priority rule; the level
-  normalisation and the low-yield retry are the mitigations, and their measured
-  effect is in `docs/BENCHMARKS.md`.
+- On the AMI meeting clips alone the engine scores 24.0 %, level with
+  Parakeet Ultra int8 and 5.8 points behind Parakeet v3 fp32, which is too slow
+  and too large for the target. This is the price of the speed margin, recorded
+  under the priority rule; level normalisation is the mitigation, and its
+  measured effect is in `docs/build/granite-measurements.md`. A second look at
+  speech regions that yield almost no words was built and measured, recovered
+  nothing, and is off.
 - The model returns token ids only. The fetch tool derives a second graph that
   also returns the per-frame peak probability, which is where word confidence
   comes from (decision 0007).
