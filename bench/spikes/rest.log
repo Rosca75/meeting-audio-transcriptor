@@ -29,3 +29,8 @@ sp-A-4x1-c10-r1: wall 22.9s audio 604s RTFx 26.32 load 2.7s rss 1459MB in-run {'
 sp-A-4x1-c10-r2: wall 22.8s audio 604s RTFx 26.45 load 2.7s rss 1438MB in-run {'mel': 0.9, 'enc': 85.6, 'dec': 3.2, 'dec_loop_total': 3.3} load1 2.45
 sp-A-4x1-c20-r1: wall 26.7s audio 604s RTFx 22.57 load 2.8s rss 1760MB in-run {'mel': 1.0, 'enc': 100.3, 'dec': 3.3, 'dec_loop_total': 3.4} load1 2.74
 sp-A-4x1-c20-r2: wall 21.6s audio 604s RTFx 27.93 load 2.4s rss 1666MB in-run {'mel': 0.8, 'enc': 82.4, 'dec': 2.7, 'dec_loop_total': 2.8} load1 3.64
+sp-A-8x1-c28-r1: wall 23.4s audio 604s RTFx 25.85 load 2.8s rss 2443MB in-run {'mel': 1.8, 'enc': 165.7, 'dec': 5.4, 'dec_loop_total': 5.6} load1 3.37
+sp-A-8x1-c28-r2: wall 24.7s audio 604s RTFx 24.40 load 2.6s rss 2470MB in-run {'mel': 1.6, 'enc': 175.3, 'dec': 5.5, 'dec_loop_total': 5.7} load1 4.19
+sp-B-1x4-c28-r1: wall 46.8s audio 604s RTFx 12.91 load 10.4s rss 2803MB in-run {'mel': 0.8, 'enc': 38.0, 'dec': 7.9, 'dec_loop_total': 8.0} load1 5.09
+sp-B-1x4-c28-r2: wall 44.3s audio 604s RTFx 13.61 load 3.6s rss 2803MB in-run {'mel': 0.8, 'enc': 35.8, 'dec': 7.7, 'dec_loop_total': 7.8} load1 1.1
+sp-B-4x1-c28-r1: wall 30.2s audio 604s RTFx 20.00 load 3.8s rss 2991MB in-run {'mel': 1.1, 'enc': 108.2, 'dec': 8.6, 'dec_loop_total': 8.8} load1 2.3
