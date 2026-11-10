@@ -157,7 +157,7 @@ Options are written `--name value` or `--name=value`; switches take no value.
 | `--formats <list>` | any of `vtt`, `json`, `txt`, separated by commas; default all three |
 | `--output <dir>` | the folder to write to; default the recording's folder |
 | `--no-speakers` | do not tell speakers apart |
-| `--speakers <n>` | the number of speakers, 1 to 32, when known; not with `--no-speakers` |
+| `--speakers <n>` | the number of speakers, 1 to 10, when known; not with `--no-speakers` |
 | `--threads <n>` | recognition threads, 1 to 256; default the logical cores, at most 4 |
 | `--raw` | also write `.raw.vtt` and `.raw.txt` |
 | `--models <dir>` | the models folder; default `MAT_MODELS_DIR`, else `models` beside the program |

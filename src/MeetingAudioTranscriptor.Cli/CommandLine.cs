@@ -188,7 +188,7 @@ internal static class CommandLine
                 "--formats" => parsed with { Formats = Formats(Value(name, value, "vtt,json,txt")) },
                 "--output" => parsed with { Output = Value(name, value, "<dir>") },
                 "--no-speakers" => parsed with { NoSpeakers = Flag(name, value) },
-                "--speakers" => parsed with { Speakers = Count(name, Value(name, value, "<n>"), 1, 32) },
+                "--speakers" => parsed with { Speakers = SpeakerCount(name, Value(name, value, "<n>")) },
                 "--threads" => parsed with { Threads = Count(name, Value(name, value, "<n>"), 1, 256) },
                 "--raw" => parsed with { Raw = Flag(name, value) },
                 "--models" => parsed with { Models = Value(name, value, "<dir>") },
@@ -360,6 +360,21 @@ internal static class CommandLine
         }
 
         return count;
+    }
+
+    /// <summary>The most speakers the separator tells apart; the window and the engine's options hold the same limit.</summary>
+    private const int MaxSpeakers = 10;
+
+    private static int SpeakerCount(string name, string value)
+    {
+        try
+        {
+            return Count(name, value, 1, MaxSpeakers);
+        }
+        catch (UsageException e)
+        {
+            throw new UsageException(e.Message + $"; the separator tells at most {MaxSpeakers} speakers apart, so give a count in that range, or leave {name} out to let it count them");
+        }
     }
 
     private static string Label(string value)
