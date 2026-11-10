@@ -4,9 +4,21 @@ Working file of the autonomous build. Re-read after any context reset.
 
 ## Phase
 
-Phases 0 done. Phase 1 (research, harness, spikes) nearly done: the spike agent
-is finishing its report. Phases 2 to 5 are being worked in parallel by agents;
-the gates are checked in order before each merge to `main`.
+Gates 0 to 6 met and on `main` (de08870): the product works end to end from
+the CLI and the Linux window, CI was green on both systems, the acceptance
+benchmark passes. Phase 7 (hardening, polish, final report) in progress.
+
+## Acceptance numbers (quiet machine, 4 threads, `bench/results/2026-11-10-accept-*.json`)
+
+- 2-hour M4A end to end, speakers on: AVX2-only mask 288 s (25.0x, 2.18 GB
+  peak); AVX2 + AVX-VNNI 166 s (43x); unmasked 95 s (75x); AVX2 without
+  speakers 242 s (29.8x); 8 threads (oversubscribed) 284 s.
+- WER raw under the AVX2 mask: clips en-read 2.17, en-ami 24.0, fr 2.88,
+  de 7.70; 10-minute files en 1.15, fr 2.51, de 8.76. Cleaned is 0.1 to 0.4
+  points higher on read speech, 1.9 on AMI.
+- Retention at least 0.997 per group, 0.999 overall; noise files 0 words.
+- Exact 8-bit kernels are switched on automatically without VNNI (decision
+  0010): German 12.4 -> 8.8 for 20 percent less speed.
 
 ## Key findings so far
 
@@ -33,10 +45,10 @@ the gates are checked in order before each merge to `main`.
 
 ## Agents in flight (worktrees under `.claude/worktrees/`)
 
-- Integration (opus): wires the Granite recogniser, speaker separation, the
-  service into the bridge and window, speaker metrics into `benchmark`; runs
-  the end-to-end checks; writes `docs/build/e2e-notes.md` and
-  `bench/results/*-e2e-*.json`.
+- Speaker-count tuning (opus): folds tiny phantom speakers; amends decision
+  0005; result files `bench/results/*speakers-tuned*`.
+- Polish and benchmark summary (sonnet): `docs/BENCHMARKS.md`, the polish list
+  below, README and Windows checklist re-read.
 
 ## CI status
 
@@ -115,19 +127,16 @@ See `docs/decisions/`.
 
 ## Next steps
 
-1. Read the first CI run on `main` (run 42895303733) and fix failures.
-2. When the recogniser lands: merge, resume the pipeline agent for part B.
-3. When diarisation lands: merge, write decision 0005, wire it into the
-   separator seam; wire `TranscriptionService` into the bridge's `ITranscriber`
-   (replace the stand-in in `Shell/ShellComposition`), fix the sentence in
-   `frontend/BRIDGE.md` about injected globals (the page defines them itself;
-   update the hash file).
-4. Flip Granite to the default set in `build/models.lock` (the recogniser agent
-   does it) and re-run the full publish.
-5. Quiet-machine benchmarks under the AVX2 mask: clips, 10 min, 30 min, 2 h;
-   write `docs/BENCHMARKS.md`.
-6. Phase 7: error handling checks, README, WINDOWS-VERIFICATION.md, charters
-   (nested CLAUDE.md files), cleanup of `bench/spikes` logs, final report.
+1. Merge the two agents; run unit tier, page and tool tests; quick 2-hour
+   masked run to confirm speed after the speaker tuning.
+2. Push to `main`, read the CI run (GitHub MCP), fix anything red.
+3. Full `build/publish.ps1 -Rid linux-x64` once more with the final lock;
+   smoke-test the extracted package (CLI transcribe on a clip, window under
+   xvfb).
+4. Final review (opus) of the whole tree against the build prompt's definition
+   of done; fix findings.
+5. Final report: built, benchmark table, decisions, deviations, gaps, Windows
+   checks, release commands. Mention the leftover remote branch `claude/ci-fix`.
 
 ## Polish list (after the integration agent reports)
 
