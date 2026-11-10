@@ -47,6 +47,9 @@ internal static class MediaFoundationErrors
     /// <summary><c>MF_E_NO_MORE_TYPES</c>.</summary>
     public const int NoMoreTypes = unchecked((int)0xC00D36B9);
 
+    /// <summary><c>MF_E_UNEXPECTED</c>.</summary>
+    public const int Unexpected = unchecked((int)0xC00D36BB);
+
     /// <summary><c>MF_E_INVALID_FILE_FORMAT</c>.</summary>
     public const int InvalidFileFormat = unchecked((int)0xC00D36BE);
 
@@ -107,6 +110,7 @@ internal static class MediaFoundationErrors
         AttributeNotFound => "MF_E_ATTRIBUTENOTFOUND",
         TopoCodecNotFound => "MF_E_TOPO_CODEC_NOT_FOUND",
         PlatformNotInitialized => "MF_E_PLATFORM_NOT_INITIALIZED",
+        Unexpected => "MF_E_UNEXPECTED",
         _ => "an unexpected error",
     };
 

@@ -50,10 +50,11 @@ public sealed class MediaFoundationAudioSourceTests : IClassFixture<MediaFixture
     {
         Assert.SkipUnless(OperatingSystem.IsWindows(), NeedsWindows);
         _media.SkipWithoutFfmpeg();
-        string sine = $"sine=frequency={MediaFixtures.ToneHz}:sample_rate=44100:duration=1";
+        string sine = MediaFixtures.Sine(44100, 1);
+        string stereo = MediaFixtures.CopyToChannels(2);
         string path = withVideo
-            ? _media.Generate(name, "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=25", "-f", "lavfi", "-i", sine, "-ac", "2", "-c:v", "libx264", "-c:a", "aac", "-shortest")
-            : _media.Generate(name, "-f", "lavfi", "-i", sine, "-ac", "2", "-c:a", "aac");
+            ? _media.Generate(name, "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=25", "-f", "lavfi", "-i", sine, "-filter:a", stereo, "-c:v", "libx264", "-c:a", "aac", "-shortest")
+            : _media.Generate(name, "-f", "lavfi", "-i", sine, "-af", stereo, "-c:a", "aac");
 
         using MediaFoundationAudioSource source = new(path);
         using FfmpegAudioSource reference = new(path, _media.Ffmpeg!);

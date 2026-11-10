@@ -13,14 +13,16 @@ namespace MeetingAudioTranscriptor.Media;
 /// <param name="AudioSampleRate">The rate of the first audio stream, null when there is no audio stream.</param>
 /// <param name="AudioStreamCount">How many audio streams the input holds.</param>
 /// <param name="DurationSeconds">The container's stated duration, null when it says <c>N/A</c> or nothing.</param>
-internal sealed record FfmpegInputInfo(bool HasInput, int? AudioSampleRate, int AudioStreamCount, double? DurationSeconds);
+/// <param name="AudioChannels">The channel count of the first audio stream, null when its layout is not one ffmpeg names.</param>
+internal sealed record FfmpegInputInfo(bool HasInput, int? AudioSampleRate, int AudioStreamCount, double? DurationSeconds, int? AudioChannels = null);
 
 /// <summary>Parses the input section ffmpeg prints to stderr when it opens a file.</summary>
 /// <remarks>
 /// The section has kept one shape across ffmpeg 4 to 8: an <c>Input #0, ...</c> line, a
 /// <c>Duration: HH:MM:SS.ss</c> line and one <c>Stream #0:N...: Kind: ...</c> line per stream, where
 /// newer versions insert a container id (<c>[0x2]</c>) and a language (<c>(und)</c>) between the index
-/// and the colon. Only the first input is read, and parsing stops at the first output section, so a
+/// and the colon. The field after the rate is the channel layout (<c>mono</c>, <c>stereo</c>,
+/// <c>5.1(side)</c>, <c>6 channels</c>). Only the first input is read, and parsing stops at the first output section, so a
 /// stream line of an output never counts as the input's.
 /// </remarks>
 internal static partial class FfmpegBanner
@@ -31,6 +33,7 @@ internal static partial class FfmpegBanner
         ArgumentNullException.ThrowIfNull(stderr);
         bool hasInput = false;
         int? rate = null;
+        int? channels = null;
         int audioStreams = 0;
         double? duration = null;
 
@@ -76,12 +79,63 @@ internal static partial class FfmpegBanner
                     if (rateMatch.Success && int.TryParse(rateMatch.Groups["rate"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out int parsed) && parsed > 0)
                     {
                         rate = parsed;
+                        channels = ChannelCount(rateMatch.Groups["layout"].Value);
                     }
                 }
             }
         }
 
-        return new FfmpegInputInfo(hasInput, rate, audioStreams, duration);
+        return new FfmpegInputInfo(hasInput, rate, audioStreams, duration, channels);
+    }
+
+    /// <summary>The number of channels an ffmpeg layout name stands for; null for a name this table does not hold.</summary>
+    /// <remarks>
+    /// ffmpeg names a layout by a word (<c>mono</c>, <c>quad</c>), by a count (<c>6 channels</c>), or by
+    /// its speaker groups (<c>5.1</c>, <c>7.1.4</c>, <c>3.0(back)</c>), whose numbers add up to the count.
+    /// </remarks>
+    public static int? ChannelCount(string layout)
+    {
+        ArgumentNullException.ThrowIfNull(layout);
+        string name = layout.Trim();
+        int bracket = name.IndexOf('(', StringComparison.Ordinal);
+        string stem = bracket > 0 ? name[..bracket] : name;
+        switch (stem)
+        {
+            case "mono":
+                return 1;
+            case "stereo":
+            case "downmix":
+                return 2;
+            case "quad":
+                return 4;
+            case "hexagonal":
+                return 6;
+            case "octagonal":
+            case "cube":
+                return 8;
+            case "hexadecagonal":
+                return 16;
+        }
+
+        Match counted = CountedLayout().Match(name);
+        if (counted.Success)
+        {
+            return int.Parse(counted.Groups["count"].Value, NumberStyles.None, CultureInfo.InvariantCulture);
+        }
+
+        Match grouped = GroupedLayout().Match(stem);
+        if (grouped.Success)
+        {
+            int total = 0;
+            foreach (Capture group in grouped.Groups["group"].Captures)
+            {
+                total += int.Parse(group.Value, NumberStyles.None, CultureInfo.InvariantCulture);
+            }
+
+            return total > 0 ? total : null;
+        }
+
+        return null;
     }
 
     /// <summary>The probe: opens the file and prints its input section, with no output.</summary>
@@ -89,17 +143,21 @@ internal static partial class FfmpegBanner
     public static IReadOnlyList<string> ProbeArguments(string path) =>
         ["-nostdin", "-hide_banner", "-i", InputUrl(path)];
 
-    /// <summary>The decode: the first audio stream, downmixed to mono, as raw little-endian float on stdout.</summary>
+    /// <summary>The decode: the first audio stream at its own channel count, as raw interleaved little-endian float on stdout.</summary>
     /// <remarks>
-    /// The rate is pinned to the one the probe read, so the samples on stdout are always at the rate the
+    /// The channels are averaged by the converter rather than by ffmpeg, because ffmpeg's own downmix
+    /// (<c>-ac 1</c>) weights each channel of a stereo pair by 0.707 and sums, which is louder than the
+    /// average every other decoder of the application delivers. The count is pinned with <c>-ac</c>, so
+    /// the frames on stdout always have the width the converter expects. The rate is pinned to the one the probe read, so the samples on stdout are always at the rate the
     /// source announced before its first read, even for a stream whose decoder reports another rate than
     /// its container (HE-AAC); when the two agree, as they almost always do, ffmpeg does not resample.
     /// </remarks>
-    public static IReadOnlyList<string> DecodeArguments(string path, int sampleRate) =>
+    public static IReadOnlyList<string> DecodeArguments(string path, int sampleRate, int channels) =>
     [
         "-nostdin", "-hide_banner", "-loglevel", "error",
         "-i", InputUrl(path),
-        "-vn", "-map", "0:a:0", "-ac", "1", "-ar", sampleRate.ToString(CultureInfo.InvariantCulture),
+        "-vn", "-map", "0:a:0",
+        "-ac", channels.ToString(CultureInfo.InvariantCulture), "-ar", sampleRate.ToString(CultureInfo.InvariantCulture),
         "-f", "f32le", "-acodec", "pcm_f32le", "pipe:1",
     ];
 
@@ -140,7 +198,18 @@ internal static partial class FfmpegBanner
     [GeneratedRegex(@"^\s+Stream #0:\d+\S*: Audio: (?<details>.*)$", RegexOptions.CultureInvariant)]
     private static partial Regex AudioStreamLine();
 
-    /// <summary>Matches a sample rate field such as <c>, 44100 Hz,</c>; it does not match a <c>kHz</c> or bit-rate field.</summary>
-    [GeneratedRegex(@"(?:^|,\s*)(?<rate>\d+) Hz\b", RegexOptions.CultureInvariant)]
+    /// <summary>
+    /// Matches a sample rate field and the layout field after it, such as <c>, 44100 Hz, stereo,</c>; it
+    /// does not match a <c>kHz</c> or bit-rate field. The layout group is empty when no field follows.
+    /// </summary>
+    [GeneratedRegex(@"(?:^|,\s*)(?<rate>\d+) Hz\b(?:,\s*(?<layout>[^,]+))?", RegexOptions.CultureInvariant)]
     private static partial Regex SampleRate();
+
+    /// <summary>Matches a counted layout such as <c>6 channels</c> or <c>1 channels (FL)</c>; it does not match a named layout.</summary>
+    [GeneratedRegex(@"^(?<count>\d+) channels?\b", RegexOptions.CultureInvariant)]
+    private static partial Regex CountedLayout();
+
+    /// <summary>Matches a speaker-group layout such as <c>5.1</c>, <c>3.0</c> or <c>7.1.4</c>; it does not match a bare number or a word.</summary>
+    [GeneratedRegex(@"^(?<group>\d+)(?:\.(?<group>\d+)){1,2}$", RegexOptions.CultureInvariant)]
+    private static partial Regex GroupedLayout();
 }

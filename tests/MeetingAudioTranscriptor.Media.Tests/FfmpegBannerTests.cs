@@ -85,7 +85,7 @@ public sealed class FfmpegBannerTests
     {
         FfmpegInputInfo info = FfmpegBanner.Parse(Ffmpeg6Wav);
 
-        Assert.True(info == new FfmpegInputInfo(true, 44100, 1, 1.0), $"got {info}, wanted 44100 Hz, one audio stream, 1 s");
+        Assert.True(info == new FfmpegInputInfo(true, 44100, 1, 1.0, 2), $"got {info}, wanted 44100 Hz, 2 channels, one audio stream, 1 s");
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public sealed class FfmpegBannerTests
     {
         FfmpegInputInfo info = FfmpegBanner.Parse(Ffmpeg6VideoThenAudio);
 
-        Assert.True(info == new FfmpegInputInfo(true, 48000, 1, 1.0), $"got {info}, wanted the audio track's 48000 Hz");
+        Assert.True(info == new FfmpegInputInfo(true, 48000, 1, 1.0, 1), $"got {info}, wanted the audio track's 48000 Hz mono");
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public sealed class FfmpegBannerTests
     {
         FfmpegInputInfo info = FfmpegBanner.Parse(Ffmpeg7TwoAudioTracks);
 
-        Assert.True(info.AudioSampleRate == 44100 && info.AudioStreamCount == 2, $"got {info}, wanted the first track's 44100 Hz of two");
+        Assert.True(info.AudioSampleRate == 44100 && info.AudioChannels == 2 && info.AudioStreamCount == 2, $"got {info}, wanted the first track's 44100 Hz stereo of two");
         Assert.True(Math.Abs(info.DurationSeconds!.Value - 3723.45) < 1e-9, $"got {info.DurationSeconds}, wanted 3723.45 s from 01:02:03.45 and not the DURATION tag");
     }
 
@@ -110,7 +110,7 @@ public sealed class FfmpegBannerTests
     {
         FfmpegInputInfo info = FfmpegBanner.Parse(Ffmpeg8UnknownDuration);
 
-        Assert.True(info == new FfmpegInputInfo(true, 16000, 1, null), $"got {info}, wanted 16000 Hz, one input audio stream and no duration");
+        Assert.True(info == new FfmpegInputInfo(true, 16000, 1, null, 1), $"got {info}, wanted 16000 Hz, one input audio stream and no duration");
     }
 
     [Fact]
@@ -130,16 +130,48 @@ public sealed class FfmpegBannerTests
     }
 
     [Fact]
-    public void TheDecodeReadsTheFirstAudioStreamAsMonoFloatAtTheProbedRate()
+    public void TheDecodeReadsTheFirstAudioStreamAsFloatAtTheProbedRateAndChannels()
     {
         string path = Path.Combine(Path.GetTempPath(), "a b", "réunion.m4a");
-        IReadOnlyList<string> arguments = FfmpegBanner.DecodeArguments(path, 44100);
+        IReadOnlyList<string> arguments = FfmpegBanner.DecodeArguments(path, 44100, 2);
 
         string joined = string.Join(" ", arguments);
         Assert.True(
-            joined == $"-nostdin -hide_banner -loglevel error -i file:{Path.GetFullPath(path)} -vn -map 0:a:0 -ac 1 -ar 44100 -f f32le -acodec pcm_f32le pipe:1",
+            joined == $"-nostdin -hide_banner -loglevel error -i file:{Path.GetFullPath(path)} -vn -map 0:a:0 -ac 2 -ar 44100 -f f32le -acodec pcm_f32le pipe:1",
             $"got '{joined}', wanted the documented decode command");
         Assert.True(arguments[5] == "file:" + Path.GetFullPath(path), $"got '{arguments[5]}', wanted the whole path as one argument");
+    }
+
+    [Theory]
+    [InlineData("mono", 1)]
+    [InlineData("stereo", 2)]
+    [InlineData("downmix", 2)]
+    [InlineData("2 channels", 2)]
+    [InlineData("1 channels (FL)", 1)]
+    [InlineData("6 channels", 6)]
+    [InlineData("3.0(back)", 3)]
+    [InlineData("quad(side)", 4)]
+    [InlineData("5.1", 6)]
+    [InlineData("5.1(side)", 6)]
+    [InlineData("7.1.4", 12)]
+    [InlineData("22.2", 24)]
+    [InlineData("hexadecagonal", 16)]
+    public void ALayoutNameGivesItsChannelCount(string layout, int expected)
+    {
+        int? channels = FfmpegBanner.ChannelCount(layout);
+
+        Assert.True(channels == expected, $"got {channels}, wanted {expected} for '{layout}'");
+    }
+
+    [Theory]
+    [InlineData("ambisonic 1")]
+    [InlineData("unknown")]
+    [InlineData("")]
+    public void AnUnknownLayoutHasNoCount(string layout)
+    {
+        int? channels = FfmpegBanner.ChannelCount(layout);
+
+        Assert.True(channels is null, $"got {channels}, wanted none for '{layout}'");
     }
 
     [Fact]

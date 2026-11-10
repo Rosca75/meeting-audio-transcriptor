@@ -48,13 +48,40 @@ public sealed class FfmpegAudioSourceTests : IClassFixture<MediaFixtures>
         string path = _media.Generate(
             "video+audio.mp4",
             "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=25",
-            "-f", "lavfi", "-i", $"sine=frequency={MediaFixtures.ToneHz}:sample_rate=44100:duration=1",
-            "-ac", "2", "-c:v", "libx264", "-c:a", "aac", "-shortest");
+            "-f", "lavfi", "-i", MediaFixtures.Sine(44100, 1),
+            "-filter:a", MediaFixtures.CopyToChannels(2), "-c:v", "libx264", "-c:a", "aac", "-shortest");
 
         using FfmpegAudioSource source = new(path, _media.Ffmpeg!);
         float[] samples = MediaFixtures.ReadAll(source);
 
         AssertTone(source, samples, 44100, "video+audio.mp4");
+    }
+
+    [Fact]
+    public void StereoChannelsAreAveragedNotSummed()
+    {
+        _media.SkipWithoutFfmpeg();
+        string path = _media.Generate("left-only.wav", "-f", "lavfi", "-i", MediaFixtures.Sine(44100, 1), "-af", "pan=stereo|c0=c0|c1=0*c0", "-c:a", "pcm_s16le");
+
+        using FfmpegAudioSource source = new(path, _media.Ffmpeg!);
+        double rms = MediaFixtures.Rms(MediaFixtures.ReadAll(source));
+
+        double expected = MediaFixtures.ToneAmplitude / Math.Sqrt(2) / 2;
+        Assert.True(Math.Abs(rms - expected) < 0.003, $"got an RMS of {rms:0.0000}, wanted {expected:0.0000}: the tone on the left and silence on the right average to half the tone");
+    }
+
+    [Fact]
+    public void FiveOneChannelsAreAveraged()
+    {
+        _media.SkipWithoutFfmpeg();
+
+        // PCM rather than AAC, because the AAC encoder low-passes the LFE channel and a 440 Hz tone there vanishes.
+        string path = _media.Tone("surround-5.1.wav", 48000, 6, 1, "-c:a", "pcm_s16le");
+
+        using FfmpegAudioSource source = new(path, _media.Ffmpeg!);
+        float[] samples = MediaFixtures.ReadAll(source);
+
+        AssertTone(source, samples, 48000, "surround-5.1.wav");
     }
 
     [Fact]

@@ -17,10 +17,11 @@ namespace MeetingAudioTranscriptor.Media;
 /// tells a file without audio from a damaged one before a decode is started. The bundled build carries
 /// no ffprobe, and reading the banner of the decoding process itself would need info-level logging
 /// mixed with the error lines that are kept as warnings, so the separate probe is the robust way. The
-/// decode then pins <c>-ar</c> to that rate, so stdout is always at the announced rate.
+/// decode then pins <c>-ar</c> to that rate and <c>-ac</c> to the stream's own channel count, so stdout
+/// is always at the announced rate and in frames of a known width, which the converter averages to mono.
 /// </para>
 /// <para>
-/// stdout is read in 64 KiB blocks into one reused byte buffer and converted as little-endian float.
+/// stdout is read in 64 KiB blocks into one reused byte buffer and converted as interleaved little-endian float.
 /// stderr is drained on its own thread by the process class, so a chatty ffmpeg never blocks on a full
 /// pipe. Dispose kills a running child and waits for it, which reaps it, so no zombie is left; a read
 /// blocked on the pipe at that moment returns zero.
@@ -66,7 +67,11 @@ internal sealed class FfmpegAudioSource : INamedAudioSource
         SampleRate = info.AudioSampleRate!.Value;
         DurationSeconds = info.DurationSeconds;
 
-        ProcessStartInfo start = NewStartInfo(ffmpeg, FfmpegBanner.DecodeArguments(path, SampleRate));
+        // A layout the table does not name is mixed down to stereo by ffmpeg and averaged here: the
+        // frames then have a known width whatever the file holds.
+        int channels = Math.Clamp(info.AudioChannels ?? 2, 1, PcmConverter.MaxChannels);
+
+        ProcessStartInfo start = NewStartInfo(ffmpeg, FfmpegBanner.DecodeArguments(path, SampleRate, channels));
         _process = new Process { StartInfo = start };
         _process.ErrorDataReceived += OnStderrLine;
         try
@@ -82,7 +87,7 @@ internal sealed class FfmpegAudioSource : INamedAudioSource
         _process.StandardInput.Close();
         _process.BeginErrorReadLine();
         _stdout = _process.StandardOutput.BaseStream;
-        _reader = new PcmSampleReader(new PcmConverter(PcmSampleFormat.Float32, 1), Refill, ReadBlockBytes * 2);
+        _reader = new PcmSampleReader(new PcmConverter(PcmSampleFormat.Float32, channels), Refill, ReadBlockBytes * 2);
     }
 
     /// <inheritdoc />

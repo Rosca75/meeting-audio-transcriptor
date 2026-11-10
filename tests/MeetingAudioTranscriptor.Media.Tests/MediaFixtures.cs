@@ -48,8 +48,26 @@ public sealed class MediaFixtures : IDisposable
     }
 
     /// <summary>A tone of the given length, rate and channel count, encoded by the given codec arguments.</summary>
+    /// <remarks>Every channel carries the tone at full level: the pan filter copies it, where ffmpeg's own upmix would scale it by 0.707.</remarks>
     public string Tone(string name, int rate, int channels, double seconds, params string[] codec) =>
-        Generate(name, ["-f", "lavfi", "-i", $"sine=frequency={ToneHz}:sample_rate={rate}:duration={seconds}", "-ac", channels.ToString(System.Globalization.CultureInfo.InvariantCulture), .. codec]);
+        Generate(name, ["-f", "lavfi", "-i", Sine(rate, seconds), "-af", CopyToChannels(channels), .. codec]);
+
+    /// <summary>ffmpeg's sine source at the tone's frequency.</summary>
+    public static string Sine(int rate, double seconds) =>
+        $"sine=frequency={ToneHz}:sample_rate={rate}:duration={seconds.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
+    /// <summary>A pan filter putting the mono tone at full level on every one of the given channels.</summary>
+    public static string CopyToChannels(int channels)
+    {
+        List<string> outputs = [];
+        for (int channel = 0; channel < channels; channel++)
+        {
+            outputs.Add($"c{channel}=c0");
+        }
+
+        string layout = channels switch { 1 => "mono", 2 => "stereo", 6 => "5.1", _ => $"{channels}c" };
+        return $"pan={layout}|{string.Join("|", outputs)}";
+    }
 
     /// <summary>Runs ffmpeg and fails with its stderr when it fails.</summary>
     public void RunFfmpeg(IEnumerable<string> arguments)
