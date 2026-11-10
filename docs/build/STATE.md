@@ -126,3 +126,18 @@ See `docs/decisions/`.
    write `docs/BENCHMARKS.md`.
 6. Phase 7: error handling checks, README, WINDOWS-VERIFICATION.md, charters
    (nested CLAUDE.md files), cleanup of `bench/spikes` logs, final report.
+
+## Polish list (after the integration agent reports)
+
+1. Wire `PreferFfmpeg` to an environment variable (`MAT_PREFER_FFMPEG=1`) and
+   print the decoder name in the CLI summary, so the Windows checklist can
+   compare Media Foundation with ffmpeg.
+2. `--speakers` range: CLI accepts 1 to 32, the window 1 to 10; make both 1 to 10.
+3. `pyannote-segmentation-3.0` is in the default set but unused: make it a
+   candidate so it does not ship; keep `NOTICE` consistent.
+4. `docs/TESTING.md`: add the `cleaning`, `diarisation`, `scoring` categories;
+   two chapters are numbered 7.
+5. `docs/transcript.schema.json` holds an em dash; the schema example names a
+   model that does not ship.
+6. Re-read `README.md` and `docs/WINDOWS-VERIFICATION.md` against the wired CLI.
+7. `docs/BENCHMARKS.md` from the quiet-machine runs.
