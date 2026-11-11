@@ -7,6 +7,10 @@ All notable changes to meeting-audio-transcriptor are recorded here. The format 
 
 ## [Unreleased]
 
+## [0.2.0]
+
+A compact window in the corporate palette, and speakers named in the transcripts.
+
 ### Added
 
 - The window names the speakers: with a number of speakers entered, one name per speaker can be
