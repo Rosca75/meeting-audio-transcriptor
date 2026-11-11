@@ -42,6 +42,11 @@ internal static unsafe partial class Win32
     internal const nint IDC_ARROW = 32512;
     internal const nint IDI_APPLICATION = 32512;
 
+    // WinUser.h: LoadImage's icon type, and the system metrics of the small icon's width and height.
+    internal const uint IMAGE_ICON = 1;
+    internal const int SM_CXSMICON = 49;
+    internal const int SM_CYSMICON = 50;
+
     // WinUser.h: MessageBox styles.
     internal const uint MB_OK = 0x0000;
     internal const uint MB_ICONERROR = 0x0010;
@@ -171,6 +176,12 @@ internal static unsafe partial class Win32
 
     [LibraryImport("user32.dll")]
     internal static partial nint LoadIconW(nint instance, nint iconName);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    internal static partial nint LoadImageW(nint instance, nint name, uint type, int width, int height, uint flags);
+
+    [LibraryImport("user32.dll")]
+    internal static partial int GetSystemMetricsForDpi(int index, uint dpi);
 
     [LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16)]
     internal static partial int MessageBoxW(nint hwnd, string text, string caption, uint type);

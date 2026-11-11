@@ -188,8 +188,9 @@ dotnet build -warnaserror
 dotnet test --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models" --ignore-exit-code 8
 dotnet test --project tests/MeetingAudioTranscriptor.Guards.Tests
 node --test "frontend/**/*.test.js"
-node --test build/*.test.mjs                   # the fetch tools and the graph patch
+node --test build/*.test.mjs                   # the fetch tools, the graph patch and the icon
 node build/update-frontend-hashes.mjs          # after a page edit
+node build/make-app-icon.mjs                   # after a change of the logo: redraws the executable's icon
 dotnet build src/MeetingAudioTranscriptor.Shell -r win-x64 -warnaserror
 pwsh build/publish.ps1 -Rid linux-x64 -Version 0.1.0 -SkipModels    # a package without models, for a structural check
 pwsh build/release-version.test.ps1                                 # the release script's version ordering

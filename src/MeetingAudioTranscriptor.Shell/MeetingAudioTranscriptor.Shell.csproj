@@ -37,6 +37,10 @@
     <!-- Per-monitor DPI awareness, long paths, the supported Windows versions and the common
          controls version are declared before the process starts. -->
     <ApplicationManifest>Windows/app.manifest</ApplicationManifest>
+    <!-- The application's mark, drawn by build/make-app-icon.mjs. The compiler stores it as the
+         module's application icon, the build copies it into the executable a user starts, and the
+         window loads it from there for its title bar and the taskbar. -->
+    <ApplicationIcon>Windows/app.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition="'$(ShellHost)' == 'linux'">
     <DefineConstants>$(DefineConstants);SHELL_LINUX</DefineConstants>

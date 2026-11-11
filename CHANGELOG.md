@@ -18,6 +18,8 @@ All notable changes to meeting-audio-transcriptor are recorded here. The format 
 - The window is compact (560 by 440) and never scrolls: it shows the recording, the output folder
   and Start, and every setting sits behind a gear button. Languages are chosen by flag, the title
   carries a logo and the colours follow the corporate palette in both light and dark schemes.
+- The Windows executable has its own icon, the same mark as the window's logo, in Explorer, the
+  title bar and the taskbar.
 
 ## [0.1.0]
 

@@ -44,6 +44,7 @@ A new category is added to this table and to `tests/CLAUDE.md` in the same chang
 - Package versions: a version appears in `Directory.Packages.props` alone.
 - Page hashes: every file under `frontend/` except `frontend/frontend-hashes.txt` is listed there as `<sha256> *<path>` and matches. A page edit moves its line in the same commit: `node build/update-frontend-hashes.mjs` rewrites the file.
 - Page tests present: the page suite has a test file per logic module, none silenced, and the charters name its command.
+- Application icon: the Shell project names `Windows/app.ico` as its `ApplicationIcon`, and the file is an icon holding the 16, 20, 24, 32, 40, 48, 64 and 256 pixel sizes. `build/make-app-icon.test.mjs` holds its pictures to the mark's geometry and that geometry to the page's logo; `node build/make-app-icon.mjs` redraws it.
 - Workflow pins: every `uses:` under `.github` is a full 40-character commit SHA, and `NOTICE` names every default model and every ffmpeg build the locks ship.
 - Copy: no em dash in `frontend/js/copy.js`, in any `.cs` file under `src/`, or in a document (`docs/**/*.md`, `docs/**/*.json`, `README.md`, `CHANGELOG.md`, `NOTICE` and every charter); `docs/build/reference-digest.md` and `docs/build/research-models.md` are exempt by name in the guard, because they quote titles that carry one. Frontend scripts and stylesheets open with a purpose header like every other source file.
 
@@ -109,7 +110,7 @@ The page suite runs on Node with no DOM and no bridge: state transitions, the ap
 ```
 node build/fetch-models.mjs --into models                          # fetch the default models (add --set all for the candidates)
 MAT_MODELS_DIR=<dir> dotnet test --filter-trait "Tier=models" --ignore-exit-code 8   # the models tier over a models folder elsewhere
-node --test build/*.test.mjs                                       # the fetch tools and the graph patch, against a loopback server
+node --test build/*.test.mjs                                       # the fetch tools and the graph patch against a loopback server, and the icon
 node build/fetch-models.mjs --into models --keep-sources           # also keep the pinned sources a shipped graph is derived from
 ```
 

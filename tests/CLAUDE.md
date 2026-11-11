@@ -59,7 +59,7 @@ The charter of `tests/`. The root `CLAUDE.md` overrides it where they conflict. 
 
 **An exemption names its file and its reason in the guard's own table.** The exemption list of the network guard is empty. A failing guard names a real inconsistency: fix the inconsistency and leave the guard as it is.
 
-The guards hold: purpose headers on source, project, script and page files (markdown is exempt); the engine's references; the ONNX Runtime package in the Inference project alone; no network type under `src`; package versions in `Directory.Packages.props` alone; the page's file hashes; the page's test files; full-commit workflow pins; the notice crediting every shipped model and ffmpeg build; no em dash in the page's copy, in `src` or in a document (the two working documents that quote titles are exempt by name).
+The guards hold: purpose headers on source, project, script and page files (markdown is exempt); the engine's references; the ONNX Runtime package in the Inference project alone; no network type under `src`; package versions in `Directory.Packages.props` alone; the page's file hashes; the page's test files; the desktop executable's icon; full-commit workflow pins; the notice crediting every shipped model and ffmpeg build; no em dash in the page's copy, in `src` or in a document (the two working documents that quote titles are exempt by name).
 
 ## 7. Where to look next
 

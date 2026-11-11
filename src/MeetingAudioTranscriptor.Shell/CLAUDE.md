@@ -42,6 +42,8 @@ The shell is the desktop executable `meeting-audio-transcriptor`: one window hol
 
 **The page cannot read a dropped file's path, so the host resolves it.** On Windows the page posts the file objects with the drop and the host turns them into a `{"drop":{"paths":[...]}}` message; on Linux the host handles the drag itself. `DropEnvelope` decodes `file://` URIs. The rest of the protocol is `frontend/BRIDGE.md`.
 
+**The Windows executable carries the application's mark as its icon.** `Windows/app.ico` is the project's `ApplicationIcon`, drawn by `build/make-app-icon.mjs` from the geometry of the page's logo, so Explorer, the title bar and the taskbar show the mark the page shows. The window loads it from its own module under the standard application id, the small one at the title bar's size. A Linux executable has no icon of its own.
+
 **Dialogs are the system's.** Windows calls `IFileOpenDialog` through raw virtual-table calls whose slots are documented against `ShObjIdl_core.h`; opening a folder is `ShellExecuteW`; Linux uses GTK's chooser and a launcher.
 
 ## 6. Start-up failures and exit codes

@@ -50,11 +50,21 @@ internal sealed unsafe class MainWindow
     {
         nint instance = Win32.GetModuleHandleW(null);
 
-        // The executable's own icon when the build embedded one, the stock icon otherwise.
+        // The executable's own icon when the build embedded one, the stock icon otherwise. The small
+        // one is loaded at the title bar's own size, so the system picks the image drawn for it
+        // rather than shrinking the large one.
         nint icon = Win32.LoadIconW(instance, Win32.IDI_APPLICATION);
+        uint systemDpi = Win32.GetDpiForSystem();
+        nint smallIcon = Win32.LoadImageW(
+            instance, Win32.IDI_APPLICATION, Win32.IMAGE_ICON,
+            Win32.GetSystemMetricsForDpi(Win32.SM_CXSMICON, systemDpi), Win32.GetSystemMetricsForDpi(Win32.SM_CYSMICON, systemDpi), 0);
         if (icon == 0)
         {
             icon = Win32.LoadIconW(0, Win32.IDI_APPLICATION);
+        }
+        if (smallIcon == 0)
+        {
+            smallIcon = icon;
         }
 
         fixed (char* className = ClassName)
@@ -66,7 +76,7 @@ internal sealed unsafe class MainWindow
                 lpfnWndProc = &WindowProcedure,
                 hInstance = instance,
                 hIcon = icon,
-                hIconSm = icon,
+                hIconSm = smallIcon,
                 hCursor = Win32.LoadCursorW(0, Win32.IDC_ARROW),
                 lpszClassName = className,
             };
