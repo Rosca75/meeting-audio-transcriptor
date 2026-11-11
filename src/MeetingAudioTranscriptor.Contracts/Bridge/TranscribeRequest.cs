@@ -25,6 +25,13 @@ public sealed record TranscribeRequest
     /// <summary>The number of speakers when the user knows it (1 to 10); absent means automatic.</summary>
     public int? SpeakerCount { get; init; }
 
+    /// <summary>
+    /// The names the user gave the speakers: the entry at index k names speaker k+1, in order of first
+    /// appearance, and an empty entry keeps the label `Speaker k+1`. Absent when no name is set; given
+    /// only with speaker separation on and a speaker count, and never longer than that count.
+    /// </summary>
+    public IReadOnlyList<string>? SpeakerNames { get; init; }
+
     /// <summary>Whether to also write the raw, uncleaned transcript files.</summary>
     public bool RawFiles { get; init; }
 

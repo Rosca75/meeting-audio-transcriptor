@@ -27,8 +27,11 @@ internal sealed unsafe class MainWindow
     /// <summary>The code the message loop ends with when the window is destroyed.</summary>
     public int ExitCode { get; set; } = ShellExitCodes.Ok;
 
-    /// <summary>The smallest client size the window may be dragged to, in device-independent pixels.</summary>
-    public (int Width, int Height) MinimumSize { get; init; } = (640, 480);
+    /// <summary>
+    /// The smallest size the window may be dragged to, in device-independent pixels: the size it opens
+    /// at, because the page is laid out to fit that size and would have to scroll in a smaller one.
+    /// </summary>
+    public (int Width, int Height) MinimumSize { get; private init; }
 
     /// <summary>Raised with the new client width and height, in pixels.</summary>
     public event Action<int, int>? Resized;
@@ -83,7 +86,7 @@ internal sealed unsafe class MainWindow
             throw new InvalidOperationException("the window could not be created: " + Marshal.GetLastPInvokeErrorMessage());
         }
 
-        Current = new MainWindow(handle);
+        Current = new MainWindow(handle) { MinimumSize = (logicalWidth, logicalHeight) };
         return Current;
     }
 

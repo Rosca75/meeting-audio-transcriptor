@@ -194,3 +194,48 @@ test("a failed run keeps its sentence in the outcome", async () => {
   api.emit("run:finished", { kind: "failed", message: "The audio could not be decoded. Convert it to WAV." });
   assert.equal(store.getState().outcome.message, "The audio could not be decoded. Convert it to WAV.");
 });
+
+test("the settings panel opens and closes on request and reports whether it moved", async () => {
+  const { store, controller } = await ready();
+  assert.equal(controller.openSettings(), true);
+  assert.equal(store.getState().settingsOpen, true);
+  assert.equal(controller.openSettings(), false);
+  assert.equal(controller.closeSettings(), true);
+  assert.equal(store.getState().settingsOpen, false);
+  assert.equal(controller.closeSettings(), false);
+});
+
+test("the settings panel does not open while a run is in flight", async () => {
+  const { api, store, controller } = await ready();
+  api.emit("file:selected", selection);
+  await controller.start();
+  assert.equal(controller.openSettings(), false);
+  assert.equal(store.getState().settingsOpen, false);
+});
+
+test("start sends the speaker names with the count", async () => {
+  const { api, store, controller } = await ready();
+  api.emit("file:selected", selection);
+  store.dispatch({ type: "speakerCountChanged", text: "2" });
+  store.dispatch({ type: "speakerNameChanged", index: 1, text: "Bob" });
+  await controller.start();
+  assert.deepEqual(api.calls.find((call) => call[0] === "startRun")[1], {
+    inputPath: "/m/a.wav",
+    language: "en",
+    formats: ["vtt", "json", "txt"],
+    speakerSeparation: true,
+    rawFiles: false,
+    speakerCount: 2,
+    speakerNames: ["", "Bob"],
+  });
+});
+
+test("start does nothing while two speakers share a name", async () => {
+  const { api, store, controller } = await ready();
+  api.emit("file:selected", selection);
+  store.dispatch({ type: "speakerCountChanged", text: "2" });
+  store.dispatch({ type: "speakerNameChanged", index: 0, text: "Bob" });
+  store.dispatch({ type: "speakerNameChanged", index: 1, text: "bob" });
+  await controller.start();
+  assert.equal(api.calls.some((call) => call[0] === "startRun"), false);
+});

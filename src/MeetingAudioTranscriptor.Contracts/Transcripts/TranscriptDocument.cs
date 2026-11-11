@@ -86,13 +86,13 @@ public sealed record TranscriptSettings
     public required bool RawFiles { get; init; }
 }
 
-/// <summary>One anonymous speaker.</summary>
+/// <summary>One speaker, anonymous unless the user named them.</summary>
 public sealed record TranscriptSpeaker
 {
     /// <summary>The identifier segments refer to, such as `S1`.</summary>
     public required string Id { get; init; }
 
-    /// <summary>The label shown in the text formats, such as `Speaker 1`.</summary>
+    /// <summary>The label shown in the text formats: `Speaker 1`, `Speaker 2` by order of first appearance, or the name the user gave for that position.</summary>
     public required string Label { get; init; }
 
     /// <summary>The seconds this speaker spoke, summed over their segments.</summary>

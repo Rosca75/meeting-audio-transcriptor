@@ -33,10 +33,12 @@ internal sealed unsafe class LinuxDesktopHost : IDesktopHost, IAutomationActions
     private const string Title = "Meeting Audio Transcriptor";
     private const string Scheme = "app";
     private const string MessageHandlerName = "host";
-    private const int InitialWidth = 900;
-    private const int InitialHeight = 720;
-    private const int MinimumWidth = 640;
-    private const int MinimumHeight = 480;
+
+    // The size the page is laid out to fit without scrolling; the web view refuses a smaller one.
+    private const int InitialWidth = 560;
+    private const int InitialHeight = 440;
+    private const int MinimumWidth = InitialWidth;
+    private const int MinimumHeight = InitialHeight;
 
     /// <summary>How many times a crashed web process is restarted before the host gives up.</summary>
     private const int ReloadsAllowed = 3;

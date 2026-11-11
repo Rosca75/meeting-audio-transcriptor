@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   baseName, checkDroppedNames, directoryOf, extensionOf, formatDuration, formatSpeed, isSupportedName,
-  parseSpeakerCount, selectedFormats, toPercent,
+  parseSpeakerCount, selectedFormats, speakerNamesToSend, speakerNamesValid, splitForCut, toPercent,
 } from "./model.js";
 
 test("supported names are .m4a, .mp4 and .wav in any case", () => {
@@ -73,4 +73,30 @@ test("durations read as hours, minutes and seconds", () => {
 test("speed reads as a multiple of real time", () => {
   assert.equal(formatSpeed(12.34), "12.3 times real time");
   assert.equal(formatSpeed(undefined), "0.0 times real time");
+});
+
+test("the names to send are the first count names, trimmed, without trailing blanks", () => {
+  assert.deepEqual(speakerNamesToSend([" Alice ", "", "Carol", "", "Eve"], 4), ["Alice", "", "Carol"]);
+  assert.deepEqual(speakerNamesToSend(["", " ", ""], 3), []);
+  assert.deepEqual(speakerNamesToSend(["Alice", "Bob", "Carol"], 2), ["Alice", "Bob"]);
+  assert.deepEqual(speakerNamesToSend(["Alice"], 0), []);
+});
+
+test("speaker names are valid when short, plain and distinct ignoring case", () => {
+  assert.equal(speakerNamesValid([]), true);
+  assert.equal(speakerNamesValid(["Alice", "", "Bob", ""]), true);
+  assert.equal(speakerNamesValid(["Zo\u00e9 D.", "O'Neil", "x".repeat(40)]), true);
+  assert.equal(speakerNamesValid(["x".repeat(41)]), false);
+  assert.equal(speakerNamesValid(["Alice", "ALICE"]), false);
+  assert.equal(speakerNamesValid(["Alice", " alice "]), false);
+  for (const bad of ["<Alice", "Al>ice", "Al\tice", "Al\u0000ice", "Al\u007fice", "Al\u0085ice"]) {
+    assert.equal(speakerNamesValid([bad]), false, JSON.stringify(bad));
+  }
+});
+
+test("a line cut in its middle keeps its last characters whole", () => {
+  assert.deepEqual(splitForCut("weekly review with the leads.raw.vtt", 12), ["weekly review with the l", "eads.raw.vtt"]);
+  assert.deepEqual(splitForCut("a.wav", 12), ["", "a.wav"]);
+  assert.deepEqual(splitForCut("", 12), ["", ""]);
+  assert.deepEqual(splitForCut("ab\u{1F600}cd", 3), ["ab", "\u{1F600}cd"]);
 });

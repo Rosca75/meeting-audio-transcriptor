@@ -1,5 +1,7 @@
 /* style.css: the page's layout and components. Every colour, size and space comes from a token in
-   tokens.css; this file declares none. There are no external fonts and no remote images. */
+   tokens.css; this file declares none. There are no external fonts and no remote images. The page is
+   a frame of the window's height: the header keeps its size, the view under it takes the rest, and
+   the document itself never scrolls. */
 
 *,
 *::before,
@@ -17,32 +19,32 @@ body {
   color: var(--color-text);
   font-family: var(--font);
   font-size: var(--text-base);
-  line-height: 1.5;
+  line-height: var(--line);
 }
 
 .page {
-  max-width: var(--page-width);
-  margin: 0 auto;
-  padding: var(--space-5) var(--space-4);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
 }
 
 h1 {
   margin: 0;
-  font-size: var(--text-h1);
+  font-size: var(--text-title);
+  font-weight: var(--weight-strong);
 }
 
-h2 {
-  margin: 0 0 var(--space-3);
-  font-size: var(--text-h2);
-}
-
+h2,
 h3 {
-  margin: var(--space-4) 0 var(--space-2);
+  margin: 0 0 var(--space-1);
   font-size: var(--text-base);
+  font-weight: var(--weight-strong);
 }
 
 p {
-  margin: var(--space-2) 0;
+  margin: 0;
 }
 
 .muted {
@@ -51,6 +53,32 @@ p {
 
 .small {
   font-size: var(--text-small);
+}
+
+/* A sentence that may be longer than its row: cut at its end with an ellipsis, the whole in title. */
+.one-line {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A name or a path that may be longer than its row: cut in its middle, so the end that tells one
+   file or folder from another always shows. Spaces at the cut are kept. */
+.cut-line {
+  display: flex;
+  min-width: 0;
+  white-space: pre;
+}
+
+.cut-head {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cut-tail {
+  flex: none;
 }
 
 .visually-hidden {
@@ -63,100 +91,81 @@ p {
 }
 
 .page-header {
-  margin-bottom: var(--space-4);
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The version sits on the title's line and takes the room up to the gear. */
+.version {
+  flex: 1;
+  min-width: 0;
+  align-self: flex-end;
+}
+
+.logo svg {
+  display: block;
+  width: var(--logo-size);
+  height: var(--logo-size);
+}
+
+/* The view takes the height the header leaves. Its own scrolling is the last resort of
+   a window made smaller than the content; the inset keeps a focus ring at its edge from being cut. */
+main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: calc(-1 * var(--space-1));
+  padding: var(--space-1);
+  overflow-y: auto;
+}
+
+.view {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .card {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--hairline) solid var(--color-border);
   border-radius: var(--radius);
-  padding: var(--space-4);
-  margin-bottom: var(--space-4);
+  padding: var(--space-3);
 }
 
-/* The settings fieldset is only a way to disable its controls together, so it draws nothing. */
+/* The inputs fieldset is only a way to disable its controls together, so it draws nothing. */
 .inputs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
   border: 0;
   margin: 0;
   padding: 0;
   min-width: 0;
 }
 
-.group {
-  border: 0;
-  margin: 0 0 var(--space-4);
-  padding: 0;
-}
-
-.group legend {
-  padding: 0;
-  font-weight: 600;
-  margin-bottom: var(--space-2);
-}
-
-.choices {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-5);
-}
-
-.choice {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 2rem;
-}
-
-.choice input {
-  width: 1.125rem;
-  height: 1.125rem;
-  accent-color: var(--color-primary);
-}
-
-.field {
-  margin-top: var(--space-3);
-}
-
-.field label {
-  display: block;
-  margin-bottom: var(--space-1);
-}
-
-input[type="text"] {
-  width: 8rem;
-  padding: var(--space-2) var(--space-3);
-  font: inherit;
-  color: var(--color-text);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-}
-
-input[type="text"]:disabled {
-  opacity: 0.6;
-}
-
-input[aria-invalid="true"] {
-  border-color: var(--color-error);
-}
-
 .button {
   font: inherit;
-  padding: var(--space-2) var(--space-4);
+  line-height: var(--line);
+  padding: var(--control-inset) var(--space-3);
   color: var(--color-text);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--hairline) solid var(--color-control-border);
   border-radius: var(--radius);
   cursor: pointer;
-  min-height: 2.5rem;
+  white-space: nowrap;
 }
 
 .button:hover:not(:disabled) {
-  border-color: var(--color-primary);
+  background: var(--color-info-bg);
 }
 
 .button:disabled {
-  opacity: 0.55;
+  opacity: var(--dim);
   cursor: not-allowed;
 }
 
@@ -164,7 +173,7 @@ input[aria-invalid="true"] {
   color: var(--color-primary-text);
   background: var(--color-primary);
   border-color: var(--color-primary);
-  font-weight: 600;
+  font-weight: var(--weight-strong);
 }
 
 .button-primary:hover:not(:disabled) {
@@ -172,82 +181,283 @@ input[aria-invalid="true"] {
   border-color: var(--color-primary-hover);
 }
 
+/* A button that holds a picture alone is a square of the common control height. */
+.button-icon {
+  display: inline-flex;
+  padding: var(--control-inset);
+}
+
+.button-icon svg {
+  display: block;
+  width: var(--line);
+  height: var(--line);
+}
+
 :focus-visible {
-  outline: var(--focus-ring) solid var(--color-focus);
-  outline-offset: 2px;
+  outline: var(--ring) solid var(--color-accent);
+  outline-offset: var(--hairline);
+}
+
+/* An orange ring would vanish against the orange button, so there the ring takes the text colour. */
+.button-primary:focus-visible {
+  outline-color: var(--color-text);
 }
 
 .drop-zone {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-4);
-  border: 2px dashed var(--color-border);
+  padding: var(--space-2) var(--space-3);
+  border: var(--hairline) dashed var(--color-control-border);
   border-radius: var(--radius);
 }
 
 .drop-zone.is-dragging {
   background: var(--color-drop-bg);
-  border-color: var(--color-primary);
+  border-color: var(--color-accent);
 }
 
 .file-name {
-  font-weight: 600;
-  overflow-wrap: anywhere;
+  margin-top: var(--space-2);
+  font-weight: var(--weight-strong);
+}
+
+.file-name.is-empty {
+  color: var(--color-muted);
+  font-weight: inherit;
 }
 
 .folder-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
 }
 
 .folder-path {
-  flex: 1 1 14rem;
+  flex: 1;
   font-family: var(--font-mono);
   font-size: var(--text-small);
-  overflow-wrap: anywhere;
 }
 
-.actions {
+/* Without a folder the row holds a sentence, which reads as text and not as a path. */
+.folder-path.is-empty {
+  color: var(--color-muted);
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Start or Cancel, with the reason Start is off or the progress of the run in the rest of the row. */
+.run {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  min-height: var(--control-height);
+}
+
+.run .one-line,
+.progress-box {
+  flex: 1;
+}
+
+.progress-box {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 progress {
+  appearance: none;
+  display: block;
   width: 100%;
-  height: 1rem;
-  accent-color: var(--color-primary);
+  height: var(--progress-height);
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--color-track);
+  overflow: hidden;
+}
+
+progress::-webkit-progress-bar {
+  background: var(--color-track);
+}
+
+progress::-webkit-progress-value {
+  background: var(--color-accent);
+}
+
+progress::-moz-progress-bar {
+  background: var(--color-accent);
 }
 
 .notice {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius);
   background: var(--color-info-bg);
+  overflow-wrap: anywhere;
 }
 
-.notice-error,
-.banner-error {
+.card .notice {
+  margin-top: var(--space-2);
+}
+
+.notice-error {
   color: var(--color-error);
   background: var(--color-error-bg);
 }
 
-.banner {
-  padding: var(--space-3) var(--space-4);
+/* The sentence under a setting that keeps a run from starting. */
+.field-error {
+  margin-top: var(--space-1);
+  color: var(--color-error);
+  font-size: var(--text-small);
+}
+
+/* The settings panel: two columns, the language and the files on the left, the speakers on the right. */
+.settings {
+  flex: 1;
+  display: grid;
+  grid-template-columns: var(--settings-left) minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-4);
+  overflow-y: auto;
+}
+
+.settings-column {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.group {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.group legend {
+  padding: 0;
+  margin-bottom: var(--space-1);
+  font-weight: var(--weight-strong);
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: calc(var(--space-1) / 2) 0;
+}
+
+.choice input {
+  flex: none;
+  width: var(--tick-size);
+  height: var(--tick-size);
+  margin: 0;
+  accent-color: var(--color-accent);
+}
+
+/* A language is chosen by its flag: the radio button is kept for the keyboard and for its name, and
+   the frame around the picture shows the choice and the focus. */
+.flags {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.flag {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.flag-frame {
+  display: block;
+  padding: var(--ring);
+  border: var(--ring) solid transparent;
   border-radius: var(--radius);
-  margin-bottom: var(--space-4);
+}
+
+.flag-frame svg {
+  display: block;
+  width: var(--flag-width);
+  height: var(--flag-height);
+  border: var(--hairline) solid var(--color-control-border);
+}
+
+.flag input:checked + .flag-frame {
+  border-color: var(--color-accent);
+}
+
+.flag input:focus-visible + .flag-frame {
+  outline: var(--ring) solid var(--color-accent);
+  outline-offset: var(--ring);
+}
+
+input[type="text"] {
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  line-height: var(--line);
+  padding: var(--control-inset) var(--space-2);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--hairline) solid var(--color-control-border);
+  border-radius: var(--radius);
+}
+
+input[type="text"]::placeholder {
+  color: var(--color-muted);
+  opacity: 1;
+}
+
+input[type="text"]:disabled {
+  opacity: var(--dim);
+}
+
+input[type="text"][aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+
+.count-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+/* Declared below the text field rule, which it ties with: the count is a short number. */
+.count-row input {
+  flex: none;
+  width: var(--count-width);
+}
+
+.names-hint {
+  margin-top: var(--space-1);
+}
+
+.names {
+  margin-top: var(--space-2);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-1) var(--space-2);
+}
+
+/* The summary fills the view; the list of files is the part that gives way when there are many. */
+.summary {
+  flex: 1;
 }
 
 .summary-list {
   display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: var(--space-1) var(--space-4);
-  margin: 0;
+  grid-template-columns: repeat(2, max-content auto);
+  gap: var(--space-1) var(--space-3);
+  margin: 0 0 var(--space-2);
 }
 
 .summary-list dt {
@@ -256,25 +466,30 @@ progress {
 
 .summary-list dd {
   margin: 0;
-  font-weight: 600;
+  font-weight: var(--weight-strong);
 }
 
 .files-list {
-  margin: 0 0 var(--space-4);
-  padding-left: var(--space-5);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
   font-family: var(--font-mono);
   font-size: var(--text-small);
-  overflow-wrap: anywhere;
+  line-height: var(--line-small);
 }
 
-.page-footer {
-  margin-top: var(--space-5);
-  text-align: center;
+.actions {
+  display: flex;
+  gap: var(--space-2);
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .drop-zone,
-  .button {
+  .button,
+  .flag-frame {
     transition: background-color 0.15s, border-color 0.15s;
   }
 }

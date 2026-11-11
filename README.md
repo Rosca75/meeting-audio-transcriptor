@@ -11,7 +11,7 @@ It is a desktop window and a command-line tool on one engine, for Windows x64 an
 - It reads `.wav`, `.m4a` and the audio track of an `.mp4`.
 - It transcribes English, French or German. You choose the language for each file. It does not detect the language, and one file holds one language.
 - It cleans the text by default (section 4). No generative model rewrites what was said; the raw text stays available.
-- It does not translate, does not name speakers and does not read live audio.
+- It does not translate, does not recognise who a speaker is and does not read live audio.
 
 ## 2. Outputs
 
@@ -81,7 +81,7 @@ Let's start with the budget for the second quarter.
 The program tells the voices in a recording apart and labels them `Speaker 1`, `Speaker 2` and so on, in order of first appearance. The labels are anonymous: the program never knows who is who.
 
 - It is on by default. `--no-speakers` (or its checkbox) switches it off; the transcript then has no labels.
-- If you know how many people speak, give the number (`--speakers 4`, or the speaker count field). The count is a hint that makes the result steadier; without it the program may find one speaker too many or too few in a real meeting.
+- If you know how many people speak, give the number (`--speakers 4`, or the number of speakers in the window's settings). The count is a hint that makes the result steadier; without it the program may find one speaker too many or too few in a real meeting.
 - Without the number, a participant who speaks only a few seconds (less than the larger of 4 seconds and 1.5 % of all speaking time) may be merged into the closest voice, and their words then appear under another speaker's label. Give the speaker count to keep everyone.
 - Overlapping speech goes to one speaker only: the recogniser reads one voice at a time, so when two people talk at once the louder or earlier one is transcribed and the other is mostly lost.
 - Two voices that sound alike, or one person speaking from very different microphones, can be confused.
@@ -128,14 +128,16 @@ Then `tar -xzf meeting-audio-transcriptor-<version>-linux-x64.tar.gz` and run `.
 
 ## 6. The desktop window
 
-1. Start `meeting-audio-transcriptor`. The window shows the version and whether the models are in place.
+1. Start `meeting-audio-transcriptor`. A small window opens with the recording, the output folder and Start; the version is beside the title, and a message says so if the models are not in place.
 2. Choose the recording: press "Choose file...", or drop a `.m4a`, `.mp4` or `.wav` file on the window. Anything else is refused with a message; when several files are dropped the first supported one is used.
-3. Choose the language the meeting is spoken in.
-4. Choose the formats to write. Tick the raw files box if you want `.raw.vtt` and `.raw.txt`.
-5. Leave speaker separation on, or switch it off. Enter the number of speakers (1 to 10) if you know it.
-6. Optionally choose an output folder; by default the transcripts go next to the recording.
-7. Press Start. A progress bar shows the stage (loading models, transcribing, identifying speakers, cleaning, writing). All options are locked while it runs. Cancel stops it and writes nothing.
-8. When it ends, a summary shows what was written, how long the recording was and how fast the run was. "Open output folder" shows the files.
+3. Optionally change the output folder; by default the transcripts go next to the recording.
+4. The gear button opens the settings, and Done returns:
+   - the language the meeting is spoken in, chosen by its flag (English, French or German);
+   - the formats to write, and the raw files box if you want `.raw.vtt` and `.raw.txt`;
+   - speaker separation, on by default, and the number of speakers (1 to 10) if you know it;
+   - once the number is given, a name for each speaker. A name replaces the label of the speaker in that position, in order of first appearance; an empty field keeps `Speaker 1`, `Speaker 2` and so on.
+5. Press Start. A progress bar shows the stage (reading the audio, finding speech, recognising words, telling speakers apart, writing the transcript). The settings are locked while it runs. Cancel stops it and writes nothing.
+6. When it ends, a summary shows what was written, how long the recording was and how fast the run was. "Open output folder" shows the files.
 
 ## 7. The command line
 
@@ -255,7 +257,7 @@ It writes no registry key. To uninstall, delete the extracted folder and that da
 | Windows N edition without the Media Feature Pack | the bundled ffmpeg decodes `.m4a` and `.mp4` instead; if the `ffmpeg` folder was removed, restore it, install the Media Feature Pack from Microsoft, or convert the file to `.wav` |
 | "models folder lacks ..." | run from the extracted package, or pass `--models <dir>` or set `MAT_MODELS_DIR`; from source see section 12 |
 | Slow on an older or small machine | `--threads 2` if the machine is also busy, `--no-speakers` to skip speaker separation, and close other programs |
-| Fewer speakers than the meeting had | a participant who spoke only a few seconds is merged into the closest voice: run again with `--speakers <n>` (or the speaker count field) |
+| Fewer speakers than the meeting had | a participant who spoke only a few seconds is merged into the closest voice: run again with `--speakers <n>` (or the number of speakers in the window's settings) |
 | A hidden `.mat-bak` file remains in the output folder after a crash | it is the previous transcript, set aside while the new set was placed: rename it to the transcript's name (drop the leading dot, the random part and the `.mat-bak` ending), or delete it |
 | Quiet speakers missing | compare `.txt` with `.raw.txt`; if the words are in the raw file, cleaning removed them, and if not the recogniser did not hear them |
 

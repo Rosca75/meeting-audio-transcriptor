@@ -66,7 +66,7 @@ public sealed class ServiceTranscriber : ITranscriber, IDisposable
     /// <summary>Releases the loaded models.</summary>
     public void Dispose() => _service.Dispose();
 
-    /// <summary>The service's request for the page's: same file, language, formats, speakers and raw files; overwriting as the service does by default.</summary>
+    /// <summary>The service's request for the page's: same file, language, formats, speakers, speaker names and raw files; overwriting as the service does by default.</summary>
     internal static TranscriptionRequest ToServiceRequest(TranscribeRequest request) => new()
     {
         InputPath = request.InputPath,
@@ -75,6 +75,7 @@ public sealed class ServiceTranscriber : ITranscriber, IDisposable
         OutputFolder = request.OutputFolder,
         SpeakerSeparation = request.SpeakerSeparation,
         SpeakerCountHint = request.SpeakerSeparation ? request.SpeakerCount : null,
+        SpeakerNames = request.SpeakerSeparation ? request.SpeakerNames : null,
         RawFiles = request.RawFiles,
     };
 

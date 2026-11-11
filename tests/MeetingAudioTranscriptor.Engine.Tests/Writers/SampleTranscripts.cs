@@ -56,6 +56,17 @@ internal static class SampleTranscripts
             Segments = segments,
         };
 
+    /// <summary>The sample document with its two speakers named by the user, the second with a character WebVTT escapes.</summary>
+    public static TranscriptDocument Named(IReadOnlyList<TranscriptSegment> segments) =>
+        Document(segments) with
+        {
+            Speakers =
+            [
+                new TranscriptSpeaker { Id = "S1", Label = "Anne-Sophie Müller", SpeakingSeconds = 10 },
+                new TranscriptSpeaker { Id = "S2", Label = "R&D", SpeakingSeconds = 5 },
+            ],
+        };
+
     public static TranscriptDocument Empty(bool speakers = false) => Document([], speakers, 0);
 
     public static byte[] Bytes(TranscriptFormat format, TranscriptVariant variant, TranscriptDocument document)

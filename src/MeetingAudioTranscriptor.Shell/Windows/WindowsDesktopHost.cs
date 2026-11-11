@@ -29,8 +29,11 @@ namespace MeetingAudioTranscriptor.Shell.Windows;
 internal sealed class WindowsDesktopHost : IDesktopHost, IAutomationActions
 {
     private const string Title = "Meeting Audio Transcriptor";
-    private const int InitialWidth = 900;
-    private const int InitialHeight = 720;
+
+    // The size the page is laid out to fit without scrolling, in device-independent pixels; the
+    // window also refuses to be dragged smaller.
+    private const int InitialWidth = 560;
+    private const int InitialHeight = 440;
 
     /// <summary>Where Microsoft publishes the Evergreen runtime.</summary>
     private const string RuntimeDownloadPage = "https://developer.microsoft.com/microsoft-edge/webview2/";

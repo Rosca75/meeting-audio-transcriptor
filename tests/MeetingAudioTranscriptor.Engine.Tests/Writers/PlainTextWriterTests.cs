@@ -55,6 +55,19 @@ public sealed class PlainTextWriterTests
     }
 
     [Fact]
+    public void AGivenNameHeadsTheTurnsOfBothVariants()
+    {
+        TranscriptDocument document = Named(
+        [
+            Segment(1, 0, 1, "S1", "Good morning.", raw: "Um good morning."),
+            Segment(2, 2.5, 3.5, "S2", "Yes."),
+        ]);
+
+        Assert.Equal(Header + "\n\n[00:00:00] Anne-Sophie Müller:\nGood morning.\n\n[00:00:02] R&D:\nYes.\n", Txt(document));
+        Assert.Equal(Header + "\n\n[00:00:00] Anne-Sophie Müller:\nUm good morning.\n\n[00:00:02] R&D:\nYes.\n", Txt(document, TranscriptVariant.Raw));
+    }
+
+    [Fact]
     public void ReturningSpeakerStartsANewTurn()
     {
         string txt = Txt(Document(
