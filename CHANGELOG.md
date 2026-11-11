@@ -7,6 +7,18 @@ All notable changes to meeting-audio-transcriptor are recorded here. The format 
 
 ## [Unreleased]
 
+### Added
+
+- The window names the speakers: with a number of speakers entered, one name per speaker can be
+  typed, and the `.vtt`, `.json` and `.txt` transcripts carry the names in place of `Speaker 1`,
+  `Speaker 2`. The run request gains the optional `speakerNames` (`frontend/BRIDGE.md`, chapter 4).
+
+### Changed
+
+- The window is compact (560 by 440) and never scrolls: it shows the recording, the output folder
+  and Start, and every setting sits behind a gear button. Languages are chosen by flag, the title
+  carries a logo and the colours follow the corporate palette in both light and dark schemes.
+
 ## [0.1.0]
 
 The first release: an offline meeting transcriber for Windows x64 and Linux x64.
