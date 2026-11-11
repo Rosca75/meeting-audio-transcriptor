@@ -35,6 +35,7 @@ internal static class TranscriptAssembler
     /// <summary>Builds the document.</summary>
     /// <param name="words">Every word in time order, absolute times.</param>
     /// <param name="speakers">One speaker index per word, or null without speaker separation.</param>
+    /// <param name="speakerNames">The names the user gave, by order of first appearance; null for none.</param>
     /// <param name="options">The segmentation and the guard.</param>
     /// <param name="cleaner">The cleaner of the run's language.</param>
     /// <param name="facts">The metadata facts.</param>
@@ -43,6 +44,7 @@ internal static class TranscriptAssembler
     public static TranscriptDocument Build(
         IReadOnlyList<RecognizedWord> words,
         IReadOnlyList<int>? speakers,
+        IReadOnlyList<string>? speakerNames,
         SegmentationOptions options,
         SegmentCleaner cleaner,
         Facts facts,
@@ -153,7 +155,7 @@ internal static class TranscriptAssembler
             speakerList.Add(new TranscriptSpeaker
             {
                 Id = SpeakerId(i),
-                Label = "Speaker " + (i + 1).ToString(CultureInfo.InvariantCulture),
+                Label = SpeakerLabel(i, speakerNames),
                 SpeakingSeconds = seconds[i],
             });
         }
@@ -209,6 +211,20 @@ internal static class TranscriptAssembler
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// The label of the speaker at a position, from 0 in order of first appearance: the name given
+    /// for that position, or <c>Speaker 1</c>, <c>Speaker 2</c> when none or a blank one was given.
+    /// </summary>
+    internal static string SpeakerLabel(int index, IReadOnlyList<string>? names)
+    {
+        if (names is not null && index < names.Count && !string.IsNullOrWhiteSpace(names[index]))
+        {
+            return names[index].Trim();
+        }
+
+        return "Speaker " + (index + 1).ToString(CultureInfo.InvariantCulture);
     }
 
     private static string SpeakerId(int index) => "S" + (index + 1).ToString(CultureInfo.InvariantCulture);

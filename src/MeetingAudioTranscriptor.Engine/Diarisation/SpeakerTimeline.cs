@@ -32,7 +32,8 @@ public readonly record struct SpeakerTurn(double Start, double End, int Speaker)
 /// </para>
 /// <para>
 /// <b>Numbering.</b> Speakers are numbered 0, 1, 2 ... in order of their first turn, and the
-/// transcript names them Speaker 1, Speaker 2 ..., so the labels say nothing about who anyone is.
+/// transcript names them Speaker 1, Speaker 2 ... unless the user named a position, so a label says
+/// who someone is only when the user said so.
 /// </para>
 /// </remarks>
 public sealed class SpeakerTimeline
@@ -60,7 +61,7 @@ public sealed class SpeakerTimeline
     /// <summary>The cluster label each speaker index was built from.</summary>
     internal IReadOnlyList<int> ClusterOfSpeaker { get; }
 
-    /// <summary>The anonymous label of a speaker index: Speaker 1 for index 0.</summary>
+    /// <summary>The anonymous label of a speaker index, the one a speaker the user did not name carries: Speaker 1 for index 0.</summary>
     public static string Label(int speaker)
     {
         return "Speaker " + (speaker + 1).ToString(CultureInfo.InvariantCulture);

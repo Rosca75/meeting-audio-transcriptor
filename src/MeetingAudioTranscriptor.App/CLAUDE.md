@@ -52,7 +52,7 @@ The App composes the engine for both front ends: the transcription service (`Tra
 
 **Progress is non-decreasing and rate limited.** `ProgressForwarder` clamps to the highest fraction seen and drops reports closer than 100 ms unless the stage changed or the work is complete, and it closes before the terminal event so none follows it.
 
-**A request is validated and normalised before it runs.** `RequestValidator` lower-cases and de-duplicates the formats, drops the speaker count when separation is off and always sets the output folder; validation creates nothing, the service creates the folder.
+**A request is validated and normalised before it runs.** `RequestValidator` lower-cases and de-duplicates the formats, drops the speaker count and the speaker names when separation is off, trims the names and always sets the output folder; validation creates nothing, the service creates the folder.
 
 **The demo transcriber simulates a run.** `DemoTranscriber` (selected by `MAT_UI_DEMO=1` in the Shell) writes nothing and needs no model, so the page can be shown and tested without them.
 

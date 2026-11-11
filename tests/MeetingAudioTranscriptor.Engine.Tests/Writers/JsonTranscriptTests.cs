@@ -50,6 +50,17 @@ public sealed class JsonTranscriptTests
     }
 
     [Fact]
+    public void AGivenNameIsTheLabelAndTheIdStays()
+    {
+        string json = Json(Named([Segment(1, 0, 1, "S1", "Hi.")]));
+
+        Assert.Contains(
+            "  \"speakers\": [\n    {\n      \"id\": \"S1\",\n      \"label\": \"Anne-Sophie Müller\",\n      \"speakingSeconds\": 10\n    },\n    {\n      \"id\": \"S2\",\n      \"label\": \"R&D\",\n      \"speakingSeconds\": 5\n    }\n  ],",
+            json);
+        Assert.Contains("\"speaker\": \"S1\"", json);
+    }
+
+    [Fact]
     public void NullsAreOmitted()
     {
         string json = Json(Document([Segment(1, 0, 1, null, "Hi.")], speakers: false));

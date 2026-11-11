@@ -15,10 +15,10 @@ public sealed class TranscriptAssemblerTests
 {
     private static readonly DateTimeOffset Created = new(2026, 11, 10, 18, 30, 5, TimeSpan.Zero);
 
-    private static TranscriptDocument Build(IReadOnlyList<RecognizedWord> words, IReadOnlyList<int>? speakers = null, SegmentationOptions? options = null)
+    private static TranscriptDocument Build(IReadOnlyList<RecognizedWord> words, IReadOnlyList<int>? speakers = null, SegmentationOptions? options = null, IReadOnlyList<string>? names = null)
     {
         TranscriptAssembler.Facts facts = new(PipelineTestKit.Request(), 12.5, 6.25, 3.5, Created, 4, speakers is not null);
-        return TranscriptAssembler.Build(words, speakers, options ?? new SegmentationOptions(), new SegmentCleaner(CleaningLanguage.English), facts, null, TestContext.Current.CancellationToken);
+        return TranscriptAssembler.Build(words, speakers, names, options ?? new SegmentationOptions(), new SegmentCleaner(CleaningLanguage.English), facts, null, TestContext.Current.CancellationToken);
     }
 
     private static RecognizedWord W(string text, double start, float confidence = 0.9f) => new(text, start, start + 0.3, confidence);
@@ -102,6 +102,34 @@ public sealed class TranscriptAssemblerTests
         Assert.True(document.Segments.Select(s => s.Speaker).SequenceEqual(["S1", "S2", "S1"]), $"got {string.Join(",", document.Segments.Select(s => s.Speaker))}");
         Assert.True(document.Speakers.Count == 2 && document.Speakers[1].Label == "Speaker 2", "got the wrong speaker list");
         Assert.True(Math.Abs(document.Speakers[0].SpeakingSeconds - 0.6) < 1e-9, $"got {document.Speakers[0].SpeakingSeconds}, wanted 0.6 summed over S1's segments");
+    }
+
+    [Fact]
+    public void AGivenNameReplacesTheLabelOfItsPositionAndTheIdsStay()
+    {
+        // Cluster 5 speaks first, so it is position 1 and takes the first name.
+        TranscriptDocument document = Build([W("One.", 0), W("Two.", 2), W("Three.", 4)], [5, 2, 5], names: ["Anna Keller", "Björn"]);
+
+        string[] speakers = document.Speakers.Select(s => s.Id + "=" + s.Label).ToArray();
+        Assert.True(speakers.SequenceEqual(["S1=Anna Keller", "S2=Björn"]), $"got speakers {string.Join(", ", speakers)}");
+        Assert.True(document.Segments.Select(s => s.Speaker).SequenceEqual(["S1", "S2", "S1"]), $"got {string.Join(",", document.Segments.Select(s => s.Speaker))}, wanted the ids unchanged by the names");
+    }
+
+    [Fact]
+    public void ABlankNameAndASpeakerBeyondTheListKeepTheDefaultLabel()
+    {
+        TranscriptDocument document = Build([W("One.", 0), W("Two.", 2), W("Three.", 4), W("Four.", 6)], [0, 1, 2, 3], names: ["", "  Chloé  ", "   "]);
+
+        string[] labels = document.Speakers.Select(s => s.Label).ToArray();
+        Assert.True(labels.SequenceEqual(["Speaker 1", "Chloé", "Speaker 3", "Speaker 4"]), $"got labels {string.Join(", ", labels)}");
+    }
+
+    [Fact]
+    public void NamesWithoutSpeakerSeparationNameNobody()
+    {
+        TranscriptDocument document = Build([W("One.", 0)], speakers: null, names: ["Anna"]);
+
+        Assert.True(document.Speakers.Count == 0 && document.Segments[0].Speaker is null, $"got {document.Speakers.Count} speakers without separation, wanted none");
     }
 
     [Fact]

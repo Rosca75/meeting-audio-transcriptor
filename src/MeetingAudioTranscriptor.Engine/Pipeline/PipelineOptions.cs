@@ -1,5 +1,6 @@
-// The settings of a transcription run: how many workers recognise, how the audio is chunked and how words become segments.
+// The settings of a transcription run: how many workers recognise, how the audio is chunked, how words become segments and what the speakers are called.
 using System;
+using System.Collections.Generic;
 using MeetingAudioTranscriptor.Engine.Vad;
 
 namespace MeetingAudioTranscriptor.Engine.Pipeline;
@@ -38,6 +39,17 @@ public sealed record PipelineOptions
 
     /// <summary>How words become segments, and which segments the hallucination guard removes.</summary>
     public SegmentationOptions Segmentation { get; init; } = new();
+
+    /// <summary>
+    /// The names the user gave the speakers, by position: entry k names the speaker who is the
+    /// (k+1)-th to speak. Null for none.
+    /// </summary>
+    /// <remarks>
+    /// A blank entry and a speaker past the end of the list keep the default label, so a user names
+    /// only the voices they know. A name is trimmed and otherwise written as it is: the caller checks
+    /// what a name may hold. The names change labels alone; the speaker ids stay <c>S1</c>, <c>S2</c>.
+    /// </remarks>
+    public IReadOnlyList<string>? SpeakerNames { get; init; }
 
     /// <summary>The shortest time between two progress reports of one stage; a stage change is always reported.</summary>
     public TimeSpan ProgressInterval { get; init; } = TimeSpan.FromMilliseconds(100);

@@ -33,6 +33,19 @@ public sealed class VttWriterTests
     }
 
     [Fact]
+    public void AGivenNameIsTheVoiceOfBothVariants()
+    {
+        TranscriptDocument document = Named([Segment(7, 1, 2.5, "S1", "Bonjour.", raw: "Euh bonjour."), Segment(8, 3, 4, "S2", "Salut.")]);
+
+        Assert.Equal(
+            "WEBVTT\n\n7\n00:00:01.000 --> 00:00:02.500\n<v Anne-Sophie Müller>Bonjour.</v>\n\n8\n00:00:03.000 --> 00:00:04.000\n<v R&amp;D>Salut.</v>\n",
+            Vtt(document));
+        Assert.Equal(
+            "WEBVTT\n\n7\n00:00:01.000 --> 00:00:02.500\n<v Anne-Sophie Müller>Euh bonjour.</v>\n\n8\n00:00:03.000 --> 00:00:04.000\n<v R&amp;D>Salut.</v>\n",
+            Vtt(document, TranscriptVariant.Raw));
+    }
+
+    [Fact]
     public void NoVoiceTagWhenSegmentHasNoSpeaker()
     {
         string vtt = Vtt(Document([Segment(1, 0, 1, null, "Hello.")], speakers: false));

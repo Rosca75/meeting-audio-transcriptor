@@ -215,7 +215,7 @@ Each word means one thing in code, JSON, copy and documentation.
 | Segment | a sentence-like stretch of words by one speaker: a subtitle cue, a line of the text, the unit the cleaner reads |
 | Turn | consecutive segments of one speaker, printed under one speaker heading in the text transcript |
 | Cleaned and raw | the cleaned text has fillers, stutters, false starts and bare acknowledgements removed; the raw text is what the recogniser wrote; the JSON holds both for every segment |
-| Speaker label | the anonymous name of a voice, `Speaker 1`, `Speaker 2`, in order of first appearance; its id is `S1`, `S2` |
+| Speaker label | the name of a voice: anonymous by default, `Speaker 1`, `Speaker 2`, in order of first appearance, or the name the user gave for that position; its id is `S1`, `S2` |
 | Confidence | a probability from 0 to 1: per word the recogniser's own, per segment the mean of its words |
 | Removed | a segment or word that cleaning took out of the cleaned text, with the reason on a segment |
 

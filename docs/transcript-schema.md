@@ -9,7 +9,7 @@ The `.json` transcript is the one file that carries everything a run produced, t
 - Every time is in seconds from the start of the recording. Times, durations and confidences are rounded to three decimals.
 - Segments are in time order and numbered from 1. A segment whose cleaned `text` is empty was removed whole by cleaning: `removed` then names the reason, and `rawText` still holds what was recognised. A cleaning that keeps part of a segment leaves `removed` absent.
 - In `words`, a word with `removed: true` is not in the cleaned `text`; the key is absent for a word cleaning kept.
-- A segment's `speaker` is the `id` of an entry of `speakers`. When speaker separation was off, `speakers` is empty and no segment has a `speaker`.
+- A segment's `speaker` is the `id` of an entry of `speakers`. A name the user gave changes a speaker's `label` alone, never an `id`. When speaker separation was off, `speakers` is empty and no segment has a `speaker`.
 - A reader ignores keys it does not know, and `schemaVersion` is raised when a field changes meaning.
 
 ## 2. Fields
@@ -53,7 +53,7 @@ The `.json` transcript is the one file that carries everything a run produced, t
 | Key | Type | Notes |
 |---|---|---|
 | `id` | string | what segments refer to, such as `S1` |
-| `label` | string | what the text formats show, such as `Speaker 1` |
+| `label` | string | what the text formats show: `Speaker 1`, `Speaker 2` in order of first appearance, or the name the user gave for that position |
 | `speakingSeconds` | number | the seconds the speaker spoke, summed over their segments |
 
 ### `segments[]`
