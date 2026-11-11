@@ -12,6 +12,7 @@ using MeetingAudioTranscriptor.Engine.Pipeline;
 using MeetingAudioTranscriptor.Engine.Recognition;
 using MeetingAudioTranscriptor.Engine.Tests.Vad;
 using MeetingAudioTranscriptor.Engine.Vad;
+using MeetingAudioTranscriptor.Engine.Writers;
 using Xunit;
 
 namespace MeetingAudioTranscriptor.Engine.Tests.Pipeline;
@@ -227,6 +228,36 @@ public sealed class TranscriptionPipelineTests
         Assert.True(bySegment.SequenceEqual(["S1", "S1", "S2", "S2", "S1", "S1", "S2", "S2"]), $"got segment speakers {string.Join(",", bySegment)}");
         Assert.True(document.Metadata.Settings.SpeakerSeparation && document.Metadata.Settings.Threads == 3, "the settings should record the separation and the thread count used");
         Assert.True(Math.Abs(document.Speakers[0].SpeakingSeconds - 2.4) < 1e-9, $"got S1 speaking {document.Speakers[0].SpeakingSeconds} s, wanted 4 segments of 0.6 s");
+    }
+
+    [Fact]
+    public void TheNamesOfTheOptionsReachTheSpeakersAndEveryWriter()
+    {
+        // Each chunk holds two words: cluster 7 speaks chunks 0 and 2, cluster 3 chunk 1, and nobody is third.
+        ScriptedSeparator separator = new((i, _) => i / 2 % 2 == 0 ? 7 : 3);
+        TranscriptionPipeline pipeline = PipelineTestKit.Pipeline(new ScriptedChunkSource(3), new ScriptedRecognizer(), threads: 2, () => separator, speakerNames: ["Anna", "Björn", "Nobody"]);
+
+        TranscriptDocument document = pipeline.Run(new SilentSource(6), PipelineTestKit.Request(hint: 3), null, Token).Document;
+
+        string[] speakers = document.Speakers.Select(s => s.Id + "=" + s.Label).ToArray();
+        Assert.True(speakers.SequenceEqual(["S1=Anna", "S2=Björn"]), $"got speakers {string.Join(", ", speakers)}");
+        string vtt = Written(TranscriptFormat.Vtt, document);
+        Assert.Equal(
+            "WEBVTT\n\n1\n00:00:00.100 --> 00:00:00.700\n<v Anna>w0a w0b.</v>\n\n2\n00:00:02.100 --> 00:00:02.700\n<v Björn>w1a w1b.</v>\n\n3\n00:00:04.100 --> 00:00:04.700\n<v Anna>w2a w2b.</v>\n",
+            vtt);
+        string txt = Written(TranscriptFormat.Txt, document);
+        Assert.EndsWith("Speakers: 2\n\n[00:00:00] Anna:\nw0a w0b.\n\n[00:00:02] Björn:\nw1a w1b.\n\n[00:00:04] Anna:\nw2a w2b.\n", txt);
+        string json = Written(TranscriptFormat.Json, document);
+        Assert.Contains("\"id\": \"S1\",\n      \"label\": \"Anna\",", json);
+        Assert.Contains("\"id\": \"S2\",\n      \"label\": \"Björn\",", json);
+        Assert.DoesNotContain("Speaker 1", vtt + txt + json);
+    }
+
+    private static string Written(TranscriptFormat format, TranscriptDocument document)
+    {
+        using MemoryStream stream = new();
+        TranscriptWriters.Write(format, TranscriptVariant.Cleaned, document, stream);
+        return new System.Text.UTF8Encoding(false).GetString(stream.ToArray());
     }
 
     [Fact]

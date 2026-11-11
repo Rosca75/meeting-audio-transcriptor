@@ -102,6 +102,68 @@ public sealed class ServiceWiringTests
         }
     }
 
+    [Fact]
+    public async Task TheNamesOfARequestAreWrittenInEveryFileInPlaceOfTheDefaultLabels()
+    {
+        using TempFolder folder = new();
+        string input = ServiceKit.WriteWav(folder.File("meeting.wav"), 12, 2, 7);
+        TranscriptionService service = ServiceKit.Service(new FakeRecognizer(), load: _ => ServiceKit.Models(new FakeRecognizer(), () => new AlternatingSeparator()));
+        using (service)
+        {
+            TranscriptionRequest request = new() { InputPath = input, Language = "en", SpeakerCountHint = 2, SpeakerNames = ["Anna Keller", "Björn"], RawFiles = true };
+            TranscriptionOutcome outcome = await service.RunAsync(request, null, Token);
+
+            Assert.True(outcome.Kind == TranscriptionOutcomeKind.Succeeded && outcome.SpeakerCount == 2, $"got {outcome.Kind} with {outcome.SpeakerCount} speakers: {outcome.Message}");
+            string[] labels = outcome.Pipeline!.Document.Speakers.Select(speaker => speaker.Id + "=" + speaker.Label).ToArray();
+            Assert.True(labels.SequenceEqual(["S1=Anna Keller", "S2=Björn"]), $"got speakers {string.Join(", ", labels)}");
+            Assert.True(outcome.OutputFiles.Count == 5, $"got {outcome.OutputFiles.Count} files, wanted the three formats and the two raw files");
+            foreach (string file in outcome.OutputFiles)
+            {
+                string text = await File.ReadAllTextAsync(file, Token);
+                Assert.True(!text.Contains("Speaker 1", StringComparison.Ordinal) && !text.Contains("Speaker 2", StringComparison.Ordinal), $"{Path.GetFileName(file)} still shows a default label");
+                string name = Path.GetExtension(file) switch
+                {
+                    ".vtt" => "<v Anna Keller>",
+                    ".txt" => "] Björn:\n",
+                    _ => "\"label\": \"Björn\"",
+                };
+                Assert.True(text.Contains(name, StringComparison.Ordinal), $"{Path.GetFileName(file)} does not hold {name}");
+            }
+        }
+    }
+
+    [Fact]
+    public async Task NamesAreIgnoredWhenTheRunDoesNotSeparateSpeakers()
+    {
+        using TempFolder folder = new();
+        string input = ServiceKit.WriteWav(folder.File("meeting.wav"), 12, 2, 7);
+        using TranscriptionService service = ServiceKit.Service(new FakeRecognizer());
+
+        TranscriptionOutcome outcome = await service.RunAsync(new TranscriptionRequest { InputPath = input, Language = "en", SpeakerSeparation = false, SpeakerNames = ["Anna"] }, null, Token);
+
+        Assert.True(outcome.Kind == TranscriptionOutcomeKind.Succeeded && outcome.SpeakerCount == 0, $"got {outcome.Kind} with {outcome.SpeakerCount} speakers: {outcome.Message}");
+    }
+
+    [Fact]
+    public void TheNamesRideTheWireAfterTheSpeakerCountAndAreOmittedWhenAbsent()
+    {
+        TranscribeRequest named = new() { InputPath = "/a/b.wav", Language = "fr", Formats = ["vtt"], SpeakerSeparation = true, SpeakerCount = 3, SpeakerNames = ["Élodie", "", "R&D"], OutputFolder = "/out" };
+
+        string json = System.Text.Json.JsonSerializer.Serialize(named, BridgeJson.Context.TranscribeRequest);
+        string plain = System.Text.Json.JsonSerializer.Serialize(named with { SpeakerNames = null }, BridgeJson.Context.TranscribeRequest);
+        TranscribeRequest? read = System.Text.Json.JsonSerializer.Deserialize(
+            "{\"inputPath\":\"/a/b.wav\",\"language\":\"fr\",\"formats\":[\"vtt\"],\"speakerSeparation\":true,\"speakerCount\":3,\"speakerNames\":[\"Élodie\",\"\"]}",
+            BridgeJson.Context.TranscribeRequest);
+
+        Assert.Equal(
+            "{\"inputPath\":\"/a/b.wav\",\"language\":\"fr\",\"formats\":[\"vtt\"],\"speakerSeparation\":true,\"speakerCount\":3,\"speakerNames\":[\"Élodie\",\"\",\"R&D\"],\"rawFiles\":false,\"outputFolder\":\"/out\"}",
+            json);
+        Assert.Equal(
+            "{\"inputPath\":\"/a/b.wav\",\"language\":\"fr\",\"formats\":[\"vtt\"],\"speakerSeparation\":true,\"speakerCount\":3,\"rawFiles\":false,\"outputFolder\":\"/out\"}",
+            plain);
+        Assert.Equal(["Élodie", ""], read!.SpeakerNames);
+    }
+
     [Theory]
     [InlineData(TranscriptionOutcomeKind.Succeeded, TranscribeOutcomeKinds.Completed)]
     [InlineData(TranscriptionOutcomeKind.NoSpeech, TranscribeOutcomeKinds.NoSpeech)]
@@ -136,7 +198,7 @@ public sealed class ServiceWiringTests
     [Fact]
     public void ThePageRequestBecomesTheServiceRequest()
     {
-        TranscribeRequest on = new() { InputPath = "/a/b.m4a", Language = "de", Formats = ["vtt", "txt"], SpeakerSeparation = true, SpeakerCount = 4, RawFiles = true, OutputFolder = "/out" };
+        TranscribeRequest on = new() { InputPath = "/a/b.m4a", Language = "de", Formats = ["vtt", "txt"], SpeakerSeparation = true, SpeakerCount = 4, SpeakerNames = ["Anna", "", "Jürgen"], RawFiles = true, OutputFolder = "/out" };
         TranscribeRequest off = on with { SpeakerSeparation = false };
 
         TranscriptionRequest service = ServiceTranscriber.ToServiceRequest(on);
@@ -146,6 +208,8 @@ public sealed class ServiceWiringTests
         Assert.True(service.Formats.SequenceEqual([TranscriptFormat.Vtt, TranscriptFormat.Txt]), $"got formats {string.Join(", ", service.Formats)}");
         Assert.True(service.SpeakerSeparation == true && service.SpeakerCountHint == 4, $"got separation {service.SpeakerSeparation} hint {service.SpeakerCountHint}");
         Assert.True(serviceOff.SpeakerSeparation == false && serviceOff.SpeakerCountHint is null, $"got separation {serviceOff.SpeakerSeparation} hint {serviceOff.SpeakerCountHint}");
+        Assert.True(service.SpeakerNames is not null && service.SpeakerNames.SequenceEqual(["Anna", "", "Jürgen"]), $"got names {string.Join("|", service.SpeakerNames ?? [])}");
+        Assert.True(serviceOff.SpeakerNames is null, $"got names {string.Join("|", serviceOff.SpeakerNames ?? [])} with separation off, wanted none");
     }
 
     [Fact]

@@ -308,7 +308,11 @@ public sealed class TranscriptionService : IDisposable
                 usedModels.Add(new TranscriptModel { Role = LoadedModels.SpeakerEmbeddingRole, Name = SpeakerSeparatorFactory.ModelName });
             }
 
-            PipelineOptions options = new() { Threads = request.Threads ?? PipelineOptions.DefaultThreads };
+            PipelineOptions options = new()
+            {
+                Threads = request.Threads ?? PipelineOptions.DefaultThreads,
+                SpeakerNames = separation ? request.SpeakerNames : null,
+            };
             options = _seams.Options?.Invoke(options) ?? options;
             TranscriptionPipeline pipeline = new(models.Vad, models.Recognizer, separation ? models.Separators : null, options, time);
             PipelineRequest pipelineRequest = new()

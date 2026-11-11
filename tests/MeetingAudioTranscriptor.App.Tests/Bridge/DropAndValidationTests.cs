@@ -1,5 +1,6 @@
 // Tests the drop protocol (names from the page, resolved paths from the host) and the validation
 // messages a bad run request produces.
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -227,6 +228,144 @@ public sealed class RequestValidationTests
     }
 
     [Fact]
+    public async Task SpeakerNamesAreAcceptedTrimmedWithBlanksKept()
+    {
+        using BridgeHarness h = new();
+
+        JsonElement reply = await h.CallAsync(BridgeMethods.RunStart, h.Request() with { SpeakerCount = 4, SpeakerNames = ["  Anna Keller ", "", "\tBjörn"] });
+        await h.Host.WaitForEventAsync(BridgeEvents.RunFinished);
+
+        Assert.False(reply.TryGetProperty("error", out _), "got an error for three valid names of four speakers, wanted acceptance");
+        Assert.Equal(["Anna Keller", "", "Björn"], h.Transcriber.LastRequest!.SpeakerNames);
+    }
+
+    [Fact]
+    public async Task ANameMayHoldFortyCharactersAndAsManyNamesAsSpeakers()
+    {
+        using BridgeHarness h = new();
+        const string forty = "Maximiliane Alexandra von Hohenstein-Ost";
+
+        JsonElement reply = await h.CallAsync(BridgeMethods.RunStart, h.Request() with { SpeakerCount = 2, SpeakerNames = [forty, "R&D"] });
+        await h.Host.WaitForEventAsync(BridgeEvents.RunFinished);
+
+        Assert.False(reply.TryGetProperty("error", out _), "got an error for a name of 40 characters, wanted acceptance");
+        Assert.Equal([forty, "R&D"], h.Transcriber.LastRequest!.SpeakerNames);
+    }
+
+    [Fact]
+    public async Task TrailingBlankNamesAreDroppedAndAllBlankNamesAreNoNames()
+    {
+        using BridgeHarness h = new();
+        using BridgeHarness second = new();
+
+        await h.CallAsync(BridgeMethods.RunStart, h.Request() with { SpeakerCount = 3, SpeakerNames = ["", "Chloé", "  "] });
+        await h.Host.WaitForEventAsync(BridgeEvents.RunFinished);
+        IReadOnlyList<string>? trimmed = h.Transcriber.LastRequest!.SpeakerNames;
+
+        await second.CallAsync(BridgeMethods.RunStart, second.Request() with { SpeakerCount = 3, SpeakerNames = ["", " "] });
+        await second.Host.WaitForEventAsync(BridgeEvents.RunFinished);
+        IReadOnlyList<string>? blank = second.Transcriber.LastRequest!.SpeakerNames;
+
+        Assert.Equal(["", "Chloé"], trimmed);
+        Assert.Null(blank);
+    }
+
+    [Fact]
+    public async Task NamesAreDroppedWhenSeparationIsOff()
+    {
+        using BridgeHarness h = new();
+
+        JsonElement reply = await h.CallAsync(BridgeMethods.RunStart, h.Request() with { SpeakerSeparation = false, SpeakerCount = 2, SpeakerNames = ["Anna", "Anna"] });
+        await h.Host.WaitForEventAsync(BridgeEvents.RunFinished);
+
+        Assert.False(reply.TryGetProperty("error", out _), "got an error for names with separation off, wanted them ignored");
+        Assert.Null(h.Transcriber.LastRequest!.SpeakerNames);
+        Assert.Null(h.Transcriber.LastRequest!.SpeakerCount);
+    }
+
+    [Fact]
+    public async Task NamesWithoutASpeakerCountAreRefused()
+    {
+        using BridgeHarness h = new();
+
+        string error = await RejectionAsync(h, h.Request() with { SpeakerNames = ["Anna"] });
+
+        Assert.Equal("Speaker names need a speaker count. Enter the number of speakers, or clear the names.", error);
+    }
+
+    [Fact]
+    public async Task MoreNamesThanSpeakersAreRefused()
+    {
+        using BridgeHarness h = new();
+
+        string error = await RejectionAsync(h, h.Request() with { SpeakerCount = 2, SpeakerNames = ["Anna", "Björn", ""] });
+
+        Assert.Equal("There are 3 speaker names for 2 speakers. Remove the extra names, or raise the speaker count.", error);
+    }
+
+    [Fact]
+    public async Task ANameOverFortyCharactersIsRefusedNamingTheSpeaker()
+    {
+        using BridgeHarness h = new();
+
+        string error = await RejectionAsync(h, h.Request() with { SpeakerCount = 2, SpeakerNames = ["Anna", "Maximiliane Alexandra von Hohenstein-Ost2"] });
+
+        Assert.Equal("The name of speaker 2 has 41 characters. Shorten it to 40 characters or fewer.", error);
+    }
+
+    [Theory]
+    [InlineData("Anna <Finance>")]
+    [InlineData("Anna>")]
+    [InlineData("<b")]
+    [InlineData("Anna\nKeller")]
+    [InlineData("Anna\tKeller")]
+    [InlineData("Anna\u0000")]
+    [InlineData("Anna\u0085Keller")]
+    public async Task ANameWithAnAngleBracketOrAControlCharacterIsRefused(string name)
+    {
+        using BridgeHarness h = new();
+
+        string error = await RejectionAsync(h, h.Request() with { SpeakerCount = 3, SpeakerNames = ["Björn", "", name] });
+
+        Assert.Equal("The name of speaker 3 holds a character a transcript cannot carry. Remove any <, > and line break from it.", error);
+    }
+
+    [Theory]
+    [InlineData("Anna", "anna")]
+    [InlineData("Élodie", " ÉLODIE ")]
+    public async Task TwoSpeakersWithOneNameAreRefused(string first, string second)
+    {
+        using BridgeHarness h = new();
+
+        string error = await RejectionAsync(h, h.Request() with { SpeakerCount = 3, SpeakerNames = [first, "", second] });
+
+        Assert.Equal($"Speakers 1 and 3 are both named \"{first}\". Give each speaker a different name.", error);
+    }
+
+    [Theory]
+    [InlineData("Speaker 2")]
+    [InlineData("speaker 10")]
+    public async Task ANameThatIsAnotherSpeakersDefaultLabelIsRefused(string name)
+    {
+        using BridgeHarness h = new();
+
+        string error = await RejectionAsync(h, h.Request() with { SpeakerCount = 2, SpeakerNames = [name] });
+
+        Assert.Equal($"The name \"{name}\" of speaker 1 is the label of another speaker. Choose a different name.", error);
+    }
+
+    [Fact]
+    public async Task ASpeakersOwnDefaultLabelIsAccepted()
+    {
+        using BridgeHarness h = new();
+
+        JsonElement reply = await h.CallAsync(BridgeMethods.RunStart, h.Request() with { SpeakerCount = 2, SpeakerNames = ["Speaker 1", "Speaker 2"] });
+        await h.Host.WaitForEventAsync(BridgeEvents.RunFinished);
+
+        Assert.False(reply.TryGetProperty("error", out _), "got an error for each speaker's own default label, wanted acceptance");
+    }
+
+    [Fact]
     public async Task ARelativeOutputFolderIsRefused()
     {
 
@@ -272,6 +411,9 @@ public sealed class RequestValidationTests
         [
             h.Request("") , h.Request(h.File("x.ogg")), h.Request() with { Language = "xx" },
             h.Request() with { Formats = [] }, h.Request() with { SpeakerCount = 99 },
+            h.Request() with { SpeakerNames = ["Anna"] }, h.Request() with { SpeakerCount = 1, SpeakerNames = ["Anna", "Björn"] },
+            h.Request() with { SpeakerCount = 2, SpeakerNames = [new string('x', 41)] }, h.Request() with { SpeakerCount = 2, SpeakerNames = ["<"] },
+            h.Request() with { SpeakerCount = 2, SpeakerNames = ["Anna", "ANNA"] }, h.Request() with { SpeakerCount = 2, SpeakerNames = ["Speaker 2"] },
         ];
 
         foreach (TranscribeRequest request in bad)

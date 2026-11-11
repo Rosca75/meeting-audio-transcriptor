@@ -214,8 +214,9 @@ internal static class PipelineTestKit
         ISpeechRecognizer recognizer,
         int threads,
         Func<ISpeakerSeparator?>? separators = null,
-        SegmentationOptions? segmentation = null) =>
-        new(_ => chunks, recognizer, separators, new PipelineOptions { Threads = threads, Segmentation = segmentation ?? new SegmentationOptions(), ProgressInterval = TimeSpan.Zero }, null);
+        SegmentationOptions? segmentation = null,
+        IReadOnlyList<string>? speakerNames = null) =>
+        new(_ => chunks, recognizer, separators, new PipelineOptions { Threads = threads, Segmentation = segmentation ?? new SegmentationOptions(), ProgressInterval = TimeSpan.Zero, SpeakerNames = speakerNames }, null);
 
     public static RecognizedWord Word(string text, double start, double end, float confidence = 0.9f) => new(text, start, end, confidence);
 }

@@ -141,6 +141,7 @@ public sealed class TranscriptionPipeline
         Contracts.Transcripts.TranscriptDocument document = TranscriptAssembler.Build(
             words,
             speakers,
+            _options.SpeakerNames,
             _options.Segmentation,
             new SegmentCleaner(request.Language),
             facts,

@@ -35,6 +35,12 @@ public sealed record TranscriptionRequest
     /// <summary>The number of speakers, when the user knows it.</summary>
     public int? SpeakerCountHint { get; init; }
 
+    /// <summary>
+    /// The names the user gave the speakers, by order of first appearance; a blank entry and a speaker
+    /// past the end keep the default label. Null for none; ignored by a run that does not separate speakers.
+    /// </summary>
+    public IReadOnlyList<string>? SpeakerNames { get; init; }
+
     /// <summary>The recognition workers; null for the default (the logical cores, at most four).</summary>
     public int? Threads { get; init; }
 
