@@ -55,12 +55,13 @@ Arguments are positional and the count is exact.
   "formats": ["vtt", "json", "txt"],
   "speakerSeparation": true,
   "speakerCount": 3,
+  "speakerNames": ["Anna Keller", "", "Björn"],
   "rawFiles": false,
   "outputFolder": "/full/path/out"
 }
 ```
 
-`language` is `en`, `fr` or `de`. `formats` holds at least one of `vtt`, `json`, `txt`. `speakerCount` is 1 to 10 and is omitted for automatic. `outputFolder` is omitted for the input file's folder; when given it is a full path that exists or whose nearest existing ancestor is a folder. The bridge validates all of it and hands `ITranscriber.RunAsync` a normalised copy: lower-case, distinct formats, no speaker count when separation is off, and `OutputFolder` always set. Validation creates nothing; the transcriber creates the folder.
+`language` is `en`, `fr` or `de`. `formats` holds at least one of `vtt`, `json`, `txt`. `speakerCount` is 1 to 10 and is omitted for automatic. `speakerNames` is omitted when no name is set; its entry at index k names speaker k+1, speakers being numbered in order of first appearance, and an empty entry keeps the label `Speaker k+1`. Names are accepted only with `speakerSeparation` true and a `speakerCount`, and there are at most `speakerCount` of them; a name is trimmed and then holds at most 40 characters, no control character, no `<` and no `>`, and names differ from each other ignoring case and from the default label of another speaker. `outputFolder` is omitted for the input file's folder; when given it is a full path that exists or whose nearest existing ancestor is a folder. The bridge validates all of it and hands `ITranscriber.RunAsync` a normalised copy: lower-case, distinct formats, no speaker count and no names when separation is off, trimmed names without blank entries at the end, and `OutputFolder` always set. Validation creates nothing; the transcriber creates the folder.
 
 ## 5. Events
 

@@ -61,6 +61,8 @@ The engine turns samples into a transcript document: audio handling, signal proc
 
 **A segment is a sentence-like stretch by one speaker.** The segment builder cuts at sentence ends, at pauses, and at the largest gap of an overlong run. A short segment of unsure words is removed with the reason `low-confidence`, except one holding a digit, because a number is content too precious to risk. The JSON shape is `docs/transcript-schema.md`; the contracts project owns its types.
 
+**A speaker's label is a name only where the user gave one.** `PipelineOptions.SpeakerNames` names speakers by order of first appearance; a blank entry and a speaker past the end of the list keep `Speaker 1`, `Speaker 2`, and the ids stay `S1`, `S2`. The assembler sets the label once and every writer reads it from the document, so the three formats and the raw files cannot disagree on a name.
+
 ## 7. Where measurements live
 
 **Numbers are measured, recorded in a document and not repeated in code or charters.** Recogniser settings are in `docs/build/granite-measurements.md`, the VAD's in `docs/build/vad-measurements.md`, speaker separation's in `docs/build/diarisation-measurements.md`, the choices in `docs/decisions/` and the shipped build's speed and accuracy in `docs/BENCHMARKS.md`. A default carries a remark saying which measurement chose it.
