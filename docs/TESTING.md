@@ -128,13 +128,14 @@ The Windows desktop host builds from Linux with `dotnet build src/MeetingAudioTr
 
 ## 8. Continuous integration
 
-`.github/workflows/ci.yml` runs on every pull request to `main` and every push to `main`, on `ubuntu-latest` and `windows-latest`, because the application ships for both and a break on one system is invisible on the other.
+`.github/workflows/ci.yml` runs on every pull request to `main`, every push to `main` and a manual start (workflow dispatch), on `ubuntu-latest` and `windows-latest`, because the application ships for both and a break on one system is invisible on the other.
 
 | Job | Runs |
 |---|---|
 | `build-and-test` | restore, `dotnet build --no-restore -warnaserror`, the unit tier (guards included), the page suite and the build tool suites |
 | `integration` | the integration tier with the pinned ffmpeg (`MAT_FFMPEG`); on Windows the Media Foundation tests run against a real Windows, on Linux the window tests run under `xvfb-run` |
-| `models` | the models tier over the real default models (`MAT_MODELS_DIR`), without the benchmark audio: tests that need it skip by name |
+| `end-to-end` | builds the reduced test set on the runner (`fetch-testset.mjs --subset ci`: every clip, the noise files and the three ten-minute files with `en-10min.m4a` and `.mp4`, with the pinned ffmpeg), runs the models tier over it in Release (`MAT_MODELS_DIR`, `MAT_BENCH_DATA`, `MAT_FFMPEG`), checks that the Pipeline suite ran at least 70 tests and skipped none for absent audio, transcribes `long/en-10min.m4a` with the command line and prints the summary and the first 15 lines of the text, and runs `benchmark --set clips --threads 4`, whose result file it keeps as the artefact `benchmark-<os>`. On Windows the transcription runs twice: by default, where the `Decoder:` line must read `media-foundation`, and with `MAT_PREFER_FFMPEG=1`; the two transcripts must differ by at most 2 % of their words |
+| `testset-parity` | compares the hash of every test set file the two `end-to-end` legs built: the WAV files, references and RTTM must be byte-identical on both systems, and only the `.m4a` and `.mp4` copies may differ |
 | `package` | `build/publish.ps1 -SkipModels`: publish, shared-runtime check, removal, unexpected-file refusal and smoke test, without the models |
 
-The models and ffmpeg are fetched by the Node tools through the composite actions under `.github/actions/` and cached keyed on the hash of their lock files. Two guards cover the CI files: every `uses:` in `.github` is a full 40-character commit SHA (local `./.github/actions/` paths excepted), and every model of the default set and every ffmpeg build is credited in `NOTICE`. `docs/RELEASING.md` owns the release workflow.
+The models and ffmpeg are fetched by the Node tools through the composite actions under `.github/actions/` and cached keyed on the hash of their lock files; the test set sources are cached keyed on `bench/testset/testset.lock`, and the builder verifies each against the lock whether it was restored or downloaded. `bench/tools/ci-checks.mjs` holds the job's checks (the test count from the TRX reports, the transcript comparison and the parity of the test set files), so each can be run by hand on a local result. Two guards cover the CI files: every `uses:` in `.github` is a full 40-character commit SHA (local `./.github/actions/` paths excepted), and every model of the default set and every ffmpeg build is credited in `NOTICE`. `docs/RELEASING.md` owns the release workflow.

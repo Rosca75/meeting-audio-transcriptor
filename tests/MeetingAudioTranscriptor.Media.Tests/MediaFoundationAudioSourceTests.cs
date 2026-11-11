@@ -44,14 +44,17 @@ public sealed class MediaFoundationAudioSourceTests : IClassFixture<MediaFixture
 
     [Theory]
     [Trait("Tier", "integration")]
-    [InlineData("mf-stereo-44k.m4a", false)]
-    [InlineData("mf-video+audio.mp4", true)]
-    public void AnAacFileMatchesFfmpegsDecode(string name, bool withVideo)
+    [InlineData("mf-stereo-44k.m4a", false, 44100, 2)]
+    [InlineData("mf-video+audio.mp4", true, 44100, 2)]
+    // 16 kHz mono is what a meeting recorder writes, and the rate at which Media Foundation's AAC
+    // decoder first states twice the rate (implicit SBR) and corrects it with the first block.
+    [InlineData("mf-mono-16k.m4a", false, 16000, 1)]
+    public void AnAacFileMatchesFfmpegsDecode(string name, bool withVideo, int rate, int channels)
     {
         Assert.SkipUnless(OperatingSystem.IsWindows(), NeedsWindows);
         _media.SkipWithoutFfmpeg();
-        string sine = MediaFixtures.Sine(44100, 1);
-        string stereo = MediaFixtures.CopyToChannels(2);
+        string sine = MediaFixtures.Sine(rate, 1);
+        string stereo = MediaFixtures.CopyToChannels(channels);
 
         // The video is H.264 through OpenH264, the one H.264 encoder the pinned LGPL ffmpeg carries, in
         // 4:2:0, the chroma format of real recordings and the one Windows' H.264 decoder reads.
@@ -66,8 +69,12 @@ public sealed class MediaFoundationAudioSourceTests : IClassFixture<MediaFixture
 
         double seconds = samples.Length / (double)source.SampleRate;
         double expectedSeconds = expected.Length / (double)reference.SampleRate;
+        // ffmpeg drops the encoder's priming frame the container names (1,024 samples of AAC) and
+        // Media Foundation keeps it, so the two may differ by that frame plus 50 ms: 23 ms of it at
+        // 44.1 kHz, 64 ms at 16 kHz, measured on the Windows runner.
+        double tolerance = 0.05 + (1024.0 / source.SampleRate);
         Assert.True(source.SampleRate == reference.SampleRate, $"got {source.SampleRate} Hz, wanted ffmpeg's {reference.SampleRate}");
-        Assert.True(Math.Abs(seconds - expectedSeconds) < 0.05, $"got {seconds:0.000} s, wanted ffmpeg's {expectedSeconds:0.000} s within 50 ms");
+        Assert.True(Math.Abs(seconds - expectedSeconds) < tolerance, $"got {seconds:0.000} s, wanted ffmpeg's {expectedSeconds:0.000} s within {tolerance * 1000:0} ms");
         Assert.True(Math.Abs(MediaFixtures.Rms(samples) - MediaFixtures.Rms(expected)) < 0.01, $"got an RMS of {MediaFixtures.Rms(samples):0.0000}, wanted ffmpeg's {MediaFixtures.Rms(expected):0.0000}");
         Assert.True(Math.Abs(MediaFixtures.ZeroCrossingHz(samples, source.SampleRate) - MediaFixtures.ToneHz) < 5, "got another frequency than the tone's, wanted 440 Hz");
     }

@@ -11,9 +11,15 @@ pinned public sources by one script; the built files are not committed.
 node bench/testset/fetch-testset.mjs            # download, verify, build; a second run is a no-op
 node bench/testset/fetch-testset.mjs --verify   # hash the data folder (and the cache) against the manifest
 node bench/testset/fetch-testset.mjs --long 120 --long-lang en   # extra long files on request
+node bench/testset/fetch-testset.mjs --subset ci --ffmpeg <path>  # the reduced set continuous integration builds
 ```
 
-Needs Node 22 or later and `ffmpeg` (6 or later) on PATH; no package is installed.
+Needs Node 22 or later and `ffmpeg` (6 or later): `--ffmpeg <path>`, else `MAT_FFMPEG`, else the
+PATH; no package is installed. It runs on Linux and Windows and writes the same WAV, reference and
+RTTM bytes on both (CI's `testset-parity` job compares them).
+`--subset ci` builds every clip, the noise files and the three ten-minute files with
+`en-10min.m4a` and `.mp4`, and leaves out `en-30min` and every longer file; it downloads the same
+sources, because the clips need every archive.
 Behind a proxy, start Node with `NODE_USE_ENV_PROXY=1` (and `NODE_EXTRA_CA_CERTS`
 when the proxy re-signs TLS). Options: `--cache <dir>` (default `bench/.cache/`,
 about 0.7 GB, git-ignored), `--out <dir>` (default `bench/data/`, git-ignored),
@@ -43,8 +49,9 @@ script's seeded generator (mulberry32, seed 20261110) when a maintainer runs
 `--plan`, so a build replays the lock and draws no random number; the noise is
 ffmpeg's generator with a fixed seed; the AAC and H.264 copies use `-bitexact`
 and one thread. The `.m4a`/`.mp4` bytes depend on the ffmpeg build's AAC and
-x264 encoders, so a different ffmpeg can change those two files (and only those)
-while the decoded audio stays equivalent; the WAV files do not depend on the
+H.264 encoders (libx264 when the build has it, libopenh264 otherwise, as in the
+pinned LGPL builds), so a different ffmpeg can change those two files (and only
+those) while the decoded audio stays equivalent; the WAV files do not depend on the
 ffmpeg version as long as its FLAC and WAV decoders are exact, which they are.
 
 ## Layout of `bench/data/`

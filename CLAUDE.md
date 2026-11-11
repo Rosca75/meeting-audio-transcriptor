@@ -88,7 +88,8 @@ meeting-audio-transcriptor/
 ├── bench/
 │   ├── testset/                              the builder of the speech test set
 │   ├── tools/                                cpuidmask hides CPU features from a benchmark process;
-│   │                                         summarise-results.mjs prints the tables of docs/BENCHMARKS.md
+│   │                                         summarise-results.mjs prints the tables of docs/BENCHMARKS.md;
+│   │                                         ci-checks.mjs holds the end-to-end CI job's checks
 │   ├── results/                              the committed result files
 │   └── spikes/                               throwaway research scripts, not needed to build or ship
 ├── build/                                    the locks, the fetch tools, the publish and release scripts

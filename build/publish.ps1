@@ -5,6 +5,7 @@
 #
 #   pwsh build/publish.ps1 [-Rid win-x64|linux-x64] [-Version 1.2.3] [-Output artifacts]
 #                          [-ModelsDir <dir>] [-FfmpegDir <dir>] [-SkipModels] [-RecordBudgets]
+#                          [-SmokeClip <file.wav>] [-SmokeLanguage en|fr|de]
 #
 # The Linux package is built on Linux only, because a tar.gz must carry the executable bits and
 # only a Linux tar writes them. The Windows package may be built on either system (a zip needs no
@@ -45,7 +46,17 @@ param(
     [switch]$SkipModels,
 
     # Rewrite build/size-budgets.json from this run instead of checking against it.
-    [switch]$RecordBudgets
+    [switch]$RecordBudgets,
+
+    # A short speech recording (a test set clip) the smoke test transcribes from inside the staged
+    # package, through the bundled ffmpeg and, on Windows, through Media Foundation as well, which
+    # proves the shipped layout: models and ffmpeg found beside the executable. A missing file
+    # skips that part with a notice; it is ignored with -SkipModels, which ships no model.
+    [string]$SmokeClip,
+
+    # The language spoken in the smoke clip.
+    [ValidateSet('en', 'fr', 'de')]
+    [string]$SmokeLanguage = 'en'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -328,6 +339,45 @@ if (-not $ridIsWindows) {
     }
 }
 
+# Transcribes the smoke clip with the staged command line: the clip is first encoded to AAC by the
+# bundled ffmpeg, so the run must decode a compressed container, and the decoder variables are
+# cleared so the program can only use what the package holds. Every run must end with exit code 0,
+# name the expected decoder and recognise words.
+function Invoke-SmokeTranscription([string]$CliPath, [string]$FfmpegPath) {
+    $smokeDir = Join-Path $Output "smoke/$Rid"
+    if (Test-Path $smokeDir) { Remove-Item -Recurse -Force $smokeDir }
+    New-Item -ItemType Directory -Force -Path $smokeDir | Out-Null
+    $m4a = Join-Path $smokeDir 'smoke.m4a'
+    Invoke-Native 'encoding the smoke clip with the bundled ffmpeg' 'the bundled ffmpeg could not write AAC; run it by hand on the clip to read its message' {
+        & $FfmpegPath -hide_banner -v error -nostdin -y -i $SmokeClip -c:a aac -b:a 64k $m4a
+    }
+    $saved = @{ MAT_FFMPEG = $env:MAT_FFMPEG; MAT_PREFER_FFMPEG = $env:MAT_PREFER_FFMPEG }
+    $runs = @(@{ Name = 'ffmpeg'; Prefer = '1'; Decoder = 'ffmpeg (bundled)' })
+    if ($ridIsWindows) { $runs += @{ Name = 'media-foundation'; Prefer = $null; Decoder = 'media-foundation' } }
+    try {
+        $env:MAT_FFMPEG = $null
+        foreach ($run in $runs) {
+            $env:MAT_PREFER_FFMPEG = $run.Prefer
+            $into = Join-Path $smokeDir $run.Name
+            New-Item -ItemType Directory -Force -Path $into | Out-Null
+            $output = (& $CliPath transcribe $m4a --language $SmokeLanguage --formats json,txt --output $into --threads 4 2>&1 | Out-String)
+            $exit = $LASTEXITCODE
+            Write-Host ($output.Trim() -replace '(?m)^', '    ')
+            if ($exit -ne 0) { throw "the staged command line exited with $exit transcribing the smoke clip through $($run.Name), wanted 0; its output above names the cause" }
+            if ($output -notmatch "Decoder:\s+$([regex]::Escape($run.Decoder))") {
+                throw "the staged command line did not decode the smoke clip with $($run.Decoder); the package must find its decoder beside the executable, so check the ffmpeg folder and the decoder order"
+            }
+            $words = if ($output -match 'Words:\s+(\d+) recognised') { [int]$Matches[1] } else { 0 }
+            if ($words -lt 20) { throw "the staged command line recognised $words words in the smoke clip through $($run.Name), wanted at least 20; the models in the package may be damaged, run 'models --verify' from the package" }
+            Write-Host "    smoke transcription through $($run.Name): $words words"
+        }
+    } finally {
+        $env:MAT_FFMPEG = $saved.MAT_FFMPEG
+        $env:MAT_PREFER_FFMPEG = $saved.MAT_PREFER_FFMPEG
+        Remove-Item -Recurse -Force $smokeDir -ErrorAction SilentlyContinue
+    }
+}
+
 # ---------------------------------------------------------------------------------------------
 if ($sameOs) {
     Step 'smoke test of the staged package'
@@ -359,6 +409,14 @@ if ($sameOs) {
             throw "the bundled ffmpeg printed '$ffmpegLine' for -version, wanted a line starting 'ffmpeg version'; the binary may not run on this system"
         }
         Write-Host "    ffmpeg: $ffmpegLine"
+
+        if ($SmokeClip -and -not $SkipModels) {
+            if (-not (Test-Path -LiteralPath $SmokeClip -PathType Leaf)) {
+                Write-Host "::notice::the smoke clip $SmokeClip does not exist, so the package's transcription is not tested; build it with node bench/testset/fetch-testset.mjs --subset ci"
+            } else {
+                Invoke-SmokeTranscription -CliPath $cliPath -FfmpegPath (Join-Path $ffmpegInto $binary.name)
+            }
+        }
     } finally {
         $env:MAT_MODELS_DIR = $savedModels
     }
