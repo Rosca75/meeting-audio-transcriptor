@@ -34,3 +34,11 @@ reported beside it for information. The benchmark result file records the mask.
   for a 4-core laptop, not a measurement of it. `docs/WINDOWS-VERIFICATION.md`
   asks the owner to run the benchmark command on the laptop.
 - 8 threads cannot be measured here: the machine has 4 hardware threads.
+- A hosted Windows runner is an independent data point for the same
+  configuration: 4 virtual processors, AVX2 and no VNNI, so the exact 8-bit
+  kernels are on. It transcribes the 10-minute English `.m4a` at 13.2 times real
+  time end to end (13.5 through ffmpeg), against 24.8 under the mask here
+  (CI run 42926115111; `docs/BENCHMARKS.md`, chapters 4 and 9). The runner is
+  shared and virtualised, so the figure corroborates that a processor without
+  VNNI runs the shipped configuration above the 12 times real time target and
+  does not stand for the laptop.

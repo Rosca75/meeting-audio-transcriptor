@@ -32,7 +32,7 @@ Verdicts: met, partly, not met, cannot verify here.
 
 | Requirement | Evidence | Verdict |
 |---|---|---|
-| Offline at run time, models shipped | `strace -f -e trace=network` over a WAV run and an M4A run (ffmpeg child included): only `socket(AF_UNIX)` + `bind`/`listen` on `/tmp/dotnet-diagnostic-<pid>-...-socket` (the .NET diagnostics IPC, local); no AF_INET or AF_INET6. Window under `xvfb-run` with strace: AF_UNIX to X11 and the D-Bus system bus, two AF_NETLINK `RTM_GETROUTE` queries (GLib's network monitor reading the routing table, local); no AF_INET/AF_INET6. Source guard green; CSP `connect-src 'none'`; WebView2 reputation check off | met on Linux; Windows: the WebView2 runtime's own background traffic is not switched off (defect D1) |
+| Offline at run time, models shipped | `strace -f -e trace=network` over a WAV run and an M4A run (ffmpeg child included): only `socket(AF_UNIX)` + `bind`/`listen` on `/tmp/dotnet-diagnostic-<pid>-...-socket` (the .NET diagnostics IPC, local); no AF_INET or AF_INET6. Window under `xvfb-run` with strace: AF_UNIX to X11 and the D-Bus system bus, two AF_NETLINK `RTM_GETROUTE` queries (GLib's network monitor reading the routing table, local); no AF_INET/AF_INET6. Source guard green; CSP `connect-src 'none'`; WebView2 reputation check off | met on Linux; Windows: the WebView2 runtime's own background traffic was not switched off at review time (defect D1, fixed afterwards) |
 | 2 hours in 10 minutes or less at 4 threads, AVX2 | acceptance file `2026-11-10-accept-avx2-120min-m4a.json`: 287.9 s, 25.0x, 2.18 GB. Reviewer's masked `benchmark --set long --threads 4` (Release, `CPUIDMASK=avx2`, exact kernels on): de 26.0x, en 25.1x, fr 25.3x against the acceptance 24.5, 24.9, 24.5; WER identical to the acceptance file (8.76, 1.15, 2.51) | met (laptop itself: cannot verify here) |
 | Peak memory 4 GB or less | reviewer's 30-minute masked CLI run: max RSS 1.83 GB, 24.2x including the model load; acceptance 2-hour 2.18 GB | met |
 | Hand-written components, dependencies justified | packages: ONNX Runtime, WebView2, xunit.v3 only (`Directory.Packages.props`); WAV, resampler, FFT, features, CTC, VAD wrapper, clustering, cleaning, writers, WER in source; decision 0008 | met |
@@ -65,11 +65,11 @@ Verdicts: met, partly, not met, cannot verify here.
 | Bullet | Verdict |
 |---|---|
 | CLI and UI transcribe m4a, mp4, wav in en, fr, de to vtt, json, txt on Linux | met: CLI on all three containers and languages; UI on wav (fr, test), mp4 (de) and m4a (en) by the reviewer |
-| Windows target compiles; Windows paths thin, CI-covered, listed in the checklist | met for compile and checklist; CI results not readable here (STATE records a green run 42906481860) |
+| Windows target compiles; Windows paths thin, CI-covered, listed in the checklist | met for compile and checklist; CI results are readable from the build session: run 42906481860 was green, and the final run 42926115111 and the release dry run 42926119455 are green (see STATE) |
 | 2 hours in 10 minutes at the reference thread count, measured | met: 4.8 min, 25.0x under the AVX2 mask; reviewer's 10-minute recheck 25 to 26x |
 | Quality gates met or deviations recorded | met with the recorded English-meetings deviation |
 | Tests pass; CI and release workflows; README, NOTICE, CLAUDE.md, decisions, benchmarks, RELEASING | met (counts in chapter 4); `pwsh` absent here, so `publish.ps1` and `release.ps1` were read, not run |
-| Everything on `main` | not met at review time: `origin/main` (de08870) is 18 commits behind the work branch and the local `main` is the initial commit; the orchestrator's final merge is pending |
+| Everything on `main` | not met at review time (`origin/main` de08870 was 18 commits behind the work branch); closed by the final merge, see STATE |
 
 ## 2. Defects
 
@@ -99,7 +99,7 @@ Read and found sound: the pipeline's failure and cancellation path (first failur
 | Recogniser is Granite Speech 5.0 470M TurboCTC, not Parakeet | 0002 |
 | English quality gate met only with read and meeting speech pooled; AMI 5.8 points behind Parakeet v3 fp32 | 0002 (priority rule), BENCHMARKS 3 and 6 |
 | Engine figures compared with Python spike figures of the other candidates | 0002 |
-| Timings on a masked server processor standing in for the laptop; 8 threads not measurable | 0004, BENCHMARKS 9 |
+| Timings on a masked server processor standing in for the laptop; 8 threads not measurable | 0004, BENCHMARKS 10 |
 | Speaker separation from embedding windows over VAD regions, no segmentation model; overlap goes to one speaker | 0005, README 3 |
 | At most 10 speakers | added to 0005, 0011, README 3 |
 | ffmpeg bundled on Windows too | 0007, 0009 |
@@ -108,9 +108,9 @@ Read and found sound: the pipeline's failure and cancellation path (first failur
 | Word times at 80 ms resolution | added in 0011 |
 | JSON names models without revision | added in 0011 |
 | German repetition rule without name guard | added in 0011, README 4 |
-| French and German test material is read speech, no real meetings | BENCHMARKS 9 |
+| French and German test material is read speech, no real meetings | BENCHMARKS 10 |
 | Python used for spikes only, kept under `bench/spikes`, nothing ships | prompt allows it; `CLAUDE.md` 3 |
-| Work not yet on `main` | to be closed by the orchestrator's merge |
+| Work not yet on `main` | closed by the final merge |
 
 ## 4. Commands run and key outputs
 

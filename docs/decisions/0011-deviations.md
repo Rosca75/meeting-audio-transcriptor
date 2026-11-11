@@ -37,6 +37,23 @@ repository with the requirements finds each with its reason.
   a repeated phrase such as `denkt und denkt` loses its first copy.
 - **Speaker separation tells at most 10 voices apart** (0005), the same range
   as the speaker-count hint of both front ends.
+- **The .NET runtime's local diagnostics socket stays.** The runtime binds a
+  Unix socket in the temporary folder during every run on Linux, for its
+  diagnostic tools. It is local: no connection leaves the machine, and a trace
+  of the system calls of a run shows no internet socket. The offline rule is
+  met, but the socket is a listener the application did not write and cannot
+  remove: the documented switch (`DOTNET_EnableDiagnostics=0`) is read from the
+  environment only, and the equivalent runtime configuration properties leave
+  the socket bound. A user or launcher that wants it gone sets the variable
+  before the process starts.
+- **The build session reads CI results and leaves one merged remote branch.**
+  The requirements assume the results of GitHub Actions cannot be read from the
+  build; they can, through the GitHub tools (the run list and the job logs),
+  and the Windows legs of `.github/workflows/ci.yml` are the only execution of
+  Windows code the build had, so each failure was read and fixed from them.
+  The remote branch `claude/ci-fix` is fully merged into `main` and stays on
+  the remote, because the session's git proxy refuses branch deletion; the
+  owner deletes it.
 
 ## Consequences
 

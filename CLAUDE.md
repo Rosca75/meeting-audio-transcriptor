@@ -93,6 +93,8 @@ meeting-audio-transcriptor/
 │   ├── results/                              the committed result files
 │   └── spikes/                               throwaway research scripts, not needed to build or ship
 ├── build/                                    the locks, the fetch tools, the publish and release scripts
+│                                             (release-version.ps1 orders versions, size-budgets.json holds
+│                                             the package size budgets)
 ├── docs/                                     the documentation; docs/build holds working documents
 └── .github/
     ├── workflows/                            ci and release
@@ -186,12 +188,17 @@ dotnet build -warnaserror
 dotnet test --filter-not-trait "Tier=deep" --filter-not-trait "Tier=integration" --filter-not-trait "Tier=models" --ignore-exit-code 8
 dotnet test --project tests/MeetingAudioTranscriptor.Guards.Tests
 node --test "frontend/**/*.test.js"
+node --test build/*.test.mjs                   # the fetch tools and the graph patch
 node build/update-frontend-hashes.mjs          # after a page edit
 dotnet build src/MeetingAudioTranscriptor.Shell -r win-x64 -warnaserror
 pwsh build/publish.ps1 -Rid linux-x64 -Version 0.1.0 -SkipModels    # a package without models, for a structural check
 pwsh build/release-version.test.ps1                                 # the release script's version ordering
 pwsh build/release.ps1 -Version X.Y.Z -DryRun                       # then without -DryRun to tag
 ```
+
+CI (`.github/workflows/ci.yml`) runs the jobs `build-and-test`, `integration` and `end-to-end` on
+`ubuntu-latest` and `windows-latest`, and the jobs `testset-parity` and `package`; the end-to-end job transcribes
+real speech on both systems, Media Foundation decoding included (`docs/TESTING.md`, chapter 8).
 
 A release is built only by the tag workflow on the hosted runners, because the
 runner builds every package the same way; `docs/RELEASING.md` owns the steps.

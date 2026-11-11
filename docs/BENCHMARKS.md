@@ -1,6 +1,6 @@
 # Benchmarks
 
-The measured speed, memory and accuracy of the shipped configuration, and how to reproduce each table. Every number comes from a result file under `bench/results/`, named beside it, and `node bench/tools/summarise-results.mjs` prints the tables below from those files.
+The measured speed, memory and accuracy of the shipped configuration, and how to reproduce each table. Every number comes from a result file under `bench/results/` or from a named CI run, named beside it. `node bench/tools/summarise-results.mjs` prints the acceptance tables (chapters 2 to 4, 6 and 7) from the `accept` files; the speaker chapter (5) and the confirmation run (section 2.3) come from the files they name, and chapter 9 from CI runs.
 
 ## 1. What is measured and how
 
@@ -62,6 +62,16 @@ Speed is the same at 10, 30 and 120 minutes within 1 percent. Peak memory rises 
 | avx2-120min-m4a-8threads | 283.4 | 283.1 | 67.3 | 2243.2 | 280.4 | 99 % | 0.33 | 0.03 | 0.06 |
 
 Decoding and voice activity run on one producer thread that feeds the recognition workers; they overlap, so the columns do not add up. Recognition time is summed over the workers, so dividing it by the thread count gives the time each worker spent recognising, and that is 99 percent of the streaming time in every row: recognition is the bottleneck, and decoding and voice activity (a seventh of the wall time under AVX2) are hidden behind it. Speaker separation costs almost nothing after the stream ends (0.35 seconds for two hours); its work is inside the recognition time, which is 181 worker-seconds longer with speakers on, 45 seconds per worker. Cleaning and writing take under 0.1 seconds.
+
+### 2.3 Confirmation on the final build
+
+The acceptance table above is from the acceptance build. One run of the final build repeats the headline configuration (`2026-11-10-final-avx2-120min.json`, `applicationVersion` `0.0.0-dev`). Its input is the two-hour WAV file, not the `.m4a`, so it carries no decoder and is not a like for like repeat of the first row:
+
+| Build | Input | Mask | Threads | Speakers | Audio s | Wall s | Times real time | Peak GB | WER raw % | Speakers found |
+|---|---|---|---|---|---|---|---|---|---|---|
+| final | WAV | avx2 | 4 | yes | 7201.9 | 280.9 | 25.6 | 1.98 | 1.22 | 6 of 6 |
+
+The file records the exact kernels as on and no VNNI. The word error rate is 214 errors over 17,549 reference words (154 substitutions, 35 deletions, 25 insertions); the speaker stage took 0.38 seconds, attribution accuracy is 88.8 % and the error rate with overlap excluded is 7.1 %. The speaker count equals the recipe's 6; the acceptance run of the `.m4a` copy found 7 (`2026-11-10-accept-avx2-120min-m4a.json`). The accuracy repeats the 10-minute recipe six times over and adds no evidence beyond it (chapter 10).
 
 ## 3. Accuracy by language
 
@@ -146,24 +156,32 @@ The English 10-minute file as AAC and as a video container gives the same 1,457 
 
 ## 5. Speakers
 
-Scores are those of `2026-11-10-accept-avx2-clips.json` and `2026-11-10-accept-avx2-long.json`, without a speaker-count hint. The constructed files (read speech, speakers taking turns) are the easy case; the AMI clips are real meetings with overlap. The error rate excludes or includes overlapped reference speech, the confusion share is the part of the error that is speech given to the wrong speaker, and attribution accuracy is the share of single-speaker reference time given to the right speaker. The last column gives the estimated against the reference speaker count of each file.
+Scores are those of `2026-11-10-speakers-tuned-clips.json` and `2026-11-10-speakers-tuned-long.json`, the final speaker configuration: 3.0 s windows every 2.0 s, average linkage, a cosine-distance threshold of 0.5, and a speaker floor of the larger of 4 s and 1.5 % of the speaking time (decision 0005). Both runs are on the build machine as it is (no mask), with 4 threads, over the same 16 clips and five long files as the other chapters; the long file holds the 10-minute, 30-minute and 2-hour recordings of the English file and the French and German 10-minute files. The speaker count and every score in the tables below are those of the run without a speaker-count hint: each file records its scores without the hint beside the scores with the hint taken from the reference (`speakerScore` and `speakerScoreHinted`).
+
+The constructed files (read speech, speakers taking turns) are the easy case; the AMI clips are real meetings with overlap. The error rate excludes or includes overlapped reference speech, the confusion share is the part of the error that is speech given to the wrong speaker, and attribution accuracy is the share of single-speaker reference time given to the right speaker. The last column gives the estimated against the reference speaker count of each file.
+
+Clips (16 files, 10 of them with reference speakers):
 
 | Group | Files | Error rate, overlap excluded | Error rate, overlap included | Confusion share | Attribution accuracy | Count exact | Count error (mean absolute) | Estimated / reference per file |
 |---|---|---|---|---|---|---|---|---|
-| en-read | 1 | 5.2 % | 5.2 % | 0.0 % | 88.1 % | 1 of 1 | 0.00 | 3/3 |
-| en-ami | 3 | 12.4 % | 24.8 % | 2.1 % | 83.4 % | 0 of 3 | 1.33 | 6/4, 3/4, 3/4 |
+| en-read | 1 | 4.3 % | 4.3 % | 0.0 % | 88.9 % | 1 of 1 | 0.00 | 3/3 |
+| en-ami | 3 | 13.0 % | 24.7 % | 2.7 % | 82.9 % | 1 of 3 | 0.67 | 4/4, 3/4, 3/4 |
 | fr | 3 | 12.7 % | 12.7 % | 0.0 % | 84.8 % | 3 of 3 | 0.00 | 2/2, 3/3, 4/4 |
-| de | 3 | 11.1 % | 11.1 % | 0.8 % | 86.7 % | 2 of 3 | 0.33 | 2/2, 3/3, 5/4 |
+| de | 3 | 10.3 % | 10.3 % | 0.0 % | 87.5 % | 3 of 3 | 0.00 | 2/2, 3/3, 4/4 |
+
+Long files (the English file at 10, 30 and 120 minutes, the French and German 10-minute files):
 
 | Group | Files | Error rate, overlap excluded | Error rate, overlap included | Confusion share | Attribution accuracy | Count exact | Count error (mean absolute) | Estimated / reference per file |
 |---|---|---|---|---|---|---|---|---|
-| en-read | 1 | 7.6 % | 7.6 % | 0.5 % | 88.4 % | 0 of 1 | 1.00 | 7/6 |
-| fr | 1 | 15.6 % | 15.6 % | 0.7 % | 81.7 % | 0 of 1 | 2.00 | 6/4 |
-| de | 1 | 6.4 % | 6.4 % | 0.0 % | 91.3 % | 1 of 1 | 0.00 | 5/5 |
+| en-read | 3 | 7.1 % | 7.1 % | 0.0 % | 88.8 % | 3 of 3 | 0.00 | 6/6, 6/6, 6/6 |
+| fr | 1 | 14.8 % | 14.8 % | 0.0 % | 82.4 % | 1 of 1 | 0.00 | 4/4 |
+| de | 1 | 6.5 % | 6.5 % | 0.0 % | 91.1 % | 1 of 1 | 0.00 | 5/5 |
 
-The speaker count is estimated, and it is the weak point: it is exact on 7 of 13 files and off by one or two on the others (the AMI clips, one German clip, the English and the French 10-minute files). The error rates are lower than the count errors suggest, because a spurious speaker takes a few seconds. The two-hour files have no reference speakers, so no accuracy is scored for them; the looped English recording was assigned 7 speakers where its recipe has 6 (`2026-11-10-accept-avx2-120min-m4a.json`).
+The speaker count is exact on 13 of the 15 files with reference speakers without a hint: every constructed clip, and all five long files, the two-hour file included. The two misses are two of the three AMI clips, one speaker short each (3 for 4). With the hint taken from the reference the three AMI clips are 4/4 each (error rate 16.7 % with overlap excluded, 27.2 % included, confusion share 5.3 %, attribution accuracy 79.5 %), so the hint fixes the count and lowers attribution accuracy on those clips; every other group scores the same with and without the hint.
 
-Result files named `bench/results/*speakers-tuned*.json` supersede this chapter when present.
+The mechanism is two rules (decision 0005, `docs/build/diarisation-measurements.md`, chapter "Through the full pipeline"). A voice-activity region under 2 seconds is embedded as one short window with an unsteady voice print, and such windows form clusters of their own, so a window counts for its own length in the minimum cluster size. After the words are assigned, a speaker below the larger of 4 s and 1.5 % of the speaking time is folded into the speaker with the nearest voice print. The cost is that a real participant who speaks only a few seconds can be merged into the closest voice, which is what happens to the quietest AMI speakers; the speaker-count hint keeps every participant.
+
+The tuning was done on this test set, so the exact counts are results on the data the two rules were chosen on and are not evidence that a different meeting is counted exactly (chapter 10). The confirmation run of section 2.3, on the final build under the AVX2 mask, finds 6 of 6 speakers in the two-hour file with an attribution accuracy of 88.8 %, equal to the unmasked run's.
 
 ## 6. The recogniser choice
 
@@ -222,7 +240,7 @@ ffmpeg -i bench/data/long/en-120min.wav -map_metadata -1 -c:a aac -b:a 64k bench
 dotnet build src/MeetingAudioTranscriptor.Cli -c Release -warnaserror
 ```
 
-The mask is applied by putting `CPUIDMASK=avx2 LD_PRELOAD=$PWD/bench/tools/cpuidmask/libcpuidmask.so` in front of the command; `MASK` below stands for it. `cli` is `src/MeetingAudioTranscriptor.Cli/bin/Release/net10.0/meeting-audio-transcriptor-cli`. Each invocation writes `bench/results/<date>-<label>.json`, so the label names the file. The first file of each two-hour run is the clip `en-single-01`, which warms the process and is reported in its own group.
+The mask is applied by putting `CPUIDMASK=avx2 LD_PRELOAD=$PWD/bench/tools/cpuidmask/libcpuidmask.so` in front of the command; `MASK` below stands for it. `cli` is `src/MeetingAudioTranscriptor.Cli/bin/Release/net10.0/meeting-audio-transcriptor-cli`. `cli benchmark --help` lists every option; the ones these commands use are `--set` (a set name, a file id, or a comma-separated list), `--long-file` with `--language`, `--threads`, `--no-speakers`, `--speakers-hint-from-reference` (also scores each file that has reference turns with their speaker count as the hint), `--repeat`, `--out`, `--label` and `--data` (default `MAT_BENCH_DATA`, else `./bench/data`). Each invocation writes `bench/results/<date>-<label>.json`, so the label names the file. The first file of each two-hour run is the clip `en-single-01`, which warms the process and is reported in its own group.
 
 | Result file label | Command |
 |---|---|
@@ -236,8 +254,11 @@ The mask is applied by putting `CPUIDMASK=avx2 LD_PRELOAD=$PWD/bench/tools/cpuid
 | `accept-avx2-fastkernels-long` | the `accept-avx2-long` command with `MAT_ORT_QUANT_PRECISION=0` set |
 | `accept-avx2vnni-long`, `accept-avx2vnni-120min-m4a` | `CPUIDMASK=avx2-vnni`: `--set clips,long`, and the `accept-avx2-120min-m4a` command |
 | `accept-unmasked-long`, `accept-unmasked-120min-m4a` | the same two commands without `MASK` |
+| `speakers-tuned-clips` | `cli benchmark --set clips --threads 4 --speakers-hint-from-reference --label speakers-tuned-clips`, without `MASK` |
+| `speakers-tuned-long` | `cli benchmark --set long --threads 4 --speakers-hint-from-reference --label speakers-tuned-long`, without `MASK`, with the 30-minute and 2-hour WAV files in `bench/data/long/` |
+| `final-avx2-120min` | `MASK cli benchmark --set en-120min --threads 4 --label final-avx2-120min` |
 
-Then `node bench/tools/summarise-results.mjs` prints every table of this file from the result files, and `node bench/tools/summarise-results.mjs <folder> <date>` reads another folder or date.
+Then `node bench/tools/summarise-results.mjs` prints the acceptance tables of this file from the `accept` result files (the speaker, confirmation and Windows runner figures come from the files and runs named beside them), and `node bench/tools/summarise-results.mjs <folder> <date>` reads another folder or date.
 
 **On your own laptop.** Close other programs and run, on any recording:
 
@@ -247,13 +268,25 @@ meeting-audio-transcriptor-cli benchmark --long-file <recording> --language en -
 
 No mask is needed: the laptop is the machine. Compare the printed speed with the first table. The result file records the processor, whether it reports VNNI, whether the exact kernels are on, the thread count and the peak memory. The Windows checklist (`docs/WINDOWS-VERIFICATION.md`) asks for this run.
 
-## 9. Limits of the evidence
+## 9. On the Windows runner
+
+The figures of this chapter are from a GitHub-hosted runner (`windows-latest`, 4 virtual processors, AVX2 and no VNNI), measured by the `end-to-end` job of `.github/workflows/ci.yml` on run 42926115111. A hosted runner is shared and virtualised: it is not the reference laptop and its speed is not the laptop's. The job's result file is kept as the CI artefact `benchmark-Windows` and is not committed.
+
+- The command line transcribes the 10-minute English `.m4a` with the `Decoder:` line `media-foundation` at 13.2 times real time end to end, and through the bundled ffmpeg (`MAT_PREFER_FFMPEG=1`) at 13.5. The runner has no VNNI, so the exact 8-bit kernels are on (chapter 7), which is the AVX2 configuration of chapter 2 on weaker hardware: the same recipe on the build machine under the AVX2 mask reads at 24.8 times real time (chapter 4).
+- The Media Foundation and ffmpeg transcripts of that file differ by 3 word edits out of 1,457 words (0.21 %).
+- Word error rates of the clips on the runner against the Linux acceptance run, raw, in percent: English read 2.2 against 2.2, English meetings 24.1 against 24.0, French 2.9 against 2.9, German 7.3 against 7.7 (Linux values in chapter 3). Every language is within 0.4 point of Linux.
+
+Only a real Windows shows one behaviour of Media Foundation: its AAC decoder announces a file at 24 kHz or below at twice its rate and corrects it with the first decoded block, so the source reads the first block while opening (`src/MeetingAudioTranscriptor.Media/CLAUDE.md`, decision 0009).
+
+## 10. Limits of the evidence
 
 - The test set is small: 16 clips and three long files, about 8,100 reference words in all, so a word error rate has a margin of a few tenths of a point for read speech and several points for meetings.
 - Real meeting speech is three AMI excerpts of 69 to about 100 seconds, 879 reference words. French and German have no real conversational material: they are read audiobooks, with multi-speaker files built by concatenating speakers' utterances, without fillers, overlap or room noise between turns. The cleaning and speaker figures for those languages say little about meetings in them.
-- The 30-minute and two-hour files repeat the ten-minute recipe, so they measure speed and memory and say nothing about accuracy.
+- The 30-minute and two-hour files repeat the ten-minute recipe, so they measure speed and memory and repeat that recipe's accuracy and speaker count; they add no new speakers or speech.
+- The speaker rules were tuned on this test set (decision 0005), so the exact counts of chapter 5 are in-sample. The real-meeting evidence for the count is the three AMI clips, where two of three are one speaker short without the hint.
 - The masked server processor is a stand-in for a laptop: it runs the processor's AVX2 code at 2.1 GHz with a server's memory system, and a laptop's thermal limits, background load and power settings are absent. The speed margin of more than two leaves room for that, but the laptop's own figure is the one to read, which is why chapter 8 gives the one-command check.
 - 8 threads are not measurable on this machine: it has 4 hardware threads, so the 8-thread row is oversubscribed.
 - Each configuration was run once (`settings.repeat` is 1), so the spread between runs of one configuration is not measured here; the spike saw 25 percent spread on a shared machine.
-- The acceptance files record `applicationVersion` 1.0.0, which names a development build and not a release, and do not record the kernel precision; the first follows from the build, the second from the mask (chapter 1).
-- The Windows build, Media Foundation decoding and the window are not exercised by any benchmark here.
+- The acceptance and speaker files record `applicationVersion` 1.0.0 and the confirmation file 0.0.0-dev, which name development builds and not releases. The acceptance and speaker files do not record the kernel precision, which follows from the mask (chapter 1); the confirmation file does.
+- The acceptance table and the confirmation run are two builds on one machine and one input recipe, once each; their 2.4 % difference in wall time (287.9 s on the `.m4a`, 280.9 s on the WAV) is within a run-to-run spread that one run each cannot measure, and is not evidence of a speed-up.
+- The Windows figures (chapter 9) are one hosted runner, one run, and say nothing about the reference laptop. No benchmark exercises the window, and no committed result file holds a Windows measurement.

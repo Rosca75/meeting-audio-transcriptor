@@ -42,7 +42,7 @@ Everything that turns an audio file into an `IAudioSource` for the engine: the c
 
 **COM is started on the constructing thread and every pointer is released as soon as its step is done.** The source reader may be read from any thread of the multithreaded apartment; `Dispose` uninitialises COM only on the thread that initialised it, because an uninitialise belongs to its thread. The rate and channel count are never forced, so the engine's resampler stays the only one.
 
-**The Windows path is checked by hand.** It was exercised under Wine and runs in the CI Windows leg; `docs/WINDOWS-VERIFICATION.md` lists what only a real Windows proves.
+**The Windows path is executed by CI and finished by hand.** The Windows legs of CI run the Media Foundation tests and transcribe a 10-minute `.m4a` through Media Foundation and through ffmpeg on a real Windows (`docs/BENCHMARKS.md`, chapter 9), and the interop's slots, GUIDs and layouts were first exercised under Wine; `docs/WINDOWS-VERIFICATION.md` lists what only a laptop proves.
 
 ## 5. Failures are sentences
 

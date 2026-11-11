@@ -9,7 +9,7 @@ The checklist the owner runs on a Windows 10 or 11 x64 laptop.
 - `integration (windows-latest)` runs the Media Foundation tests against generated files, a 16 kHz mono `.m4a` among them, compared with ffmpeg's decode.
 - `release.yml`'s `build (win-x64)` publishes the package with the models and transcribes a clip from inside the staged folder, with no `MAT_MODELS_DIR` or `MAT_FFMPEG` set, through the bundled ffmpeg and through Media Foundation, so the shipped layout (models and ffmpeg beside the executable) works.
 
-What CI cannot prove: the window (the web view host, drag and drop, the dialogs, SmartScreen), real recordings from a phone or a meeting tool, and speed on the target laptop: the hosted runner reports no VNNI and reads at about 13 to 15 times real time with 4 threads. The checklist below covers those first; the decoding items repeat on real recordings what CI proves on the test set.
+What CI cannot prove: the window (the web view host, drag and drop, the dialogs, SmartScreen), real recordings from a phone or a meeting tool, and speed on the target laptop: the hosted runner reports no VNNI and reads the 10-minute `.m4a` at 13.2 times real time through Media Foundation and 13.5 through ffmpeg with 4 threads (CI run 42926115111; `docs/BENCHMARKS.md`, chapter 9). The checklist below covers those first; the decoding items repeat on real recordings what CI proves on the test set.
 
 Everything below is what remains for a person. Work in order; each item says what to do, what is expected and what to report when it differs. Report the item number, the exact message and the output of `meeting-audio-transcriptor-cli.exe --version`.
 

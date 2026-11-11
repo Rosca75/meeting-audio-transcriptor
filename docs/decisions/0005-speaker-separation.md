@@ -53,6 +53,14 @@ group's attribution lower (`docs/build/diarisation-measurements.md`, chapter
 | AMI meeting clips (3) | 0 of 3 (6, 3, 3 for 4) | 1 of 3 (4, 3, 3 for 4) |
 | 10, 30 and 120-minute files (5) | 1 of 5 | 5 of 5 |
 
+The benchmark command over the shipped service reads the same: without the
+hint the count is exact on 13 of the 15 files with reference speakers (all
+seven constructed clips and all five long files; two AMI clips are one short),
+and with the hint on all 15 (`bench/results/2026-11-10-speakers-tuned-clips.json`
+and `-long.json`). The final build under the AVX2 mask finds 6 of 6 speakers in
+the two-hour file (`bench/results/2026-11-10-final-avx2-120min.json`). The test
+set is the one the rules were tuned on (`docs/BENCHMARKS.md`, chapter 5).
+
 An absolute floor of 8 to 15 s merges a real speaker of a constructed clip who
 reads one sentence (10 s) and quiet AMI participants; a share alone does nothing
 on a short clip, and an absolute floor alone misses the two-hour file's 42 s.

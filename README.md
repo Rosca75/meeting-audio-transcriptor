@@ -24,7 +24,7 @@ For `meeting.m4a` the program writes next to the recording (or into the folder y
 | `meeting.txt` | readable text grouped into speaker turns |
 | `meeting.raw.vtt`, `meeting.raw.txt` | the same without cleaning; written only when you ask (`--raw`, or the checkbox in the window) |
 
-You pick which of the three formats to write. The JSON always carries both texts, so a raw file is only a convenience. Files are written whole or not at all: a cancelled or failed run leaves no partial file, and an existing transcript of the same name is replaced only when the new one is complete.
+You pick which of the three formats to write. The JSON always carries both texts, so a raw file is only a convenience. The files are placed as a set, whole or not at all: each is first written under a hidden temporary name in the same folder, and an existing transcript of the same name is set aside and deleted only once every new file is in place. A cancelled or failed run leaves no partial file and the previous transcripts as they were, and a transcript that another program holds open stops the run at once, naming the file.
 
 Examples (made up, to show the shapes).
 
@@ -82,6 +82,7 @@ The program tells the voices in a recording apart and labels them `Speaker 1`, `
 
 - It is on by default. `--no-speakers` (or its checkbox) switches it off; the transcript then has no labels.
 - If you know how many people speak, give the number (`--speakers 4`, or the speaker count field). The count is a hint that makes the result steadier; without it the program may find one speaker too many or too few in a real meeting.
+- Without the number, a participant who speaks only a few seconds (less than the larger of 4 seconds and 1.5 % of all speaking time) may be merged into the closest voice, and their words then appear under another speaker's label. Give the speaker count to keep everyone.
 - Overlapping speech goes to one speaker only: the recogniser reads one voice at a time, so when two people talk at once the louder or earlier one is transcribed and the other is mostly lost.
 - Two voices that sound alike, or one person speaking from very different microphones, can be confused.
 - At most 10 speakers are told apart; in a larger meeting the voices nearest each other share a label.
@@ -218,6 +219,10 @@ The design target is a two-hour meeting transcribed in ten minutes or less on a 
 | AVX2 and AVX-VNNI | 2.8 minutes | 43.3 | 1.95 GB |
 | the processor as it is (AMX, AVX-512 VNNI) | 1.6 minutes | 75.5 | 1.98 GB |
 
+These rows are from the acceptance build with an `.m4a` input. One run of the final build on a two-hour WAV file, AVX2 only, with speaker separation, takes 4.7 minutes (280.9 seconds, 25.6 times real time, 1.98 GB) and finds all 6 of the recording's speakers, with a word error rate of 1.2 % on that read English recording (`bench/results/2026-11-10-final-avx2-120min.json`).
+
+On a hosted Windows runner (4 virtual processors, AVX2 without VNNI, shared with other work, so a data point and not the laptop's figure) the command line transcribes a 10-minute `.m4a` at 13.2 times real time through Media Foundation and 13.5 through the bundled ffmpeg, end to end, with the two transcripts differing by 3 words in 1,457 (`docs/BENCHMARKS.md`, chapter 9).
+
 Speed is the same at 10, 30 and 120 minutes within one percent. Word error rate is 1.5 % for read English, 2.7 % for French and 8.3 % for German on the test set, and 24 % for real English meetings with overlapping speech, which is the weak case (`docs/BENCHMARKS.md`, chapters 3 and 6). On a processor without VNNI the program switches to exact 8-bit kernels by itself: they cost about a fifth of the speed and keep the German error at 8.8 % instead of 12.4 % (`docs/decisions/0010-exact-quantised-kernels.md`). Speed depends mostly on the core count and on the processor's vector instructions; a machine below the requirements will be slower, and `--threads` and `--no-speakers` are the two levers (section 11). Measure your own machine with the command of section 7.
 
 ## 9. System requirements
@@ -229,10 +234,10 @@ Speed is the same at 10, 30 and 120 minutes within one percent. Word error rate 
 
 ## 10. Privacy
 
-Nothing leaves your machine. The program has no network code, and the window refuses every address except its own embedded page. Where it writes:
+Nothing leaves your machine. The program has no network code, and the window refuses every address except its own embedded page. On Windows the web view starts with the browser engine's own background traffic (component updates, usage metrics, sync, SmartScreen lookups) switched off. Outside the program's reach are the Microsoft Edge Update service, which Windows runs on its own for the WebView2 runtime, and anything a group policy forces on; on Linux the .NET runtime also keeps a local diagnostics socket in the temporary folder, which no connection to the outside uses. Where it writes:
 
 - the transcripts, only into the folder you chose (or beside the recording);
-- a temporary file named after each transcript, in the same folder, while it is being written;
+- a hidden temporary file for each transcript (`.<name>.<random>.mat-tmp`) while it is written, and a hidden `.mat-bak` copy of an existing transcript while the new set is put in place, both in the same folder and both removed when the run ends;
 - the window's web view profile, in `%LOCALAPPDATA%\meeting-audio-transcriptor\webview` on Windows and `$XDG_DATA_HOME/meeting-audio-transcriptor/webview` (default `~/.local/share/meeting-audio-transcriptor/webview`) on Linux.
 
 It writes no registry key. To uninstall, delete the extracted folder and that data folder. The recording itself is only ever read.
@@ -250,6 +255,8 @@ It writes no registry key. To uninstall, delete the extracted folder and that da
 | Windows N edition without the Media Feature Pack | the bundled ffmpeg decodes `.m4a` and `.mp4` instead; if the `ffmpeg` folder was removed, restore it, install the Media Feature Pack from Microsoft, or convert the file to `.wav` |
 | "models folder lacks ..." | run from the extracted package, or pass `--models <dir>` or set `MAT_MODELS_DIR`; from source see section 12 |
 | Slow on an older or small machine | `--threads 2` if the machine is also busy, `--no-speakers` to skip speaker separation, and close other programs |
+| Fewer speakers than the meeting had | a participant who spoke only a few seconds is merged into the closest voice: run again with `--speakers <n>` (or the speaker count field) |
+| A hidden `.mat-bak` file remains in the output folder after a crash | it is the previous transcript, set aside while the new set was placed: rename it to the transcript's name (drop the leading dot, the random part and the `.mat-bak` ending), or delete it |
 | Quiet speakers missing | compare `.txt` with `.raw.txt`; if the words are in the raw file, cleaning removed them, and if not the recogniser did not hear them |
 
 ## 12. Building from source
