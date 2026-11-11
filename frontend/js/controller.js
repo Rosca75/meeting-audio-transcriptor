@@ -105,5 +105,19 @@ export function createController({ api, store }) {
     another() {
       dispatch({ type: "another" });
     },
+
+    // Shows the settings panel. Returns true when it opened, so the caller can move the focus.
+    openSettings() {
+      const wasOpen = store.getState().settingsOpen;
+      dispatch({ type: "settingsOpened" });
+      return !wasOpen && store.getState().settingsOpen;
+    },
+
+    // Returns to the main view. Returns true when the panel was open.
+    closeSettings() {
+      const wasOpen = store.getState().settingsOpen;
+      dispatch({ type: "settingsClosed" });
+      return wasOpen;
+    },
   };
 }

@@ -2,7 +2,9 @@
 // `node --test "frontend/**/*.test.js"`. They need no DOM and no bridge.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildRequest, canStart, createStore, initialState, outputFolder, reduce, startProblem } from "./state.js";
+import {
+  buildRequest, canStart, createStore, initialState, namedSpeakers, outputFolder, reduce, settingsProblem, startProblem,
+} from "./state.js";
 
 const selection = { path: "/home/me/meetings/standup.m4a", name: "standup.m4a" };
 
@@ -36,7 +38,9 @@ test("missing models disable Start and carry the host's message", () => {
     reduce(initialState(), { type: "info", info: { version: "1", models: { ready: false, message: "Models are missing." } } }),
   );
   assert.equal(canStart(state), false);
-  assert.equal(startProblem(state), "Models are missing.");
+  assert.equal(state.models.message, "Models are missing.");
+  // The banner already shows the host's message, so the line beside Start does not repeat it.
+  assert.equal(startProblem(state), null);
 });
 
 test("picking a file selects it, clears errors and defaults the output folder to its folder", () => {
@@ -72,6 +76,7 @@ test("a cancelled folder dialog changes nothing", () => {
 test("Start needs a file, a format and a valid speaker count", () => {
   const ready = withFile(readyInfo());
   assert.equal(canStart(ready), true);
+  assert.equal(startProblem(ready), null);
   assert.equal(canStart(readyInfo()), false);
   let none = ready;
   for (const format of ["vtt", "json", "txt"]) {
@@ -121,7 +126,8 @@ test("start puts the page in the running phase and clears old results", () => {
   assert.equal(state.phase, "running");
   assert.equal(state.outcome, null);
   assert.deepEqual(state.progress, { stage: "", fraction: 0 });
-  assert.equal(startProblem(state), "running");
+  assert.equal(canStart(state), false);
+  assert.equal(startProblem(state), null);
 });
 
 test("a rejected start returns to idle with the host's sentence", () => {
@@ -237,4 +243,109 @@ test("the store notifies subscribers only when the state changes and supports un
   off();
   store.dispatch({ type: "languageChanged", language: "de" });
   assert.equal(calls, 1);
+});
+
+test("without a file Start is unavailable and no sentence explains it", () => {
+  const state = readyInfo();
+  assert.equal(canStart(state), false);
+  assert.equal(startProblem(state), null);
+  assert.equal(settingsProblem(state), null);
+});
+
+test("a settings problem is the sentence beside Start, with or without a file", () => {
+  const bad = reduce(readyInfo(), { type: "speakerCountChanged", text: "11" });
+  assert.match(startProblem(bad), /1 to 10/);
+  assert.equal(startProblem(withFile(bad)), startProblem(bad));
+  assert.equal(canStart(withFile(bad)), false);
+});
+
+test("the settings panel opens and closes, and stays shut while a run is in flight", () => {
+  assert.equal(initialState().settingsOpen, false);
+  const open = reduce(initialState(), { type: "settingsOpened" });
+  assert.equal(open.settingsOpen, true);
+  assert.equal(reduce(open, { type: "settingsClosed" }).settingsOpen, false);
+  const running = reduce(withFile(readyInfo()), { type: "startRequested" });
+  assert.equal(reduce(running, { type: "settingsOpened" }), running);
+  // A run started from an open panel shuts it, so the progress is on screen.
+  assert.equal(reduce(reduce(withFile(readyInfo()), { type: "settingsOpened" }), { type: "startRequested" }).settingsOpen, false);
+});
+
+test("the state holds ten speaker names and a name survives a change of the count", () => {
+  assert.deepEqual(initialState().speakerNames, ["", "", "", "", "", "", "", "", "", ""]);
+  let state = reduce(initialState(), { type: "speakerCountChanged", text: "4" });
+  state = reduce(state, { type: "speakerNameChanged", index: 3, text: "Dana " });
+  assert.equal(state.speakerNames[3], "Dana ");
+  state = reduce(state, { type: "speakerCountChanged", text: "2" });
+  state = reduce(state, { type: "speakerCountChanged", text: "4" });
+  assert.equal(state.speakerNames[3], "Dana ");
+  assert.equal(state.speakerNames.length, 10);
+});
+
+test("a speaker name outside the ten fields is ignored", () => {
+  const before = initialState();
+  for (const index of [-1, 10, 1.5, "2", undefined]) {
+    assert.equal(reduce(before, { type: "speakerNameChanged", index, text: "x" }), before, String(index));
+  }
+});
+
+test("name fields are shown only with separation on and a valid count", () => {
+  assert.equal(namedSpeakers(initialState()), 0);
+  const state = reduce(initialState(), { type: "speakerCountChanged", text: "3" });
+  assert.equal(namedSpeakers(state), 3);
+  assert.equal(namedSpeakers(reduce(state, { type: "separationChanged", value: false })), 0);
+  assert.equal(namedSpeakers(reduce(state, { type: "speakerCountChanged", text: "12" })), 0);
+});
+
+test("buildRequest carries the speaker names right after the count, trimmed, without trailing blanks", () => {
+  let state = reduce(withFile(readyInfo()), { type: "speakerCountChanged", text: "4" });
+  state = reduce(state, { type: "speakerNameChanged", index: 0, text: "  Alice " });
+  state = reduce(state, { type: "speakerNameChanged", index: 2, text: "Carol" });
+  const request = buildRequest(state);
+  assert.deepEqual(request, {
+    inputPath: selection.path,
+    language: "en",
+    formats: ["vtt", "json", "txt"],
+    speakerSeparation: true,
+    rawFiles: false,
+    speakerCount: 4,
+    speakerNames: ["Alice", "", "Carol"],
+  });
+  assert.deepEqual(Object.keys(request).slice(-2), ["speakerCount", "speakerNames"]);
+  state = reduce(state, { type: "folderChosen", path: "/out" });
+  assert.deepEqual(Object.keys(buildRequest(state)).slice(-3), ["speakerCount", "speakerNames", "outputFolder"]);
+});
+
+test("speaker names are cut to the count", () => {
+  let state = reduce(withFile(readyInfo()), { type: "speakerCountChanged", text: "4" });
+  state = reduce(state, { type: "speakerNameChanged", index: 0, text: "Alice" });
+  state = reduce(state, { type: "speakerNameChanged", index: 3, text: "Dana" });
+  state = reduce(state, { type: "speakerCountChanged", text: "2" });
+  assert.deepEqual(buildRequest(state).speakerNames, ["Alice"]);
+});
+
+test("speaker names are omitted when none is set, when separation is off and when no count is given", () => {
+  const counted = reduce(withFile(readyInfo()), { type: "speakerCountChanged", text: "3" });
+  assert.equal("speakerNames" in buildRequest(counted), false);
+  assert.equal("speakerNames" in buildRequest(reduce(counted, { type: "speakerNameChanged", index: 1, text: "   " })), false);
+  const named = reduce(counted, { type: "speakerNameChanged", index: 0, text: "Alice" });
+  assert.deepEqual(buildRequest(named).speakerNames, ["Alice"]);
+  assert.equal("speakerNames" in buildRequest(reduce(named, { type: "separationChanged", value: false })), false);
+  assert.equal("speakerNames" in buildRequest(reduce(named, { type: "speakerCountChanged", text: "" })), false);
+});
+
+test("names the host would reject keep Start off with one sentence", () => {
+  const counted = reduce(withFile(readyInfo()), { type: "speakerCountChanged", text: "3" });
+  let twice = reduce(counted, { type: "speakerNameChanged", index: 0, text: "Alice" });
+  twice = reduce(twice, { type: "speakerNameChanged", index: 1, text: " alice" });
+  assert.equal(canStart(twice), false);
+  assert.match(startProblem(twice), /must be different/);
+  assert.equal(settingsProblem(twice), startProblem(twice));
+  const tagged = reduce(counted, { type: "speakerNameChanged", index: 0, text: "<b>" });
+  assert.equal(canStart(tagged), false);
+  // A bad name in a field the count no longer shows is not sent, so it blocks nothing.
+  let hidden = reduce(counted, { type: "speakerNameChanged", index: 2, text: "Alice" });
+  hidden = reduce(hidden, { type: "speakerNameChanged", index: 0, text: "Alice" });
+  assert.equal(canStart(hidden), false);
+  assert.equal(canStart(reduce(hidden, { type: "speakerCountChanged", text: "2" })), true);
+  assert.equal(canStart(reduce(hidden, { type: "separationChanged", value: false })), true);
 });

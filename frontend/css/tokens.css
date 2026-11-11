@@ -1,56 +1,84 @@
-/* tokens.css: the page's design tokens, colours for light and dark and the spacing, type and radius
-   scales. style.css consumes them and declares none of its own, so a value changes in one place.
-   Text colours keep at least 4.5 to 1 contrast on their backgrounds in both schemes. */
+/* tokens.css: the page's design tokens, the colours for light and dark and the spacing, type, size
+   and radius scales. style.css consumes them and declares none of its own, so a value changes in one
+   place. Every colour is one of the corporate palette: white, black, the oranges, the gray-blues and
+   their tints and shades; a test holds this file to that list. Text colours keep at least 4.5 to 1
+   contrast on their backgrounds in both schemes, and the marks that carry meaning without text (the
+   borders of controls, the selection ring, the focus ring, the progress bar) keep at least 3 to 1.
+   The flags and the logo are pictures with colours of their own, drawn by js/icons.js. */
 
 :root {
   color-scheme: light dark;
 
-  --color-bg: #f4f6f8;
-  --color-surface: #ffffff;
-  --color-text: #1b1f24;
-  --color-muted: #4a5560;
-  --color-border: #b8c1ca;
-  --color-primary: #0b5cad;
-  --color-primary-text: #ffffff;
-  --color-primary-hover: #084a8c;
-  --color-error: #a8071a;
-  --color-error-bg: #fdecee;
-  --color-info-bg: #e8f1fb;
-  --color-focus: #0b5cad;
-  --color-drop-bg: #e8f1fb;
+  /* Surfaces: the window, and the cards and controls on it. */
+  --color-bg: #F5F7F8;
+  --color-surface: #FFFFFF;
+  /* Text: the body, and the quieter hints and labels. */
+  --color-text: #000000;
+  --color-muted: #4B535E;
+  /* Lines: the hairline around a card, and the stronger edge of a control. */
+  --color-border: #CBD1D6;
+  --color-control-border: #717C8D;
+  /* The primary action: black text on orange, a lighter orange under the pointer. */
+  --color-primary: #FD5108;
+  --color-primary-text: #000000;
+  --color-primary-hover: #FE7C39;
+  /* The accent of small marks: the selection ring, the focus ring, the progress bar, a ticked box. */
+  --color-accent: #FD5108;
+  --color-track: #DFE3E6;
+  /* Messages: an error in the palette's darkest readable orange, a note on a quiet gray-blue. */
+  --color-error: #C23A01;
+  --color-error-bg: #FFF5ED;
+  --color-info-bg: #EEEFF1;
+  --color-drop-bg: #FFF5ED;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
 
-  --radius: 0.5rem;
+  --radius: 0.375rem;
+  --hairline: 1px;
+  --ring: 2px;
+
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
-  --text-small: 0.875rem;
-  --text-base: 1rem;
-  --text-h1: 1.5rem;
-  --text-h2: 1.125rem;
-  --page-width: 44rem;
-  --focus-ring: 3px;
+  /* The type ladder, by role: hints and paths, the body and every control, the window's title. */
+  --text-small: 0.75rem;
+  --text-base: 0.875rem;
+  --text-title: 1.0625rem;
+  --line: 1.25rem;
+  --line-small: 1rem;
+  --weight-strong: 600;
+
+  /* One control height: the line plus this inset above and below, for buttons and text fields. */
+  --control-inset: var(--space-1);
+  --control-height: 1.875rem;
+  --tick-size: 1rem;
+  --logo-size: 1.625rem;
+  --flag-width: 2.25rem;
+  --flag-height: 1.5rem;
+  --count-width: 5.5rem;
+  --progress-height: 0.5rem;
+  --settings-left: 11.5rem;
+  --dim: 0.55;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #14181d;
-    --color-surface: #1e242b;
-    --color-text: #e8ecf0;
-    --color-muted: #aab4be;
-    --color-border: #4a5560;
-    --color-primary: #5aaeff;
-    --color-primary-text: #08111a;
-    --color-primary-hover: #82c0ff;
-    --color-error: #ff9aa5;
-    --color-error-bg: #3a1a1f;
-    --color-info-bg: #1b2a3a;
-    --color-focus: #82c0ff;
-    --color-drop-bg: #1b2a3a;
+    --color-bg: #171717;
+    --color-surface: #262626;
+    --color-text: #FFFFFF;
+    --color-muted: #BABFC7;
+    --color-border: #464646;
+    --color-control-border: #808C9A;
+    --color-primary: #FD5108;
+    --color-primary-text: #000000;
+    --color-primary-hover: #FE7C39;
+    --color-accent: #FE7C39;
+    --color-track: #464646;
+    --color-error: #FEB99C;
+    --color-error-bg: #3B3B3B;
+    --color-info-bg: #3B3B3B;
+    --color-drop-bg: #3B3B3B;
   }
 }

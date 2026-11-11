@@ -1,6 +1,6 @@
 // state.js, the single holder of page state: one plain object, pure reducer-style transitions over it
 // and a tiny store with subscribe. It has no DOM and no bridge access, so every flow is unit-testable.
-import { directoryOf, parseSpeakerCount, selectedFormats } from "./model.js";
+import { SPEAKER_MAX, directoryOf, parseSpeakerCount, selectedFormats, speakerNamesToSend, speakerNamesValid } from "./model.js";
 import { ERRORS, OPTIONS } from "./copy.js";
 
 export function initialState() {
@@ -18,8 +18,12 @@ export function initialState() {
     formats: { vtt: true, json: true, txt: true },
     speakerSeparation: true,
     speakerCountText: "",
+    // One name per possible speaker, as typed; all ten are kept so a name survives a change of count.
+    speakerNames: Array(SPEAKER_MAX).fill(""),
     rawFiles: false,
     chosenFolder: null,
+    // True while the settings panel replaces the main view.
+    settingsOpen: false,
     // The run: "idle", "running" or "done".
     phase: "idle",
     cancelling: false,
@@ -38,28 +42,35 @@ export function outputFolder(state) {
   return state.file ? directoryOf(state.file.path) : "";
 }
 
-// The one sentence that explains why Start is unavailable, or null when it is available.
-export function startProblem(state) {
-  if (state.phase === "running") {
-    return "running";
-  }
-  if (!state.models.ready) {
-    return state.models.message || ERRORS.modelsUnknown;
-  }
-  if (!state.file) {
-    return ERRORS.needFile;
-  }
+// How many speakers can be named: the count the user entered, or zero while separation is off or
+// the count is automatic or invalid.
+export function namedSpeakers(state) {
+  return state.speakerSeparation ? parseSpeakerCount(state.speakerCountText).value ?? 0 : 0;
+}
+
+// The first sentence about a setting that keeps a run from starting, or null when the settings are
+// fine. Only the names a run would carry are checked.
+export function settingsProblem(state) {
   if (selectedFormats(state.formats).length === 0) {
     return OPTIONS.formatsNeeded;
   }
   if (!parseSpeakerCount(state.speakerCountText).valid) {
     return OPTIONS.speakerCountInvalid;
   }
+  if (!speakerNamesValid(state.speakerNames.slice(0, namedSpeakers(state)))) {
+    return OPTIONS.namesInvalid;
+  }
   return null;
 }
 
 export function canStart(state) {
-  return startProblem(state) === null;
+  return state.phase !== "running" && state.models.ready && state.file !== null && settingsProblem(state) === null;
+}
+
+// The sentence shown beside Start, or null. A run in flight, missing models (the banner says so) and
+// a missing recording (the empty recording area says so) leave Start off without a sentence.
+export function startProblem(state) {
+  return state.phase === "running" ? null : settingsProblem(state);
 }
 
 // The run.start argument for the current form; call only when canStart is true.
@@ -74,6 +85,10 @@ export function buildRequest(state) {
   };
   if (state.speakerSeparation && count.value !== null) {
     request.speakerCount = count.value;
+    const names = speakerNamesToSend(state.speakerNames, count.value);
+    if (names.length > 0) {
+      request.speakerNames = names;
+    }
   }
   if (state.chosenFolder) {
     request.outputFolder = state.chosenFolder;
@@ -129,6 +144,19 @@ export function reduce(state, action) {
       return { ...state, speakerSeparation: action.value === true };
     case "speakerCountChanged":
       return { ...state, speakerCountText: String(action.text ?? "") };
+    case "speakerNameChanged": {
+      if (!Number.isInteger(action.index) || action.index < 0 || action.index >= SPEAKER_MAX) {
+        return state;
+      }
+      const speakerNames = [...state.speakerNames];
+      speakerNames[action.index] = String(action.text ?? "");
+      return { ...state, speakerNames };
+    }
+    case "settingsOpened":
+      // The settings are locked while a run is in flight, so the panel stays shut.
+      return state.phase === "running" || state.settingsOpen ? state : { ...state, settingsOpen: true };
+    case "settingsClosed":
+      return state.settingsOpen ? { ...state, settingsOpen: false } : state;
     case "rawFilesChanged":
       return { ...state, rawFiles: action.value === true };
     case "folderChosen":
@@ -137,6 +165,7 @@ export function reduce(state, action) {
       return {
         ...state,
         phase: "running",
+        settingsOpen: false,
         cancelling: false,
         progress: { stage: "", fraction: 0 },
         outcome: null,
