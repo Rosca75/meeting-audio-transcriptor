@@ -274,7 +274,7 @@ The figures of this chapter are from a GitHub-hosted runner (`windows-latest`, 4
 
 - The command line transcribes the 10-minute English `.m4a` with the `Decoder:` line `media-foundation` at 13.2 times real time end to end, and through the bundled ffmpeg (`MAT_PREFER_FFMPEG=1`) at 13.5. The runner has no VNNI, so the exact 8-bit kernels are on (chapter 7), which is the AVX2 configuration of chapter 2 on weaker hardware: the same recipe on the build machine under the AVX2 mask reads at 24.8 times real time (chapter 4).
 - The Media Foundation and ffmpeg transcripts of that file differ by 3 word edits out of 1,457 words (0.21 %).
-- Word error rates of the clips on the runner against the Linux acceptance run, raw, in percent: English read 2.2 against 2.2, English meetings 24.1 against 24.0, French 2.9 against 2.9, German 7.3 against 7.7 (Linux values in chapter 3). Every language is within 0.4 point of Linux.
+- Word error rates of the clips on the Windows runner against the Linux runner of the same CI run, raw, in percent: English read 2.2 against 2.2, English meetings 24.0 against 24.1, French 2.9 against 2.9, German 7.7 against 7.3. The Windows runner reports no VNNI and so runs the exact 8-bit kernels (chapter 7), which accounts for the German difference.
 
 Only a real Windows shows one behaviour of Media Foundation: its AAC decoder announces a file at 24 kHz or below at twice its rate and corrects it with the first decoded block, so the source reads the first block while opening (`src/MeetingAudioTranscriptor.Media/CLAUDE.md`, decision 0009).
 
