@@ -40,7 +40,7 @@ Media Foundation is the decoder for `.m4a` and `.mp4` on Windows; the engine's o
 11. **Drop.** Drag an `.m4a` from Explorer onto the window: the drop styling shows and the file is selected. Drop a `.txt`: one refusal message. Drop two files: the first supported one is taken and a note says so.
 12. **Output folder.** "Choose folder..." opens the folder picker at the current output folder; the chosen path shows; Cancel changes nothing.
 13. **A run.** Start a transcription of the 30-minute recording: the progress bar moves forward only, stages change, the summary shows the speed and the files. "Open output folder" opens File Explorer on them.
-14. **Cancel.** Start again, press Cancel at about half progress. Expected: the run ends within a few seconds with "cancelled", and the output folder holds no new or partial file (also no `*.tmp`). Report leftovers.
+14. **Cancel.** Start again, press Cancel at about half progress. Expected: the run ends within a few seconds with "cancelled", and the output folder holds no new or partial file (also no `.*.mat-tmp` or `.*.mat-bak`). Report leftovers.
 15. **Close while running.** Start a run and close the window: the process ends at once, no error dialog, and Task Manager shows no leftover `meeting-audio-transcriptor.exe`, `meeting-audio-transcriptor-cli.exe` or `msedgewebview2.exe` of this window.
 16. **DPI and size.** At 100, 150 and 200 percent scaling the text is sharp; dragging the window between two monitors of different scale keeps it sharp; it cannot be made smaller than 640 by 480; maximise and restore work.
 17. **Hardening.** Right-click shows no context menu; F12, Ctrl+Shift+I, F5, Ctrl+R and Ctrl+wheel do nothing.
@@ -50,7 +50,7 @@ Media Foundation is the decoder for `.m4a` and `.mp4` on Windows; the engine's o
 
 ## 4. Offline proof
 
-21. Run items 13 and 4 with the network disabled (airplane mode), then again with Resource Monitor (Network tab, "TCP Connections" and "Listening Ports") filtered on `meeting-audio-transcriptor` and `msedgewebview2`. Expected: it works offline, and no connection, listening port or UDP endpoint appears for any of the processes. Report any remote address.
+21. **Offline.** Run items 13 and 4 with the network disabled (airplane mode): both work. Then, with the network on, use Resource Monitor (Network tab) or `Get-NetTCPConnection -OwningProcess (Get-Process msedgewebview2,meeting-audio-transcriptor*).Id`, run a transcription and leave the window open for five minutes. Expected: no TCP or UDP connection from `meeting-audio-transcriptor*.exe`, `ffmpeg.exe` or the `msedgewebview2.exe` processes the application started (no component update, variations, SmartScreen, sync, metrics or crash upload: the window starts the web view with those switched off). Not the application's: `MicrosoftEdgeUpdate.exe` and the Edge Update service, a separate machine-wide service, and anything a group policy forces on. Report any connection from `msedgewebview2` with its remote address.
 
 ## 5. The speed check
 
@@ -63,4 +63,4 @@ Media Foundation is the decoder for `.m4a` and `.mp4` on Windows; the engine's o
 
 ## 6. Disk footprint and removal
 
-25. Besides the files you saved (and the temporary `.tmp` files that disappear when a run ends), the only folder written is `%LOCALAPPDATA%\meeting-audio-transcriptor\webview`. Check with a before and after listing of `%LOCALAPPDATA%` and `%APPDATA%`, and `reg query HKCU\Software /s /f meeting-audio-transcriptor` finds nothing. Uninstalling is deleting the extracted folder and `%LOCALAPPDATA%\meeting-audio-transcriptor`. Report anything else found.
+25. Besides the files you saved (and the temporary `.<name>.<random>.mat-tmp` and `.mat-bak` files that disappear when a run ends), the only folder written is `%LOCALAPPDATA%\meeting-audio-transcriptor\webview`. Check with a before and after listing of `%LOCALAPPDATA%` and `%APPDATA%`, and `reg query HKCU\Software /s /f meeting-audio-transcriptor` finds nothing. Uninstalling is deleting the extracted folder and `%LOCALAPPDATA%\meeting-audio-transcriptor`. Report anything else found.

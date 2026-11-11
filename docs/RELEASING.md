@@ -22,8 +22,9 @@ forget.
 
 The script refuses, and says what to do, unless the checkout is `main`, is clean and equals
 `origin/main`, the changelog has the version, the tag exists neither here nor on the remote, and the
-version is not below the highest released one. A pre-release label (`0.2.0-rc.1`) is allowed; the
-final `0.2.0` may follow it.
+version is above the highest released one. Versions are ordered by semantic-version precedence:
+a pre-release sorts below its final version, so `0.2.0` may follow `0.2.0-rc.1`, and `0.2.0-rc.2`
+is refused once `0.2.0` is released. `pwsh build/release-version.test.ps1` checks the ordering.
 
 ## 3. What the workflow does
 
@@ -51,7 +52,7 @@ The release appears under the repository's Releases page, named after the tag, w
 On Linux: `sha256sum -c --ignore-missing SHA256SUMS.txt` in the folder holding the file. On
 Windows: `Get-FileHash .\meeting-audio-transcriptor-X.Y.Z-win-x64.zip -Algorithm SHA256` and compare
 the hash with the line in `SHA256SUMS.txt`. Then unpack, and run `meeting-audio-transcriptor-cli
---version` (it prints `X.Y.Z`) and `meeting-audio-transcriptor-cli models --verify`.
+--version` (it prints `meeting-audio-transcriptor X.Y.Z`) and `meeting-audio-transcriptor-cli models --verify`.
 
 ## 5. Dry run from the workflow
 
