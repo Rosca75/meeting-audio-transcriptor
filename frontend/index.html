@@ -1,6 +1,8 @@
 <!doctype html>
 <!-- The one page of the application: static markup only. Every string shown is set by js/view.js from
-     js/copy.js, and there is no inline script or style, so the host can serve it under a strict CSP. -->
+     js/copy.js, every picture is drawn by js/icons.js, and there is no inline script or style, so the
+     host can serve it under a strict CSP. The page fills the window and holds three views, of which
+     one shows at a time: the main view, the settings panel and the summary. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -14,79 +16,87 @@
 <body>
   <div class="page">
     <header class="page-header">
+      <span id="logo" class="logo"></span>
       <h1 id="app-title"></h1>
-      <p id="app-tagline" class="muted"></p>
+      <span id="version" class="version muted small"></span>
+      <button id="open-settings" type="button" class="button button-icon"></button>
+      <button id="close-settings" type="button" class="button button-primary" hidden></button>
     </header>
 
-    <p id="models-message" class="banner banner-error" role="alert" hidden></p>
+    <p id="models-message" class="notice notice-error" role="alert" hidden></p>
 
     <main>
-      <fieldset id="inputs" class="inputs">
-        <legend id="inputs-legend" class="visually-hidden"></legend>
+      <div id="main-view" class="view">
+        <fieldset id="inputs" class="inputs">
+          <legend id="inputs-legend" class="visually-hidden"></legend>
 
-        <section class="card" aria-labelledby="file-heading">
-          <h2 id="file-heading"></h2>
-          <div id="drop-zone" class="drop-zone">
-            <button id="choose-file" type="button" class="button"></button>
-            <span id="drop-hint" class="muted"></span>
+          <section class="card" aria-labelledby="file-heading">
+            <h2 id="file-heading"></h2>
+            <div id="drop-zone" class="drop-zone">
+              <button id="choose-file" type="button" class="button"></button>
+              <span id="drop-hint" class="muted small"></span>
+            </div>
+            <p id="file-name" class="file-name cut-line"></p>
+            <p id="file-note" class="notice" role="status" hidden></p>
+            <p id="file-error" class="notice notice-error" role="alert" hidden></p>
+          </section>
+
+          <section class="card" aria-labelledby="output-heading">
+            <h2 id="output-heading"></h2>
+            <div class="folder-row">
+              <output id="output-folder" class="folder-path cut-line" for="choose-folder"></output>
+              <button id="choose-folder" type="button" class="button"></button>
+            </div>
+          </section>
+        </fieldset>
+
+        <section id="run-region" class="run">
+          <button id="start" type="button" class="button button-primary" aria-describedby="start-problem"></button>
+          <button id="cancel" type="button" class="button" hidden></button>
+          <p id="start-problem" class="muted small one-line"></p>
+          <div id="progress-box" class="progress-box" aria-live="polite" hidden>
+            <progress id="progress" max="100" value="0"></progress>
+            <p id="progress-text" class="small one-line"></p>
           </div>
-          <p id="file-name" class="file-name"></p>
-          <p id="file-note" class="notice" role="status" hidden></p>
-          <p id="file-error" class="notice notice-error" role="alert" hidden></p>
         </section>
 
-        <section class="card" aria-labelledby="options-heading">
-          <h2 id="options-heading" class="visually-hidden"></h2>
+        <p id="message" class="notice" role="status" hidden></p>
+      </div>
 
+      <section id="settings-view" class="view card settings" aria-labelledby="settings-heading" hidden>
+        <h2 id="settings-heading" class="visually-hidden"></h2>
+
+        <div class="settings-column">
           <fieldset class="group">
             <legend id="language-legend"></legend>
-            <div class="choices" id="language-choices"></div>
+            <div class="flags" id="language-choices"></div>
           </fieldset>
 
           <fieldset class="group">
             <legend id="formats-legend"></legend>
             <div class="choices" id="format-choices"></div>
-            <p id="formats-error" class="notice notice-error" role="alert" hidden></p>
+            <label class="choice"><input id="raw-files" type="checkbox"><span id="raw-files-label"></span></label>
+            <p id="formats-error" class="field-error" role="alert" hidden></p>
           </fieldset>
+        </div>
 
+        <div class="settings-column">
           <fieldset class="group">
             <legend id="speakers-legend"></legend>
             <label class="choice"><input id="separation" type="checkbox"><span id="separation-label"></span></label>
-            <div class="field">
+            <div class="count-row">
               <label for="speaker-count" id="speaker-count-label"></label>
-              <input id="speaker-count" type="text" inputmode="numeric" autocomplete="off" aria-describedby="speaker-count-help speaker-count-error">
-              <p id="speaker-count-help" class="muted small"></p>
-              <p id="speaker-count-error" class="notice notice-error" role="alert" hidden></p>
+              <input id="speaker-count" type="text" inputmode="numeric" autocomplete="off" aria-describedby="speaker-count-error">
             </div>
+            <p id="speaker-count-error" class="field-error" role="alert" hidden></p>
+            <p id="names-hint" class="names-hint muted small"></p>
+            <div id="speaker-names" class="names" role="group" hidden></div>
+            <p id="names-error" class="field-error" role="alert" hidden></p>
           </fieldset>
-
-          <label class="choice"><input id="raw-files" type="checkbox"><span id="raw-files-label"></span></label>
-        </section>
-
-        <section class="card" aria-labelledby="output-heading">
-          <h2 id="output-heading"></h2>
-          <div class="folder-row">
-            <output id="output-folder" class="folder-path" for="choose-folder"></output>
-            <button id="choose-folder" type="button" class="button"></button>
-          </div>
-        </section>
-      </fieldset>
-
-      <section id="run-region" class="actions">
-        <button id="start" type="button" class="button button-primary" aria-describedby="start-problem"></button>
-        <button id="cancel" type="button" class="button" hidden></button>
-        <p id="start-problem" class="muted small"></p>
+        </div>
       </section>
 
-      <section id="progress-card" class="card" aria-live="polite" hidden>
-        <progress id="progress" max="100" value="0"></progress>
-        <p id="progress-text"></p>
-      </section>
-
-      <p id="message" class="notice" role="status" hidden></p>
-      <p id="error" class="notice notice-error" role="alert" hidden></p>
-
-      <section id="summary" class="card" aria-labelledby="summary-heading" hidden>
+      <section id="summary" class="view card summary" aria-labelledby="summary-heading" hidden>
         <h2 id="summary-heading"></h2>
         <dl id="summary-list" class="summary-list"></dl>
         <h3 id="files-heading"></h3>
@@ -96,11 +106,9 @@
           <button id="another" type="button" class="button"></button>
         </div>
       </section>
-    </main>
 
-    <footer class="page-footer muted small">
-      <span id="version"></span>
-    </footer>
+      <p id="error" class="notice notice-error" role="alert" hidden></p>
+    </main>
   </div>
 </body>
 </html>

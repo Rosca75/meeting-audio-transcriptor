@@ -1,5 +1,6 @@
 // model.js: pure helpers shared by the store, the controller and the view: file name checks, speaker
-// count parsing, path pieces and the formatting of a summary. It has no DOM and no bridge access.
+// count parsing, speaker names, path pieces and the formatting of a summary. It has no DOM and no
+// bridge access.
 import { FILE, UNITS, refusal } from "./copy.js";
 
 export const SUPPORTED_EXTENSIONS = [".m4a", ".mp4", ".wav"];
@@ -7,6 +8,7 @@ export const LANGUAGES = ["en", "fr", "de"];
 export const FORMATS = ["vtt", "json", "txt"];
 export const SPEAKER_MIN = 1;
 export const SPEAKER_MAX = 10;
+export const SPEAKER_NAME_MAX = 40;
 
 export function baseName(path) {
   const parts = String(path).split(/[\\/]/);
@@ -28,6 +30,13 @@ export function extensionOf(name) {
   const file = baseName(name);
   const dot = file.lastIndexOf(".");
   return dot <= 0 ? "" : file.slice(dot).toLowerCase();
+}
+
+// Splits a text for a line that is cut in its middle: the last `keep` characters always show (a
+// file's extension, a path's last folder) and the part before them gives way with an ellipsis.
+export function splitForCut(text, keep) {
+  const letters = Array.from(String(text ?? ""));
+  return letters.length > keep ? [letters.slice(0, -keep).join(""), letters.slice(-keep).join("")] : ["", letters.join("")];
 }
 
 export function isSupportedName(name) {
@@ -56,6 +65,33 @@ export function parseSpeakerCount(text) {
   }
   const value = Number(trimmed);
   return value >= SPEAKER_MIN && value <= SPEAKER_MAX ? { valid: true, value } : { valid: false, value: null };
+}
+
+// The names a run carries: index k names speaker k+1. The first count names, trimmed, with the
+// trailing empty ones dropped; an empty entry in the middle keeps that speaker's default label.
+export function speakerNamesToSend(names, count) {
+  const list = names.slice(0, count).map((name) => String(name ?? "").trim());
+  while (list.length > 0 && list[list.length - 1] === "") {
+    list.pop();
+  }
+  return list;
+}
+
+// True when the host will accept the names: each at most 40 characters, with no control character
+// and no angle bracket, and no two equal ignoring case. Empty names are always allowed.
+export function speakerNamesValid(names) {
+  const seen = new Set();
+  for (const name of names.map((text) => String(text ?? "").trim()).filter((text) => text !== "")) {
+    if (name.length > SPEAKER_NAME_MAX || /[\u0000-\u001f\u007f-\u009f<>]/.test(name)) {
+      return false;
+    }
+    const folded = name.toUpperCase();
+    if (seen.has(folded)) {
+      return false;
+    }
+    seen.add(folded);
+  }
+  return true;
 }
 
 export function selectedFormats(formats) {
